@@ -99,3 +99,16 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# Compiled source
+*.pyc
+*.pyo
+
+# OS generated files
+/.pydevproject
+/.project
+/.settings/
+
+# Data files
+/data/
+/backup/
