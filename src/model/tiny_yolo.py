@@ -101,9 +101,6 @@ class TinyYolo():
             input_shape=(None, int(self.image_size/32), int(self.image_size/32), 256),
             n_size=3, n_filter=512, stride=1, activation='relu', 
             batch_normal=False, weight_decay=None, name='conv6')
-        pool_layer6 = PoolLayer(
-            n_size=2, stride=2, mode='max', resp_normal=False, name='pool6')
-        
         conv_layer7 = ConvLayer(
             input_shape=(None, int(self.image_size/32), int(self.image_size/32), 512),
             n_size=3, n_filter=1024, stride=1, activation='relu', 
@@ -131,8 +128,7 @@ class TinyYolo():
         hidden_conv5 = conv_layer5.get_output(input=hidden_pool4)
         hidden_pool5 = pool_layer5.get_output(input=hidden_conv5)
         hidden_conv6 = conv_layer6.get_output(input=hidden_pool5)
-        hidden_pool6 = pool_layer6.get_output(input=hidden_conv6)
-        hidden_conv7 = conv_layer7.get_output(input=hidden_pool6)
+        hidden_conv7 = conv_layer7.get_output(input=hidden_conv6)
         hidden_conv8 = conv_layer8.get_output(input=hidden_conv7)
         input_dense1 = tf.reshape(hidden_conv8, shape=[
             -1, int(self.image_size/32) * int(self.image_size/32) * 1024])
@@ -182,7 +178,7 @@ class TinyYolo():
             # 计算每一个example的loss
             class_loss += self.class_scala * tf.nn.l2_loss(
                 (class_pred - class_label) * class_mask)
-            iou_matrix = self.iou(box_preds[i,:,:,:,:], self.box_labels[i,:,:,:,:])
+            iou_matrix = self.iou(box_preds[i,:,:,:,0:4], self.box_labels[i,:,:,:,0:4])
             position_loss = self.coord_scala * tf.nn.l2_loss(
                 (position_pred - position_label) * iou_matrix * object_mask)
             size_loss = self.coord_scala * tf.nn.l2_loss(
@@ -193,11 +189,15 @@ class TinyYolo():
             nobject_loss += self.nobject_scala * tf.nn.l2_loss(
                 confidence_pred * iou_matrix * nobject_mask)
             # 计算观察值
-            iou_value += iou_matrix * object_mask / tf.reduce_sum(object_mask, axis=0)
-            object_value += tf.cast(confidence_pred > 0.5, tf.float32) * object_mask \
-                / tf.reduce_sum(object_mask, axis=0)
-            nobject_value += tf.cast(confidence_pred > 0.5, tf.float32) * nobject_mask \
-                / tf.reduce_sum(nobject_mask, axis=0)
+            iou_value += tf.reduce_sum(
+                iou_matrix * object_mask, axis=[0,1,2]) \
+                / tf.reduce_sum(object_mask, axis=[0,1,2])
+            object_value += tf.reduce_sum(tf.cast(
+                confidence_pred > 0.5, tf.float32) * object_mask, axis=[0,1,2]) \
+                / tf.reduce_sum(object_mask, axis=[0,1,2])
+            nobject_value += tf.reduce_sum(tf.cast(
+                confidence_pred > 0.5, tf.float32) * nobject_mask, axis=[0,1,2]) \
+                / tf.reduce_sum(nobject_mask, axis=[0,1,2])
         
         # 目标函数值
         class_loss /= self.batch_size
@@ -211,36 +211,32 @@ class TinyYolo():
         
         return class_loss, coord_loss, object_loss, nobject_loss, \
             iou_value, object_value, nobject_value
-            
-                
+              
     def iou(self, box_pred, box_label):
-        iou_tensor = []
-        for i in range(self.cell_size):
-            row_matrix = []
-            for j in range(self.cell_size):
-                col_vector = []
-                for k in range(self.n_boxes):
-                    box1 = box_pred[i,j,k,0:4]
-                    box2 = box_label[i,j,k,0:4]
-                    box1 = tf.stack([box1[0] - box1[2] / 2.0, box1[1] - box1[3] / 2.0,
-                                     box1[0] + box1[2] / 2.0, box1[1] + box1[3] / 2.0])
-                    box2 = tf.stack([box2[0] - box2[2] / 2.0, box2[1] - box2[3] / 2.0,
-                                     box2[0] + box2[2] / 2.0, box2[1] + box2[3] / 2.0])
-                    left_top = tf.maximum(box1[0:2], box2[0:2])
-                    right_bottom = tf.minimum(box1[2:], box2[2:])
-                    intersection = right_bottom - left_top
-                    area = intersection[0] * intersection[1]
-                    mask = tf.cast(intersection[0] > 0, tf.float32) * \
-                        tf.cast(intersection[1] > 0, tf.float32)
-                    area = area * mask
-                    box1_area = (box1[2] - box1[0]) * (box1[3] - box1[1])
-                    box2_area = (box2[2] - box2[0]) * (box2[3] - box2[1])
-                    iou = area / (box1_area + box2_area + 1e-6)
-                    col_vector.append([iou])
-                row_matrix.append(col_vector)
-            iou_tensor.append(row_matrix)
+        box1 = tf.stack([
+            box_pred[:,:,:,0] - box_pred[:,:,:,2] / 2,
+            box_pred[:,:,:,1] - box_pred[:,:,:,3] / 2,
+            box_pred[:,:,:,0] + box_pred[:,:,:,2] / 2,
+            box_pred[:,:,:,1] + box_pred[:,:,:,3] / 2])
+        box1 = tf.transpose(box1, perm=[1, 2, 3, 0])
+        box2 = tf.stack([
+            box_label[:,:,:,0] - box_label[:,:,:,2] / 2,
+            box_label[:,:,:,1] - box_label[:,:,:,3] / 2,
+            box_label[:,:,:,0] + box_label[:,:,:,2] / 2,
+            box_label[:,:,:,1] + box_label[:,:,:,3] / 2])
+        box2 = tf.transpose(box2, perm=[1, 2, 3, 0])
         
-        return tf.cast(iou_tensor, dtype=tf.float32)
+        left_top = tf.maximum(box1[:,:,:,0:2], box2[:,:,:,0:2])
+        right_bottom = tf.minimum(box1[:,:,:,2:4], box2[:,:,:,2:4])
+        intersection = right_bottom - left_top
+        area = intersection[:,:,:,0] * intersection[:,:,:,1]
+        mask = tf.cast(intersection[:,:,:,0] > 0, tf.float32) * \
+            tf.cast(intersection[:,:,:,1] > 0, tf.float32)
+        area = area * mask
+        box1_area = (box1[:,:,:,2] - box1[:,:,:,0]) * (box1[:,:,:,3] - box1[:,:,:,1])
+        box2_area = (box2[:,:,:,2] - box2[:,:,:,0]) * (box2[:,:,:,3] - box2[:,:,:,1])
+        iou = area / (box1_area + box2_area + 1e-6)
+        return tf.reshape(iou, shape=[self.cell_size, self.cell_size, self.n_boxes, 1])
     
     def _process_labels_cpu(self, labels):
         # true label and mask in 类别标记
@@ -320,13 +316,14 @@ class TinyYolo():
                     processor.valid_labels)
                 
             # 开始本轮的训练
-            for i in range(0, dataloader.n_train-batch_size, batch_size):
+            for i in range(0, processor.n_train-batch_size, batch_size):
                 batch_images = train_images[i: i+batch_size]
                 batch_class_labels = train_class_labels[i: i+batch_size]
                 batch_class_masks = train_class_masks[i: i+batch_size]
                 batch_box_labels = train_box_labels[i: i+batch_size]
                 batch_object_masks = train_object_masks[i: i+batch_size]
                 batch_nobject_masks = train_nobject_masks[i: i+batch_size]
+                
                 [_, avg_loss] = self.sess.run(
                     fetches=[self.optimizer, self.avg_loss], 
                     feed_dict={self.images: batch_images, 
@@ -334,18 +331,19 @@ class TinyYolo():
                                self.class_masks: batch_class_masks,
                                self.box_labels: batch_box_labels,
                                self.object_masks: batch_object_masks,
-                               self.nobject_mask: batch_nobject_masks,
+                               self.nobject_masks: batch_nobject_masks,
                                self.keep_prob: 0.5})
                 
             # 在训练之后，获得本轮的训练集损失值和准确率
             train_loss, train_iou, train_object, train_nobject = 0.0, 0.0, 0.0, 0.0
-            for i in range(0, dataloader.n_train-batch_size, batch_size):
+            for i in range(0, processor.n_train-batch_size, batch_size):
                 batch_images = train_images[i: i+batch_size]
                 batch_class_labels = train_class_labels[i: i+batch_size]
                 batch_class_masks = train_class_masks[i: i+batch_size]
                 batch_box_labels = train_box_labels[i: i+batch_size]
                 batch_object_masks = train_object_masks[i: i+batch_size]
                 batch_nobject_masks = train_nobject_masks[i: i+batch_size]
+                
                 [avg_loss, iou_value, object_value, nobject_value] = self.sess.run(
                     fetches=[self.avg_loss, 
                              self.iou_value, 
@@ -356,7 +354,7 @@ class TinyYolo():
                                self.class_masks: batch_class_masks,
                                self.box_labels: batch_box_labels,
                                self.object_masks: batch_object_masks,
-                               self.nobject_mask: batch_nobject_masks,
+                               self.nobject_masks: batch_nobject_masks,
                                self.keep_prob: 1.0})
                 train_loss += avg_loss * batch_images.shape[0]
                 train_iou += iou_value * batch_images.shape[0]
@@ -369,13 +367,14 @@ class TinyYolo():
             
             # 在训练之后，获得本轮的验证集损失值和准确率
             valid_loss, valid_iou, valid_object, valid_nobject = 0.0, 0.0, 0.0, 0.0
-            for i in range(0, dataloader.n_valid-batch_size, batch_size):
+            for i in range(0, processor.n_valid-batch_size, batch_size):
                 batch_images = valid_images[i: i+batch_size]
                 batch_class_labels = valid_class_labels[i: i+batch_size]
                 batch_class_masks = valid_class_masks[i: i+batch_size]
                 batch_box_labels = valid_box_labels[i: i+batch_size]
                 batch_object_masks = valid_object_masks[i: i+batch_size]
                 batch_nobject_masks = valid_nobject_masks[i: i+batch_size]
+                
                 [avg_loss, iou_value, object_value, nobject_value] = self.sess.run(
                     fetches=[self.avg_loss, 
                              self.iou_value, 
@@ -386,7 +385,7 @@ class TinyYolo():
                                self.class_masks: batch_class_masks,
                                self.box_labels: batch_box_labels,
                                self.object_masks: batch_object_masks,
-                               self.nobject_mask: batch_nobject_masks,
+                               self.nobject_masks: batch_nobject_masks,
                                self.keep_prob: 1.0})
                 valid_loss += avg_loss * batch_images.shape[0]
                 valid_iou += iou_value * batch_images.shape[0]
@@ -396,9 +395,8 @@ class TinyYolo():
             valid_iou = 1.0 * valid_iou / processor.n_valid
             valid_object = 1.0 * valid_object / processor.n_valid
             valid_nobject = 1.0 * valid_nobject / processor.n_valid
-            
             print('epoch: [%d], train loss: %.6f, valid: iou: %.6f, object: %.6f, nobject: %.6f' % (
-                epoch, train_accuracy, valid_iou, valid_object, valid_nobject))
+                epoch, train_loss, valid_iou, valid_object, valid_nobject))
             sys.stdout.flush()
             
             # 保存模型
