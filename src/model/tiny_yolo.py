@@ -31,22 +31,28 @@ class TinyYolo():
         # 输入变量
         self.images = tf.placeholder(
             dtype=tf.float32, shape=[
-                None, self.image_size, self.image_size, self.n_channel], name='images')
+                self.batch_size, self.image_size, self.image_size, self.n_channel], 
+            name='images')
         self.class_labels = tf.placeholder(
             dtype=tf.float32, shape=[
-                None, self.cell_size, self.cell_size, 1], name='class_labels')
+                self.batch_size, self.cell_size, self.cell_size, 1], 
+            name='class_labels')
         self.class_masks = tf.placeholder(
             dtype=tf.float32, shape=[
-                None, self.cell_size, self.cell_size], name='class_masks')
+                self.batch_size, self.cell_size, self.cell_size],
+            name='class_masks')
         self.box_labels = tf.placeholder(
             dtype=tf.float32, shape=[
-                None, self.cell_size, self.cell_size, self.n_boxes, 5], name='box_labels')
+                self.batch_size, self.cell_size, self.cell_size, self.n_boxes, 5], 
+            name='box_labels')
         self.object_masks = tf.placeholder(
             dtype=tf.float32, shape=[
-                None, self.cell_size, self.cell_size, self.n_boxes], name='object_masks')
+                self.batch_size, self.cell_size, self.cell_size, self.n_boxes],
+            name='object_masks')
         self.nobject_masks = tf.placeholder(
             dtype=tf.float32, shape=[
-                None, self.cell_size, self.cell_size, self.n_boxes], name='nobject_masks')
+                self.batch_size, self.cell_size, self.cell_size, self.n_boxes],
+            name='nobject_masks')
         self.keep_prob = tf.placeholder(
             dtype=tf.float32, name='keep_prob')
         
@@ -63,57 +69,57 @@ class TinyYolo():
     def inference(self, images):
         # 网络结构
         conv_layer1 = ConvLayer(
-            input_shape=(None, self.image_size, self.image_size, self.n_channel), 
+            input_shape=(self.batch_size, self.image_size, self.image_size, self.n_channel), 
             n_size=3, n_filter=16, stride=1, activation='relu', 
             batch_normal=False, weight_decay=None, name='conv1')
         pool_layer1 = PoolLayer(
             n_size=2, stride=2, mode='max', resp_normal=False, name='pool1')
         
         conv_layer2 = ConvLayer(
-            input_shape=(None, int(self.image_size/2), int(self.image_size/2), 16), 
+            input_shape=(self.batch_size, int(self.image_size/2), int(self.image_size/2), 16), 
             n_size=3, n_filter=32, stride=1, activation='relu',
             batch_normal=False, weight_decay=None, name='conv2')
         pool_layer2 = PoolLayer(
             n_size=2, stride=2, mode='max', resp_normal=False, name='pool2')
         
         conv_layer3 = ConvLayer(
-            input_shape=(None, int(self.image_size/4), int(self.image_size/4), 32),
+            input_shape=(self.batch_size, int(self.image_size/4), int(self.image_size/4), 32),
             n_size=3, n_filter=64, stride=1, activation='relu', 
             batch_normal=False, weight_decay=None, name='conv3')
         pool_layer3 = PoolLayer(
             n_size=2, stride=2, mode='max', resp_normal=False, name='pool3')
         
         conv_layer4 = ConvLayer(
-            input_shape=(None, int(self.image_size/8), int(self.image_size/8), 64),
+            input_shape=(self.batch_size, int(self.image_size/8), int(self.image_size/8), 64),
             n_size=3, n_filter=128, stride=1, activation='relu', 
             batch_normal=False, weight_decay=None, name='conv4')
         pool_layer4 = PoolLayer(
             n_size=2, stride=2, mode='max', resp_normal=False, name='pool4')
         
         conv_layer5 = ConvLayer(
-            input_shape=(None, int(self.image_size/16), int(self.image_size/16), 128),
+            input_shape=(self.batch_size, int(self.image_size/16), int(self.image_size/16), 128),
             n_size=3, n_filter=256, stride=1, activation='relu', 
             batch_normal=False, weight_decay=None, name='conv5')
         pool_layer5 = PoolLayer(
             n_size=2, stride=2, mode='max', resp_normal=False, name='pool5')
         
         conv_layer6 = ConvLayer(
-            input_shape=(None, int(self.image_size/32), int(self.image_size/32), 256),
+            input_shape=(self.batch_size, int(self.image_size/32), int(self.image_size/32), 256),
             n_size=3, n_filter=512, stride=1, activation='relu', 
             batch_normal=False, weight_decay=None, name='conv6')
         conv_layer7 = ConvLayer(
-            input_shape=(None, int(self.image_size/32), int(self.image_size/32), 512),
+            input_shape=(self.batch_size, int(self.image_size/32), int(self.image_size/32), 512),
             n_size=3, n_filter=1024, stride=1, activation='relu', 
             batch_normal=False, weight_decay=None, name='conv7')
         conv_layer8 = ConvLayer(
-            input_shape=(None, int(self.image_size/32), int(self.image_size/32), 1024),
+            input_shape=(self.batch_size, int(self.image_size/32), int(self.image_size/32), 1024),
             n_size=3, n_filter=1024, stride=1, activation='relu', 
             batch_normal=False, weight_decay=None, name='conv8')
         
         dense_layer1 = DenseLayer(
-            input_shape=(None, int(self.image_size/32) * int(self.image_size/32) * 1024), 
+            input_shape=(self.batch_size, int(self.image_size/32) * int(self.image_size/32) * 1024), 
             hidden_dim=self.cell_size * self.cell_size * (self.n_classes + self.n_boxes * 5), 
-            activation='none', dropout=False, keep_prob=None, 
+            activation='sigmoid', dropout=False, keep_prob=None,
             batch_normal=False, weight_decay=None, name='dense1')
         
         # 数据流
@@ -155,17 +161,21 @@ class TinyYolo():
         object_value = 0.0
         nobject_value = 0.0
         
-        for i in range(logits.shape[0]):
+        for i in range(self.batch_size):
             class_pred = class_preds[i,:,:,:]
             class_label = self.class_labels[i,:,:,:]
             class_mask = tf.reshape(
                 self.class_masks[i,:,:], 
                 shape=[self.cell_size, self.cell_size, 1])
             
-            position_pred = box_preds[i,:,:,:,0:2]
-            position_label = self.box_labels[i,:,:,:,0:2]
-            size_pred = box_preds[i,:,:,:,2:4]
-            size_label = self.box_labels[i,:,:,:,2:4]
+            x_pred = box_preds[i,:,:,:,0:1]
+            x_label = self.box_labels[i,:,:,:,0:1]
+            y_pred = box_preds[i,:,:,:,1:2]
+            y_label = self.box_labels[i,:,:,:,1:2]
+            w_pred = box_preds[i,:,:,:,2:3]
+            w_label = self.box_labels[i,:,:,:,2:3]
+            h_pred = box_preds[i,:,:,:,3:4]
+            h_label = self.box_labels[i,:,:,:,3:4]
             confidence_pred = box_preds[i,:,:,:,4:]
             confidence_label = self.box_labels[i,:,:,:,4:]
             object_mask = tf.reshape(
@@ -178,26 +188,38 @@ class TinyYolo():
             # 计算每一个example的loss
             class_loss += self.class_scala * tf.nn.l2_loss(
                 (class_pred - class_label) * class_mask)
+            
             iou_matrix = self.iou(box_preds[i,:,:,:,0:4], self.box_labels[i,:,:,:,0:4])
-            position_loss = self.coord_scala * tf.nn.l2_loss(
-                (position_pred - position_label) * iou_matrix * object_mask)
-            size_loss = self.coord_scala * tf.nn.l2_loss(
-                (tf.sqrt(size_pred) - tf.sqrt(size_label)) * iou_matrix * object_mask)
-            coord_loss += position_loss + size_loss
+            x_loss = self.coord_scala * tf.nn.l2_loss(
+                (x_pred - x_label) * iou_matrix * object_mask)
+            y_loss = self.coord_scala * tf.nn.l2_loss(
+                (y_pred - y_label) * iou_matrix * object_mask)
+            w_loss = self.coord_scala * tf.nn.l2_loss(
+                (tf.sqrt(w_pred) - tf.sqrt(w_label)) * iou_matrix * object_mask)
+            h_loss = self.coord_scala * tf.nn.l2_loss(
+                (tf.sqrt(h_pred) - tf.sqrt(h_label)) * iou_matrix * object_mask)
+            coord_loss += x_loss + y_loss + w_loss + h_loss
+            self.x_loss = x_loss
+            self.y_loss = y_loss
+            self.w_loss = w_loss
+            self.h_loss = h_loss
+            
             object_loss += self.object_scala * tf.nn.l2_loss(
                 (confidence_pred - confidence_label) * iou_matrix * object_mask)
+            
             nobject_loss += self.nobject_scala * tf.nn.l2_loss(
                 confidence_pred * iou_matrix * nobject_mask)
+            
             # 计算观察值
-            iou_value += tf.reduce_sum(
-                iou_matrix * object_mask, axis=[0,1,2]) \
-                / tf.reduce_sum(object_mask, axis=[0,1,2])
-            object_value += tf.reduce_sum(tf.cast(
-                confidence_pred > 0.5, tf.float32) * object_mask, axis=[0,1,2]) \
-                / tf.reduce_sum(object_mask, axis=[0,1,2])
-            nobject_value += tf.reduce_sum(tf.cast(
-                confidence_pred > 0.5, tf.float32) * nobject_mask, axis=[0,1,2]) \
-                / tf.reduce_sum(nobject_mask, axis=[0,1,2])
+            iou_value += (tf.reduce_sum(
+                iou_matrix * object_mask, axis=[0,1,2]) + 1e-6) \
+                / (tf.reduce_sum(object_mask, axis=[0,1,2]) + 1e-6)
+            object_value += (tf.reduce_sum(tf.cast(
+                confidence_pred > 0.5, tf.float32) * object_mask, axis=[0,1,2]) + 1e-6) \
+                / (tf.reduce_sum(object_mask, axis=[0,1,2]) + 1e-6)
+            nobject_value += (tf.reduce_sum(tf.cast(
+                confidence_pred > 0.5, tf.float32) * nobject_mask, axis=[0,1,2]) + 1e-6) \
+                / (tf.reduce_sum(nobject_mask, axis=[0,1,2]) + 1e-6)
         
         # 目标函数值
         class_loss /= self.batch_size
@@ -395,7 +417,7 @@ class TinyYolo():
             valid_iou = 1.0 * valid_iou / processor.n_valid
             valid_object = 1.0 * valid_object / processor.n_valid
             valid_nobject = 1.0 * valid_nobject / processor.n_valid
-            print('epoch: [%d], train loss: %.6f, valid: iou: %.6f, object: %.6f, nobject: %.6f' % (
+            print('epoch[%d], train loss: %.6f, valid: iou: %.6f, object: %.6f, nobject: %.6f' % (
                 epoch, train_loss, valid_iou, valid_object, valid_nobject))
             sys.stdout.flush()
             
