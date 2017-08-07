@@ -1,5 +1,6 @@
 # -*- coding: utf8 -*-
 # author: ronniecao
+from __future__ import print_function
 import sys
 import os
 import math
@@ -296,11 +297,14 @@ class TinyYolo():
             dtype='int32')
         
         for i in range(labels.shape[0]):
+            if i % 1000 == 0:
+                print('Processing Labels, rate: %.2f%%' % (100.0 * i / labels.shape[0]))
+            sys.stdout.flush()
             for j in range(self.max_objects):
                 
                 [center_x, center_y, w, h, class_index] = labels[i,j,:]
                 
-                if class_index != 0:    
+                if class_index != 0:
                     # 计算包围框标记
                     center_cell_x = math.floor(self.cell_size * center_x)
                     center_cell_y = math.floor(self.cell_size * center_y)
@@ -325,6 +329,7 @@ class TinyYolo():
                     # object_num增加
                     object_num[i, j] = 1.0
                             
+        print('Processing Labels finished!\n')
         return class_labels, class_masks, box_labels, object_masks, nobject_masks, object_num
         
     def train(self, processor, backup_path, n_epoch=5, batch_size=128):
@@ -338,18 +343,18 @@ class TinyYolo():
         # 模型初始化
         self.sess.run(tf.global_variables_initializer())
         
+        # 数据处理
+        train_images = processor.train_images
+        train_class_labels, train_class_masks, train_box_labels, \
+            train_object_masks, train_nobject_masks, train_object_num = \
+                self._process_labels_cpu(processor.train_labels)
+        valid_images = processor.train_images
+        valid_class_labels, valid_class_masks, valid_box_labels, \
+            valid_object_masks, valid_nobject_masks, valid_object_num = \
+                self._process_labels_cpu(processor.valid_labels)
+                
         # 模型训练
         for epoch in range(0, n_epoch+1):
-            # 数据处理
-            train_images = processor.train_images
-            train_class_labels, train_class_masks, train_box_labels, \
-                train_object_masks, train_nobject_masks, train_object_num = \
-                    self._process_labels_cpu(processor.train_labels)
-            valid_images = processor.train_images
-            valid_class_labels, valid_class_masks, valid_box_labels, \
-                valid_object_masks, valid_nobject_masks, valid_object_num = \
-                    self._process_labels_cpu(processor.valid_labels)
-                
             # 开始本轮的训练
             for i in range(0, processor.n_train-batch_size, batch_size):
                 batch_images = train_images[i: i+batch_size]

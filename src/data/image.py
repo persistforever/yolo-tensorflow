@@ -1,5 +1,7 @@
 # -*- coding: utf8 -*-
 # author: ronniecao
+from __future__ import print_function
+import sys
 import os
 import pickle
 import numpy
@@ -21,9 +23,14 @@ class ImageProcessor:
     def _load_images(self, directory):
         
         def _load_data(filename):
-            images, labels = [], []
+            images, labels, n = [], [], 0
             with open(filename, 'r') as fo:
                 for line in fo:
+                    n += 1
+                    if n % 1000 == 0:
+                        print('Load Images, rate: %.2f%%' % (100.0 * n / 174214))
+                    sys.stdout.flush()
+                    
                     infos = line.strip().split(' ')
                     image_path = infos[0]
                     label_infos = infos[1:]
