@@ -24,4 +24,4 @@ tiny_yolo = TinyYolo(
 print('Constructing Models finished!\n')
 tiny_yolo.train(
     processor=image_processor, backup_path=os.path.join(maindir, 'backup', 'table-v1'),
-    n_epoch=5, batch_size=32)
+    n_epoch=10000, batch_size=32)

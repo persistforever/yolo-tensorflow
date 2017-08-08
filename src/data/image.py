@@ -94,6 +94,7 @@ class ImageProcessor:
             self.test_images.shape[3], self.test_labels.shape[0], self.test_labels.shape[1],
             self.test_labels.shape[2]))
         print()
+        sys.stdout.flush()
         
     def _shuffle_images(self):
         # 打乱训练集

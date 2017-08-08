@@ -233,14 +233,14 @@ class TinyYolo():
                     / (tf.reduce_sum(nobject_mask, axis=[0,1,2]) + 1e-6)
         
         # 目标函数值
-        class_loss /= self.batch_size
-        coord_loss /= self.batch_size
-        object_loss /= self.batch_size
-        nobject_loss /= self.batch_size
+        class_loss /= tf.reduce_sum(self.object_num[i,j], axis=[0, 1])
+        coord_loss /= tf.reduce_sum(self.object_num[i,j], axis=[0, 1])
+        object_loss /= tf.reduce_sum(self.object_num[i,j], axis=[0, 1])
+        nobject_loss /= tf.reduce_sum(self.object_num[i,j], axis=[0, 1])
         # 观察值
-        iou_value /= self.batch_size
-        object_value /= self.batch_size
-        nobject_value /= self.batch_size
+        iou_value /= tf.reduce_sum(self.object_num[i,j], axis=[0, 1])
+        object_value /= tf.reduce_sum(self.object_num[i,j], axis=[0, 1])
+        nobject_value /= tf.reduce_sum(self.object_num[i,j], axis=[0, 1])
         
         return class_loss, coord_loss, object_loss, nobject_loss, \
             iou_value, object_value, nobject_value
@@ -334,7 +334,7 @@ class TinyYolo():
         
     def train(self, processor, backup_path, n_epoch=5, batch_size=128):
         # 构建会话
-        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.25)
+        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.45)
         self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
         # 模型保存器
         self.saver = tf.train.Saver(
@@ -434,16 +434,16 @@ class TinyYolo():
                                self.nobject_masks: batch_nobject_masks,
                                self.object_num: batch_object_num,
                                self.keep_prob: 1.0})
-                valid_loss += avg_loss * self.batch_size
-                valid_iou += iou_value * self.batch_size
-                valid_object += object_value * self.batch_size
-                valid_nobject += nobject_value * self.batch_size
+                valid_loss += avg_loss
+                valid_iou += iou_value
+                valid_object += object_value
+                valid_nobject += nobject_value
                 
             valid_loss /= i
             valid_iou /= i
             valid_object /= i
             valid_nobject /= i
-            print('epoch[%d], train loss: %.6f, valid: iou: %.6f, object: %.6f, nobject: %.6f' % (
+            print('epoch[%d], train loss: %.8f, valid: iou: %.8f, object: %.8f, nobject: %.8f' % (
                 epoch, train_loss, valid_iou, valid_object, valid_nobject))
             sys.stdout.flush()
             
@@ -456,8 +456,8 @@ class TinyYolo():
                     self.sess, os.path.join(backup_path, 'model_%d.ckpt' % (epoch)))
         self.sess.close()
                 
-    def test(self, dataloader, backup_path, epoch, batch_size=128):
-        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.25)
+    def evaluate(self, dataloader, backup_path, epoch, batch_size=128):
+        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.45)
         self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
         # 读取模型
         self.saver = tf.train.Saver(write_version=tf.train.SaverDef.V2)
