@@ -285,8 +285,8 @@ class TinyYolo():
         self.sess.run(tf.global_variables_initializer())
                 
         # 模型训练
-        process_images = 0
-        for n_iter in range(0, n_iters+1):
+        process_images, train_loss = 0, 0.0
+        for n_iter in range(1, n_iters+1):
             # 训练一个batch
             start_time = time.time()
             

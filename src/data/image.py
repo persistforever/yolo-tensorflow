@@ -313,7 +313,7 @@ class ImageProcessor:
         batch_box_labels = self.valid_box_labels[i: i+batch_size]
         batch_object_masks = self.valid_object_masks[i: i+batch_size]
         batch_nobject_masks = self.valid_nobject_masks[i: i+batch_size]
-        batch_object_nums = self.valid_object_num[i: i+batch_size]
+        batch_object_nums = self.valid_object_nums[i: i+batch_size]
         
         return batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
             batch_object_masks, batch_nobject_masks, batch_object_nums
@@ -325,7 +325,7 @@ class ImageProcessor:
         batch_box_labels = self.test_box_labels[i: i+batch_size]
         batch_object_masks = self.test_object_masks[i: i+batch_size]
         batch_nobject_masks = self.test_nobject_masks[i: i+batch_size]
-        batch_object_nums = self.test_object_num[i: i+batch_size]
+        batch_object_nums = self.test_object_nums[i: i+batch_size]
         
         return batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
             batch_object_masks, batch_nobject_masks, batch_object_nums
