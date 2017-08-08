@@ -250,17 +250,17 @@ class ImageProcessor:
             
             if class_index != 0:
                 # 计算包围框标记
-                center_cell_x = int(math.floor(self.cell_size * center_x) - 1e-6)
-                center_cell_y = int(math.floor(self.cell_size * center_y) - 1e-6)
+                center_cell_x = int(math.floor(self.cell_size * center_x - 1e-6))
+                center_cell_y = int(math.floor(self.cell_size * center_y - 1e-6))
                 box_label[center_cell_x, center_cell_y, j, :] = numpy.array(
                     [center_x, center_y, w, h] + [1.0])
                 object_mask[center_cell_x, center_cell_y, j] = 1.0
                 nobject_mask[center_cell_x, center_cell_y, j] = 0.0
                 
                 # 计算类别标记
-                left_cell_x = int(math.floor(self.cell_size * (center_x - w / 2.0)) - 1e-6)
-                right_cell_x = int(math.floor(self.cell_size * (center_x + w / 2.0)) - 1e-6)
-                top_cell_y = int(math.floor(self.cell_size * (center_y - h / 2.0)) - 1e-6)
+                left_cell_x = int(math.floor(self.cell_size * (center_x - w / 2.0) - 1e-6))
+                right_cell_x = int(math.floor(self.cell_size * (center_x + w / 2.0) - 1e-6))
+                top_cell_y = int(math.floor(self.cell_size * (center_y - h / 2.0) - 1e-6))
                 bottom_cell_y = int(math.floor(self.cell_size * (center_y + h / 2.0) - 1e-6))
                 for x in range(left_cell_x, right_cell_x+1):
                     for y in range(top_cell_y, bottom_cell_y+1):
