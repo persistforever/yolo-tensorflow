@@ -68,7 +68,6 @@ class ImageProcessor:
               ', test object nums: ', self.test_object_nums.shape)
         print()
         sys.stdout.flush()
-        exit()
         
     def _load_dataset_whole(self, filename, n_thread=10):
         # 读取训练集/验证集/测试集
