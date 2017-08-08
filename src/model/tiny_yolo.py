@@ -11,6 +11,7 @@ from src.layer.conv_layer import ConvLayer
 from src.layer.dense_layer import DenseLayer
 from src.layer.pool_layer import PoolLayer
 
+
 class TinyYolo():
     
     def __init__(self, n_channel=3, n_classes=1, image_size=288, max_objects_per_image=20,
