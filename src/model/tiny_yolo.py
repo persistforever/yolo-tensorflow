@@ -234,14 +234,14 @@ class TinyYolo():
                     / (tf.reduce_sum(nobject_mask, axis=[0,1,2]) + 1e-6)
         
         # 目标函数值
-        class_loss /= tf.reduce_sum(self.object_num[i,j], axis=[0, 1])
-        coord_loss /= tf.reduce_sum(self.object_num[i,j], axis=[0, 1])
-        object_loss /= tf.reduce_sum(self.object_num[i,j], axis=[0, 1])
-        nobject_loss /= tf.reduce_sum(self.object_num[i,j], axis=[0, 1])
+        class_loss /= tf.reduce_sum(self.object_num, axis=[0, 1])
+        coord_loss /= tf.reduce_sum(self.object_num, axis=[0, 1])
+        object_loss /= tf.reduce_sum(self.object_num, axis=[0, 1])
+        nobject_loss /= tf.reduce_sum(self.object_num, axis=[0, 1])
         # 观察值
-        iou_value /= tf.reduce_sum(self.object_num[i,j], axis=[0, 1])
-        object_value /= tf.reduce_sum(self.object_num[i,j], axis=[0, 1])
-        nobject_value /= tf.reduce_sum(self.object_num[i,j], axis=[0, 1])
+        iou_value /= tf.reduce_sum(self.object_num, axis=[0, 1])
+        object_value /= tf.reduce_sum(self.object_num, axis=[0, 1])
+        nobject_value /= tf.reduce_sum(self.object_num, axis=[0, 1])
         
         return class_loss, coord_loss, object_loss, nobject_loss, \
             iou_value, object_value, nobject_value
@@ -271,67 +271,6 @@ class TinyYolo():
         box2_area = (box2[:,:,:,2] - box2[:,:,:,0]) * (box2[:,:,:,3] - box2[:,:,:,1])
         iou = area / (box1_area + box2_area + 1e-6)
         return tf.reshape(iou, shape=[self.cell_size, self.cell_size, self.n_boxes, 1])
-    
-    def _process_labels_cpu(self, labels):
-        # true label and mask in 类别标记
-        class_labels = numpy.zeros(
-            shape=(labels.shape[0], self.cell_size, self.cell_size, self.n_classes), 
-            dtype='int32')
-        class_masks = numpy.zeros(
-            shape=(labels.shape[0], self.cell_size, self.cell_size),
-            dtype='float32')
-        
-        # true_label and mask in 包围框标记
-        box_labels = numpy.zeros(
-            shape=(labels.shape[0], self.cell_size, self.cell_size, self.max_objects, 5),
-            dtype='float32')
-        
-        object_masks = numpy.zeros(
-            shape=(labels.shape[0], self.cell_size, self.cell_size, self.max_objects), 
-            dtype='float32')
-        nobject_masks = numpy.ones(
-            shape=(labels.shape[0], self.cell_size, self.cell_size, self.max_objects), 
-            dtype='float32')
-        
-        object_num = numpy.zeros(
-            shape=(labels.shape[0], self.max_objects), 
-            dtype='int32')
-        
-        for i in range(labels.shape[0]):
-            if i % 1000 == 0:
-                print('Processing Labels, rate: %.2f%%' % (100.0 * i / labels.shape[0]))
-            sys.stdout.flush()
-            for j in range(self.max_objects):
-                
-                [center_x, center_y, w, h, class_index] = labels[i,j,:]
-                
-                if class_index != 0:
-                    # 计算包围框标记
-                    center_cell_x = math.floor(self.cell_size * center_x)
-                    center_cell_y = math.floor(self.cell_size * center_y)
-                    box_labels[i, center_cell_x, center_cell_y, j, :] = numpy.array(
-                        [center_x, center_y, w, h] + [1.0])
-                    object_masks[i, center_cell_x, center_cell_y, j] = 1.0
-                    nobject_masks[i, center_cell_x, center_cell_y, j] = 0.0
-                    
-                    # 计算类别标记
-                    left_cell_x = math.floor(self.cell_size * (center_x - w / 2.0))
-                    right_cell_x = math.floor(self.cell_size * (center_x + w / 2.0))
-                    top_cell_y = math.floor(self.cell_size * (center_y - h / 2.0))
-                    bottom_cell_y = math.floor(self.cell_size * (center_y + h / 2.0))
-                    for x in range(left_cell_x, right_cell_x+1):
-                        for y in range(top_cell_y, bottom_cell_y+1):
-                            _class_label = numpy.zeros(
-                                shape=[self.n_classes,], dtype='int32')
-                            _class_label[int(class_index)-1] = 1
-                            class_labels[i, x, y, :] = _class_label
-                            class_masks[i, x, y] = 1.0
-                    
-                    # object_num增加
-                    object_num[i, j] = 1.0
-                            
-        print('Processing Labels finished!\n')
-        return class_labels, class_masks, box_labels, object_masks, nobject_masks, object_num
         
     def train(self, processor, backup_path, n_epoch=5, batch_size=128):
         # 构建会话
@@ -343,28 +282,15 @@ class TinyYolo():
             max_to_keep=1000)
         # 模型初始化
         self.sess.run(tf.global_variables_initializer())
-        
-        # 数据处理
-        train_images = processor.train_images
-        train_class_labels, train_class_masks, train_box_labels, \
-            train_object_masks, train_nobject_masks, train_object_num = \
-                self._process_labels_cpu(processor.train_labels)
-        valid_images = processor.train_images
-        valid_class_labels, valid_class_masks, valid_box_labels, \
-            valid_object_masks, valid_nobject_masks, valid_object_num = \
-                self._process_labels_cpu(processor.valid_labels)
                 
         # 模型训练
         for epoch in range(0, n_epoch+1):
             # 开始本轮的训练
-            for i in range(0, processor.n_train-batch_size, batch_size):
-                batch_images = train_images[i: i+batch_size]
-                batch_class_labels = train_class_labels[i: i+batch_size]
-                batch_class_masks = train_class_masks[i: i+batch_size]
-                batch_box_labels = train_box_labels[i: i+batch_size]
-                batch_object_masks = train_object_masks[i: i+batch_size]
-                batch_nobject_masks = train_nobject_masks[i: i+batch_size]
-                batch_object_num = train_object_num[i: i+batch_size]
+            train_loss, n_iters = 0.0, 5000
+            for i in range(0, n_iters):
+                batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
+                    batch_object_masks, batch_nobject_masks, batch_object_num = \
+                    processor.get_train_batch(batch_size)
                 
                 [_, avg_loss] = self.sess.run(
                     fetches=[self.optimizer, self.avg_loss], 
@@ -377,56 +303,22 @@ class TinyYolo():
                                self.object_num: batch_object_num,
                                self.keep_prob: 0.5})
                 
-            # 在训练之后，获得本轮的训练集损失值和准确率
-            train_loss, train_iou, train_object, train_nobject = 0.0, 0.0, 0.0, 0.0
-            for i in range(0, processor.n_train-batch_size, batch_size):
-                batch_images = train_images[i: i+batch_size]
-                batch_class_labels = train_class_labels[i: i+batch_size]
-                batch_class_masks = train_class_masks[i: i+batch_size]
-                batch_box_labels = train_box_labels[i: i+batch_size]
-                batch_object_masks = train_object_masks[i: i+batch_size]
-                batch_nobject_masks = train_nobject_masks[i: i+batch_size]
-                batch_object_num = train_object_num[i: i+batch_size]
-                
-                [avg_loss, iou_value, object_value, nobject_value] = self.sess.run(
-                    fetches=[self.avg_loss, 
-                             self.iou_value, 
-                             self.object_value, 
-                             self.nobject_value], 
-                    feed_dict={self.images: batch_images, 
-                               self.class_labels: batch_class_labels, 
-                               self.class_masks: batch_class_masks,
-                               self.box_labels: batch_box_labels,
-                               self.object_masks: batch_object_masks,
-                               self.nobject_masks: batch_nobject_masks,
-                               self.object_num: batch_object_num,
-                               self.keep_prob: 1.0})
                 train_loss += avg_loss
-                train_iou += iou_value
-                train_object += object_value
-                train_nobject += nobject_value
                 
-            train_loss /= i
-            train_iou /= i
-            train_object /= i
-            train_nobject /= i
+            train_loss /= n_iters
             
             # 在训练之后，获得本轮的验证集损失值和准确率
             valid_loss, valid_iou, valid_object, valid_nobject = 0.0, 0.0, 0.0, 0.0
             for i in range(0, processor.n_valid-batch_size, batch_size):
-                batch_images = valid_images[i: i+batch_size]
-                batch_class_labels = valid_class_labels[i: i+batch_size]
-                batch_class_masks = valid_class_masks[i: i+batch_size]
-                batch_box_labels = valid_box_labels[i: i+batch_size]
-                batch_object_masks = valid_object_masks[i: i+batch_size]
-                batch_nobject_masks = valid_nobject_masks[i: i+batch_size]
-                batch_object_num = valid_object_num[i: i+batch_size]
+                batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
+                    batch_object_masks, batch_nobject_masks, batch_object_num = \
+                    processor.get_valid_batch(i, batch_size)
                 
                 [avg_loss, iou_value, object_value, nobject_value] = self.sess.run(
-                    fetches=[self.avg_loss, 
-                             self.iou_value, 
-                             self.object_value, 
-                             self.nobject_value], 
+                    fetches=[self.avg_loss,
+                             self.iou_value,
+                             self.object_value,
+                             self.nobject_value],
                     feed_dict={self.images: batch_images, 
                                self.class_labels: batch_class_labels, 
                                self.class_masks: batch_class_masks,
@@ -444,6 +336,7 @@ class TinyYolo():
             valid_iou /= i
             valid_object /= i
             valid_nobject /= i
+            
             print('epoch[%d], train loss: %.8f, valid: iou: %.8f, object: %.8f, nobject: %.8f' % (
                 epoch, train_loss, valid_iou, valid_object, valid_nobject))
             sys.stdout.flush()
