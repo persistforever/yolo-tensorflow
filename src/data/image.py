@@ -262,8 +262,8 @@ class ImageProcessor:
                 right_cell_x = int(math.floor(self.cell_size * (center_x + w / 2.0)))
                 top_cell_y = int(math.floor(self.cell_size * (center_y - h / 2.0)))
                 bottom_cell_y = int(math.floor(self.cell_size * (center_y + h / 2.0)))
-                for x in range(left_cell_x, right_cell_x+1):
-                    for y in range(top_cell_y, bottom_cell_y+1):
+                for x in range(left_cell_x, right_cell_x):
+                    for y in range(top_cell_y, bottom_cell_y):
                         _class_label = numpy.zeros(
                             shape=[self.n_classes,], dtype='int32')
                         _class_label[int(class_index)-1] = 1
