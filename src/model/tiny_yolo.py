@@ -3,6 +3,7 @@
 from __future__ import print_function
 import sys
 import os
+import time
 import math
 import numpy
 import matplotlib.pyplot as plt
@@ -272,7 +273,7 @@ class TinyYolo():
         iou = area / (box1_area + box2_area + 1e-6)
         return tf.reshape(iou, shape=[self.cell_size, self.cell_size, self.n_boxes, 1])
         
-    def train(self, processor, backup_path, n_epoch=5, batch_size=128):
+    def train(self, processor, backup_path, n_iters=500000, batch_size=128):
         # 构建会话
         gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.45)
         self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
@@ -284,70 +285,80 @@ class TinyYolo():
         self.sess.run(tf.global_variables_initializer())
                 
         # 模型训练
-        for epoch in range(0, n_epoch+1):
-            # 开始本轮的训练
-            train_loss, n_iters = 0.0, 5000
-            for i in range(0, n_iters):
-                batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
-                    batch_object_masks, batch_nobject_masks, batch_object_num = \
-                    processor.get_train_batch(batch_size)
-                
-                [_, avg_loss] = self.sess.run(
-                    fetches=[self.optimizer, self.avg_loss], 
-                    feed_dict={self.images: batch_images, 
-                               self.class_labels: batch_class_labels, 
-                               self.class_masks: batch_class_masks,
-                               self.box_labels: batch_box_labels,
-                               self.object_masks: batch_object_masks,
-                               self.nobject_masks: batch_nobject_masks,
-                               self.object_num: batch_object_num,
-                               self.keep_prob: 0.5})
-                
-                train_loss += avg_loss
-                
-            train_loss /= n_iters
+        process_images = 0
+        for n_iter in range(0, n_iters+1):
+            # 训练一个batch
+            start_time = time.time()
             
-            # 在训练之后，获得本轮的验证集损失值和准确率
-            valid_loss, valid_iou, valid_object, valid_nobject = 0.0, 0.0, 0.0, 0.0
-            for i in range(0, processor.n_valid-batch_size, batch_size):
-                batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
-                    batch_object_masks, batch_nobject_masks, batch_object_num = \
-                    processor.get_valid_batch(i, batch_size)
+            batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
+                batch_object_masks, batch_nobject_masks, batch_object_nums = \
+                processor.get_train_batch(batch_size)
+            [_, avg_loss] = self.sess.run(
+                fetches=[self.optimizer, self.avg_loss], 
+                feed_dict={self.images: batch_images, 
+                           self.class_labels: batch_class_labels, 
+                           self.class_masks: batch_class_masks,
+                           self.box_labels: batch_box_labels,
+                           self.object_masks: batch_object_masks,
+                           self.nobject_masks: batch_nobject_masks,
+                           self.object_num: batch_object_nums,
+                           self.keep_prob: 0.5})
                 
-                [avg_loss, iou_value, object_value, nobject_value] = self.sess.run(
-                    fetches=[self.avg_loss,
-                             self.iou_value,
-                             self.object_value,
-                             self.nobject_value],
-                    feed_dict={self.images: batch_images, 
-                               self.class_labels: batch_class_labels, 
-                               self.class_masks: batch_class_masks,
-                               self.box_labels: batch_box_labels,
-                               self.object_masks: batch_object_masks,
-                               self.nobject_masks: batch_nobject_masks,
-                               self.object_num: batch_object_num,
-                               self.keep_prob: 1.0})
-                valid_loss += avg_loss
-                valid_iou += iou_value
-                valid_object += object_value
-                valid_nobject += nobject_value
+            end_time = time.time()
+            train_loss += avg_loss
+            process_images += batch_images.shape[0]
+            speed = 1.0 * batch_images.shape[0] / (end_time - start_time)
                 
-            valid_loss /= i
-            valid_iou /= i
-            valid_object /= i
-            valid_nobject /= i
+            # 每10轮训练观测一次train_loss
+            if n_iter % 10 == 0:
+                train_loss /= 10
+                
+                print('iter[%d], train loss: %.8f, processed images: %d, speed: %.2f images/s' % (
+                    n_iter, train_loss, process_images, speed))
+                sys.stdout.flush()
+                
+                train_loss = 0.0
             
-            print('epoch[%d], train loss: %.8f, valid: iou: %.8f, object: %.8f, nobject: %.8f' % (
-                epoch, train_loss, valid_iou, valid_object, valid_nobject))
-            sys.stdout.flush()
+            # 每100轮观测一次验证集损失值和准确率
+            if n_iter % 100 == 0:
+                valid_loss, valid_iou, valid_object, valid_nobject = 0.0, 0.0, 0.0, 0.0
+                for i in range(0, processor.n_valid-batch_size, batch_size):
+                    batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
+                        batch_object_masks, batch_nobject_masks, batch_object_nums = \
+                        processor.get_valid_batch(i, batch_size)
+                    
+                    [avg_loss, iou_value, object_value, nobject_value] = self.sess.run(
+                        fetches=[self.avg_loss,
+                                 self.iou_value,
+                                 self.object_value,
+                                 self.nobject_value],
+                        feed_dict={self.images: batch_images, 
+                                   self.class_labels: batch_class_labels, 
+                                   self.class_masks: batch_class_masks,
+                                   self.box_labels: batch_box_labels,
+                                   self.object_masks: batch_object_masks,
+                                   self.nobject_masks: batch_nobject_masks,
+                                   self.object_num: batch_object_nums,
+                                   self.keep_prob: 1.0})
+                    valid_loss += avg_loss
+                    valid_iou += iou_value
+                    valid_object += object_value
+                    valid_nobject += nobject_value
+                    
+                valid_loss /= i
+                valid_iou /= i
+                valid_object /= i
+                valid_nobject /= i
+                
+                print('iter[%d], valid: iou: %.8f, object: %.8f, nobject: %.8f' % (
+                    n_iter, valid_iou, valid_object, valid_nobject))
+                sys.stdout.flush()
             
-            # 保存模型
-            saver_path = self.saver.save(
-                self.sess, os.path.join(backup_path, 'model.ckpt'))
-            if epoch <= 100 and epoch % 10 == 0 or epoch <= 1000 and epoch % 100 == 0 or \
-                epoch <= 10000 and epoch % 1000 == 0:
+            # 每1000轮保存一次模型
+            if n_iter % 1000 == 0:
                 saver_path = self.saver.save(
-                    self.sess, os.path.join(backup_path, 'model_%d.ckpt' % (epoch)))
+                    self.sess, os.path.join(backup_path, 'model_%d.ckpt' % (n_iter)))
+                
         self.sess.close()
                 
     def evaluate(self, dataloader, backup_path, epoch, batch_size=128):
