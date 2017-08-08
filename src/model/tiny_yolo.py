@@ -354,8 +354,8 @@ class TinyYolo():
                     n_iter, valid_iou, valid_object, valid_nobject))
                 sys.stdout.flush()
             
-            # 每1000轮保存一次模型
-            if n_iter % 1000 == 0:
+            # 每500轮保存一次模型
+            if n_iter % 500 == 0:
                 saver_path = self.saver.save(
                     self.sess, os.path.join(backup_path, 'model_%d.ckpt' % (n_iter)))
                 
