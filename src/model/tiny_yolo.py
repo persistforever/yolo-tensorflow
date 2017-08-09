@@ -31,7 +31,7 @@ class TinyYolo():
         self.nobject_scala = float(nobject_scala)
         self.coord_scala = float(coord_scala)
         self.batch_size = batch_size
-        """
+        
         # 输入变量
         self.images = tf.placeholder(
             dtype=tf.float32, shape=[
@@ -71,7 +71,7 @@ class TinyYolo():
             self.class_loss + self.coord_loss + self.object_loss + self.nobject_loss))
         # 目标函数和优化器
         self.avg_loss = tf.add_n(tf.get_collection('losses'))
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=1e-5).minimize(self.avg_loss)"""
+        self.optimizer = tf.train.AdamOptimizer(learning_rate=1e-5).minimize(self.avg_loss)
         
     def inference(self, images):
         # 网络结构
@@ -226,14 +226,15 @@ class TinyYolo():
                 
                 # 计算观察值
                 iou_value += self.object_num[i,j] * (tf.reduce_sum(
-                    iou_matrix * iou_object_mask * object_mask, axis=[0,1,2]) + 1e-6) \
-                    / (tf.reduce_sum(object_mask, axis=[0,1,2]) + 1e-6)
+                    iou_matrix * iou_object_mask * object_mask, axis=[0,1,2,3]) + 1e-6) \
+                    / (tf.reduce_sum(object_mask, axis=[0,1,2,3]) + 1e-6)
                 object_value += self.object_num[i,j] * (tf.reduce_sum(
-                    confidence_pred * iou_object_mask * object_mask, axis=[0,1,2]) + 1e-6) \
-                    / (tf.reduce_sum(object_mask, axis=[0,1,2]) + 1e-6)
+                    confidence_pred / iou_matrix * iou_object_mask * object_mask, 
+                    axis=[0,1,2,3]) + 1e-6) \
+                    / (tf.reduce_sum(object_mask, axis=[0,1,2,3]) + 1e-6)
                 nobject_value += self.object_num[i,j] * (tf.reduce_sum(
-                    confidence_pred * iou_nobject_mask * nobject_mask, axis=[0,1,2]) + 1e-6) \
-                    / (tf.reduce_sum(nobject_mask, axis=[0,1,2]) + 1e-6)
+                    confidence_pred * iou_nobject_mask * nobject_mask, axis=[0,1,2,3]) + 1e-6) \
+                    / (tf.reduce_sum(nobject_mask, axis=[0,1,2,3]) + 1e-6)
         
         # 目标函数值
         class_loss /= tf.reduce_sum(self.object_num, axis=[0, 1])
@@ -265,13 +266,13 @@ class TinyYolo():
         left_top = tf.maximum(box1[:,:,:,0:2], box2[:,:,:,0:2])
         right_bottom = tf.minimum(box1[:,:,:,2:4], box2[:,:,:,2:4])
         intersection = right_bottom - left_top
-        area = intersection[:,:,:,0] * intersection[:,:,:,1]
+        inter_area = intersection[:,:,:,0] * intersection[:,:,:,1]
         mask = tf.cast(intersection[:,:,:,0] > 0, tf.float32) * \
             tf.cast(intersection[:,:,:,1] > 0, tf.float32)
-        area = area * mask
+        inter_area = inter_area * mask
         box1_area = (box1[:,:,:,2] - box1[:,:,:,0]) * (box1[:,:,:,3] - box1[:,:,:,1])
         box2_area = (box2[:,:,:,2] - box2[:,:,:,0]) * (box2[:,:,:,3] - box2[:,:,:,1])
-        iou = area / (box1_area + box2_area + 1e-6)
+        iou = inter_area / (box1_area + box2_area - inter_area + 1e-6)
         return tf.reshape(iou, shape=[self.cell_size, self.cell_size, self.n_boxes, 1])
         
     def train(self, processor, backup_path, n_iters=500000, batch_size=128):
@@ -281,7 +282,7 @@ class TinyYolo():
         # 模型保存器
         self.saver = tf.train.Saver(
             var_list=tf.global_variables(), write_version=tf.train.SaverDef.V2, 
-            max_to_keep=1000)
+            max_to_keep=10)
         # 模型初始化
         self.sess.run(tf.global_variables_initializer())
                 
@@ -356,7 +357,7 @@ class TinyYolo():
                 sys.stdout.flush()
             
             # 每500轮保存一次模型
-            if n_iter % 500 == 0:
+            if n_iter % 1000 == 0:
                 saver_path = self.saver.save(
                     self.sess, os.path.join(backup_path, 'model_%d.ckpt' % (n_iter)))
                 
@@ -366,13 +367,13 @@ class TinyYolo():
         # 构建会话
         gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.45)
         self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
-        """
+        
         # 读取模型
         self.saver = tf.train.Saver(write_version=tf.train.SaverDef.V2)
         model_path = os.path.join(backup_path, 'model_%d.ckpt' % (epoch))
         assert(os.path.exists(model_path+'.index'))
         self.saver.restore(self.sess, model_path)
-        print('read model from %s' % (model_path))"""
+        print('read model from %s' % (model_path))
         
         # 在测试集上计算
         for i in range(0, processor.n_test-batch_size, batch_size):

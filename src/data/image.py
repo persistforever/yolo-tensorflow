@@ -32,42 +32,43 @@ class ImageProcessor:
         self.load_images_labels(directory)
     
     def load_images_labels(self, directory):
-        # 读取训练集
-        train_file = os.path.join(directory, 'train.txt')
-        self.load_dataset_loop(train_file, n_thread=5)
-        
-        # 读取验证集
-        valid_file = os.path.join(directory, 'valid.txt')
-        self.valid_images, self.valid_class_labels, self.valid_class_masks, \
-            self.valid_box_labels, self.valid_object_masks, \
-            self.valid_nobject_masks, self.valid_object_nums = \
-                self.load_dataset_whole(valid_file, n_thread=5)
-        self.n_valid = self.valid_images.shape[0]
-        
-        # 读取测试集
-        test_file = os.path.join(directory, 'test.txt')
-        self.test_images, self.test_class_labels, self.test_class_masks, \
-            self.test_box_labels, self.test_object_masks, \
-            self.test_nobject_masks, self.test_object_nums = \
-                self.load_dataset_whole(test_file, n_thread=5)
-        self.n_test = self.test_images.shape[0]
-        
-        print('valid images: ', self.valid_images.shape, 
-              ', valid class labels: ', self.valid_class_labels.shape, 
-              ', valid class masks: ', self.valid_class_masks.shape,
-              ', valid box labels: ', self.valid_box_labels.shape,
-              ', valid object masks: ', self.valid_object_masks.shape,
-              ', valid nobject masks: ', self.valid_nobject_masks.shape,
-              ', valid object num: ', self.valid_object_nums.shape)
-        print('test images: ', self.test_images.shape, 
-              ', test class labels: ', self.test_class_labels.shape, 
-              ', test class masks: ', self.test_class_masks.shape,
-              ', test box labels: ', self.test_box_labels.shape,
-              ', test object masks: ', self.test_object_masks.shape,
-              ', test nobject masks: ', self.test_nobject_masks.shape,
-              ', test object nums: ', self.test_object_nums.shape)
-        print()
-        sys.stdout.flush()
+        if os.path.exists(directory):
+            # 读取训练集
+            train_file = os.path.join(directory, 'train.txt')
+            self.load_dataset_loop(train_file, n_thread=5)
+            
+            # 读取验证集
+            valid_file = os.path.join(directory, 'valid.txt')
+            self.valid_images, self.valid_class_labels, self.valid_class_masks, \
+                self.valid_box_labels, self.valid_object_masks, \
+                self.valid_nobject_masks, self.valid_object_nums = \
+                    self.load_dataset_whole(valid_file, n_thread=5)
+            self.n_valid = self.valid_images.shape[0]
+            
+            # 读取测试集
+            test_file = os.path.join(directory, 'test.txt')
+            self.test_images, self.test_class_labels, self.test_class_masks, \
+                self.test_box_labels, self.test_object_masks, \
+                self.test_nobject_masks, self.test_object_nums = \
+                    self.load_dataset_whole(test_file, n_thread=5)
+            self.n_test = self.test_images.shape[0]
+            
+            print('valid images: ', self.valid_images.shape, 
+                  ', valid class labels: ', self.valid_class_labels.shape, 
+                  ', valid class masks: ', self.valid_class_masks.shape,
+                  ', valid box labels: ', self.valid_box_labels.shape,
+                  ', valid object masks: ', self.valid_object_masks.shape,
+                  ', valid nobject masks: ', self.valid_nobject_masks.shape,
+                  ', valid object num: ', self.valid_object_nums.shape)
+            print('test images: ', self.test_images.shape, 
+                  ', test class labels: ', self.test_class_labels.shape, 
+                  ', test class masks: ', self.test_class_masks.shape,
+                  ', test box labels: ', self.test_box_labels.shape,
+                  ', test object masks: ', self.test_object_masks.shape,
+                  ', test nobject masks: ', self.test_nobject_masks.shape,
+                  ', test object nums: ', self.test_object_nums.shape)
+            print()
+            sys.stdout.flush()
         
     def load_dataset_whole(self, filename, n_thread=10):
         # 读取训练集/验证集/测试集
@@ -116,7 +117,7 @@ class ImageProcessor:
                     n_objects += 1
                 
                 class_label, class_mask, box_label, object_mask, nobject_mask, object_num = \
-                    self._process_label(label)
+                    self.process_label(label)
                     
                 dataset.put([image, class_label, class_mask, box_label, 
                              object_mask, nobject_mask, object_num])
@@ -205,7 +206,7 @@ class ImageProcessor:
                         n_objects += 1
                     
                     class_label, class_mask, box_label, object_mask, nobject_mask, object_num = \
-                        self._process_label(label)
+                        self.process_label(label)
                         
                     self.train_dataset.put(
                         [image, class_label, class_mask, box_label, 
@@ -219,7 +220,7 @@ class ImageProcessor:
         for thread in thread_list:
             thread.start()
     
-    def _process_label(self, label):
+    def process_label(self, label):
         # true label and mask in 类别标记
         class_label = numpy.zeros(
             shape=(self.cell_size, self.cell_size, self.n_classes), 
