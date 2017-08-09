@@ -34,14 +34,14 @@ class ImageProcessor:
     def load_images_labels(self, directory):
         # 读取训练集
         train_file = os.path.join(directory, 'train.txt')
-        self._load_dataset_loop(train_file, n_thread=5)
+        self.load_dataset_loop(train_file, n_thread=5)
         
         # 读取验证集
         valid_file = os.path.join(directory, 'valid.txt')
         self.valid_images, self.valid_class_labels, self.valid_class_masks, \
             self.valid_box_labels, self.valid_object_masks, \
             self.valid_nobject_masks, self.valid_object_nums = \
-                self._load_dataset_whole(valid_file, n_thread=5)
+                self.load_dataset_whole(valid_file, n_thread=5)
         self.n_valid = self.valid_images.shape[0]
         
         # 读取测试集
@@ -49,7 +49,7 @@ class ImageProcessor:
         self.test_images, self.test_class_labels, self.test_class_masks, \
             self.test_box_labels, self.test_object_masks, \
             self.test_nobject_masks, self.test_object_nums = \
-                self._load_dataset_whole(test_file, n_thread=5)
+                self.load_dataset_whole(test_file, n_thread=5)
         self.n_test = self.test_images.shape[0]
         
         print('valid images: ', self.valid_images.shape, 
@@ -69,7 +69,7 @@ class ImageProcessor:
         print()
         sys.stdout.flush()
         
-    def _load_dataset_whole(self, filename, n_thread=10):
+    def load_dataset_whole(self, filename, n_thread=10):
         # 读取训练集/验证集/测试集
         # 该函数使用多线程，将所有数据全部载入内存，不使用缓冲区
         
@@ -156,7 +156,7 @@ class ImageProcessor:
         return images, class_labels, class_masks, box_labels, \
             object_masks, nobject_masks, object_nums
         
-    def _load_dataset_loop(self, filename, n_thread=10):
+    def load_dataset_loop(self, filename, n_thread=10):
         # 读取训练集/验证集/测试集
         # 该函数使用多线程，基于生产者消费者模型
         # 生产者不停地读取原始数据，并且处理数据，并且存入循环队列中
