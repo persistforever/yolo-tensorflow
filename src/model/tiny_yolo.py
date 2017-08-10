@@ -39,7 +39,7 @@ class TinyYolo():
             name='images')
         self.class_labels = tf.placeholder(
             dtype=tf.float32, shape=[
-                self.batch_size, self.cell_size, self.cell_size, 1], 
+                self.batch_size, self.cell_size, self.cell_size, self.n_classes], 
             name='class_labels')
         self.class_masks = tf.placeholder(
             dtype=tf.float32, shape=[
@@ -130,7 +130,7 @@ class TinyYolo():
             batch_normal=False, weight_decay=None, name='dense1')
         
         # 数据流
-        hidden_conv1 = conv_layer1.get_output(input=self.images)
+        hidden_conv1 = conv_layer1.get_output(input=images)
         hidden_pool1 = pool_layer1.get_output(input=hidden_conv1)
         hidden_conv2 = conv_layer2.get_output(input=hidden_pool1)
         hidden_pool2 = pool_layer2.get_output(input=hidden_conv2)
@@ -169,16 +169,17 @@ class TinyYolo():
         nobject_value = 0.0
         
         for i in range(self.batch_size):
+            # 计算class_label
+            class_pred = class_preds[i,:,:,:]
+            class_label = self.class_labels[i,:,:,:]
+            class_mask = tf.reshape(
+                self.class_masks[i,:,:], 
+                shape=[self.cell_size, self.cell_size, 1])
+            # 计算class_loss
+            class_loss += self.class_scala * tf.nn.l2_loss(
+                (class_pred - class_label) * class_mask)
+                
             for j in range(self.max_objects):
-                # 计算class_label
-                class_pred = class_preds[i,:,:,:]
-                class_label = self.class_labels[i,:,:,:]
-                class_mask = tf.reshape(
-                    self.class_masks[i,:,:], 
-                    shape=[self.cell_size, self.cell_size, 1])
-                # 计算class_loss
-                class_loss += self.object_num[i,j] * self.class_scala * tf.nn.l2_loss(
-                    (class_pred - class_label) * class_mask)
                 
                 # iou_matrix对每一个cell中每一个pred_box对box label求iou，尺寸为(n_cell, n_cell, n_box, 1)
                 # 而iou_matrix_true对每一个cell中求出iou最大的pred_box对应的iou，尺寸为(n_cell, n_cell, 1, 1)
@@ -237,7 +238,7 @@ class TinyYolo():
                     / (tf.reduce_sum(nobject_mask, axis=[0,1,2,3]) + 1e-6)
         
         # 目标函数值
-        class_loss /= tf.reduce_sum(self.object_num, axis=[0, 1])
+        class_loss /= self.batch_size
         coord_loss /= tf.reduce_sum(self.object_num, axis=[0, 1])
         object_loss /= tf.reduce_sum(self.object_num, axis=[0, 1])
         nobject_loss /= tf.reduce_sum(self.object_num, axis=[0, 1])

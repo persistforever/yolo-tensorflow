@@ -42,7 +42,7 @@ def uint_test():
     from src.model.test.tiny_yolo_test import TinyYoloTestor
     
     testor = TinyYoloTestor()
-    testor.test_iou()
+    testor.test_loss_class_label()
     
 
-train()
+uint_test()
