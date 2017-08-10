@@ -66,7 +66,7 @@ class TinyYolo():
         # 待输出的中间变量
         self.logits = self.inference(self.images)
         self.class_loss, self.coord_loss, self.object_loss, self.nobject_loss, \
-            _, _ = self.loss(self.logits)
+            self.iou_value, self.object_value = self.loss(self.logits)
         tf.add_to_collection('losses', (
             self.class_loss + self.coord_loss + self.object_loss + self.nobject_loss))
         # 目标函数和优化器
@@ -226,7 +226,6 @@ class TinyYolo():
             object_masks = tf.reshape(
                 tf.reduce_sum(self.object_masks[i,:,:,:], axis=[2]),
                 shape=(self.cell_size, self.cell_size, 1, 1))
-            object_masks = tf.Print(object_masks, [object_masks], 'object_masks:', summarize=100)
             object_value += tf.reduce_sum(
                 iou_matrix_masks, axis=[0,1,2,3]) / \
                 tf.reduce_sum(object_masks, axis=[0,1,2,3])
@@ -326,8 +325,7 @@ class TinyYolo():
                     [avg_loss, iou_value, object_value] = self.sess.run(
                         fetches=[self.avg_loss,
                                  self.iou_value,
-                                 self.object_value,
-                                 self.nobject_value],
+                                 self.object_value],
                         feed_dict={self.images: batch_images, 
                                    self.class_labels: batch_class_labels, 
                                    self.class_masks: batch_class_masks,
