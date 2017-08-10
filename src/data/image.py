@@ -231,7 +231,7 @@ class ImageProcessor:
         
         # true_label and mask in 包围框标记
         box_label = numpy.zeros(
-            shape=(self.cell_size, self.cell_size, self.max_objects, 5),
+            shape=(self.cell_size, self.cell_size, self.max_objects, 4),
             dtype='float32')
         object_mask = numpy.zeros(
             shape=(self.cell_size, self.cell_size, self.max_objects), 
@@ -253,7 +253,7 @@ class ImageProcessor:
                 center_cell_x = int(math.floor(self.cell_size * center_x - 1e-6))
                 center_cell_y = int(math.floor(self.cell_size * center_y - 1e-6))
                 box_label[center_cell_x, center_cell_y, j, :] = numpy.array(
-                    [center_x, center_y, w, h] + [1.0])
+                    [center_x, center_y, w, h])
                 object_mask[center_cell_x, center_cell_y, j] = 1.0
                 nobject_mask[center_cell_x, center_cell_y, j] = 0.0
                 

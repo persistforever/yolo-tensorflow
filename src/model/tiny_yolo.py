@@ -47,7 +47,7 @@ class TinyYolo():
             name='class_masks')
         self.box_labels = tf.placeholder(
             dtype=tf.float32, shape=[
-                self.batch_size, self.cell_size, self.cell_size, self.max_objects, 5], 
+                self.batch_size, self.cell_size, self.cell_size, self.max_objects, 4], 
             name='box_labels')
         self.object_masks = tf.placeholder(
             dtype=tf.float32, shape=[
@@ -66,7 +66,7 @@ class TinyYolo():
         # 待输出的中间变量
         self.logits = self.inference(self.images)
         self.class_loss, self.coord_loss, self.object_loss, self.nobject_loss, \
-            self.iou_value, self.object_value, self.nobject_value = self.loss(self.logits)
+            _, _ = self.loss(self.logits)
         tf.add_to_collection('losses', (
             self.class_loss + self.coord_loss + self.object_loss + self.nobject_loss))
         # 目标函数和优化器
@@ -166,7 +166,6 @@ class TinyYolo():
         nobject_loss = 0.0
         iou_value = 0.0
         object_value = 0.0
-        nobject_value = 0.0
         
         for i in range(self.batch_size):
             # 计算class_label
@@ -175,80 +174,74 @@ class TinyYolo():
             class_mask = tf.reshape(
                 self.class_masks[i,:,:], 
                 shape=[self.cell_size, self.cell_size, 1])
-            # 计算class_loss
-            class_loss += self.class_scala * tf.nn.l2_loss(
-                (class_pred - class_label) * class_mask)
+            
+            box_label_used = tf.zeros(
+                shape=[self.cell_size, self.cell_size, self.n_boxes, 5])
+            iou_matrix_masks = tf.zeros(
+                shape=[self.cell_size, self.cell_size, self.n_boxes, 1])
                 
             for j in range(self.max_objects):
-                
-                # iou_matrix对每一个cell中每一个pred_box对box label求iou，尺寸为(n_cell, n_cell, n_box, 1)
-                # 而iou_matrix_true对每一个cell中求出iou最大的pred_box对应的iou，尺寸为(n_cell, n_cell, 1, 1)
-                iou_matrix = self.iou(box_preds[i,:,:,:,0:4], self.box_labels[i,:,:,j:j+1,0:4])
-                iou_matrix_max = tf.reduce_max(iou_matrix, 2, keep_dims=True)
-                iou_matrix_mask = tf.cast((iou_matrix >= iou_matrix_max), dtype=tf.float32)
-                
-                # 计算confidence_label
-                confidence_pred = box_preds[i,:,:,:,4:]
-                confidence_label = self.box_labels[i,:,:,j:j+1,4:]
+                # 获取object_mask和nobject_mask
                 object_mask = tf.reshape(
                     self.object_masks[i,:,:,j:j+1],
                     shape=[self.cell_size, self.cell_size, 1, 1])
                 nobject_mask = tf.reshape(
                     self.nobject_masks[i,:,:,j:j+1],
                     shape=[self.cell_size, self.cell_size, 1, 1])
-                # 计算object_loss和nobject_loss
-                iou_object_mask = iou_matrix_mask
-                iou_nobject_mask = tf.ones_like(
-                    iou_matrix_mask, dtype=tf.float32) - iou_matrix_mask
-                object_loss += self.object_num[i,j] * self.object_scala * tf.nn.l2_loss(
-                    (confidence_pred - confidence_label) * iou_object_mask * object_mask)
-                nobject_loss += self.object_num[i,j] * self.nobject_scala * tf.nn.l2_loss(
-                    confidence_pred * iou_nobject_mask * nobject_mask)
                 
-                # 计算coord_label
-                x_pred = box_preds[i,:,:,:,0:1]
-                x_label = self.box_labels[i,:,:,j:j+1,0:1]
-                y_pred = box_preds[i,:,:,:,1:2]
-                y_label = self.box_labels[i,:,:,j:j+1,1:2]
-                w_pred = box_preds[i,:,:,:,2:3]
-                w_label = self.box_labels[i,:,:,j:j+1,2:3]
-                h_pred = box_preds[i,:,:,:,3:4]
-                h_label = self.box_labels[i,:,:,j:j+1,3:4]
-                # 计算coord_loss
-                x_loss = self.coord_scala * tf.nn.l2_loss(
-                    (x_pred - x_label) * iou_object_mask * object_mask)
-                y_loss = self.coord_scala * tf.nn.l2_loss(
-                    (y_pred - y_label) * iou_object_mask * object_mask)
-                w_loss = self.coord_scala * tf.nn.l2_loss(
-                    (tf.sqrt(w_pred) - tf.sqrt(w_label)) * iou_object_mask * object_mask)
-                h_loss = self.coord_scala * tf.nn.l2_loss(
-                    (tf.sqrt(h_pred) - tf.sqrt(h_label)) * iou_object_mask * object_mask)
-                coord_loss += self.object_num[i,j] * (x_loss + y_loss + w_loss + h_loss)
+                # iou_matrix对每一个cell中每一个pred_box对box label求iou，尺寸为(n_cell, n_cell, n_box, 1)
+                # 而iou_matrix_true对每一个cell中求出iou最大的pred_box对应的iou，尺寸为(n_cell, n_cell, 1, 1)
+                iou_matrix = self.iou(box_preds[i,:,:,:,0:4], self.box_labels[i,:,:,j:j+1,0:4])
+                iou_matrix_max = tf.reduce_max(iou_matrix, 2, keep_dims=True)
+                iou_matrix_mask = tf.cast(
+                    (iou_matrix >= iou_matrix_max), dtype=tf.float32) * object_mask
                 
-                # 计算观察值
-                iou_value += self.object_num[i,j] * (tf.reduce_sum(
-                    iou_matrix * iou_object_mask * object_mask, axis=[0,1,2,3]) + 1e-6) \
-                    / (tf.reduce_sum(object_mask, axis=[0,1,2,3]) + 1e-6)
-                object_value += self.object_num[i,j] * (tf.reduce_sum(
-                    confidence_pred / iou_matrix * iou_object_mask * object_mask, 
-                    axis=[0,1,2,3]) + 1e-6) \
-                    / (tf.reduce_sum(object_mask, axis=[0,1,2,3]) + 1e-6)
-                nobject_value += self.object_num[i,j] * (tf.reduce_sum(
-                    confidence_pred * iou_nobject_mask * nobject_mask, axis=[0,1,2,3]) + 1e-6) \
-                    / (tf.reduce_sum(nobject_mask, axis=[0,1,2,3]) + 1e-6)
+                # 计算box_label_used（box_label_used是真正计算loss使用的box_label）
+                box_label_used += tf.concat(
+                    [self.box_labels[i,:,:,j:j+1,:], iou_matrix_max],
+                    axis=3) * iou_matrix_mask
+                iou_matrix_masks += iou_matrix_mask
+        
+            # 计算所有的loss
+            class_loss += tf.nn.l2_loss(
+                (class_pred - class_label) * class_mask)
+            
+            object_loss += tf.nn.l2_loss(
+                (box_label_used[:,:,:,4:] - box_preds[i,:,:,:,4:]) * iou_matrix_masks)
+            
+            iou_matrix_masks_reverse = tf.ones_like(iou_matrix_masks) - iou_matrix_masks
+            nobject_loss += tf.nn.l2_loss(
+                (box_label_used - box_preds[i,:,:,:,:]) * iou_matrix_masks_reverse)
+            
+            coord_loss += tf.nn.l2_loss(
+                (box_label_used[:,:,:,0:2] - box_preds[i,:,:,:,0:2]) * iou_matrix_masks)
+            coord_loss += tf.nn.l2_loss(
+                (tf.sqrt(box_label_used[:,:,:,2:4]) - tf.sqrt(box_preds[i,:,:,:,2:4]) * \
+                 iou_matrix_masks))
+            
+            # 计算观察值
+            iou_value += tf.reduce_sum(box_label_used[:,:,:,4:], axis=[0,1,2,3]) / \
+                tf.reduce_sum(iou_matrix_masks, axis=[0,1,2,3])
+            
+            object_masks = tf.reshape(
+                tf.reduce_sum(self.object_masks[i,:,:,:], axis=[2]),
+                shape=(self.cell_size, self.cell_size, 1, 1))
+            object_masks = tf.Print(object_masks, [object_masks], 'object_masks:', summarize=100)
+            object_value += tf.reduce_sum(
+                iou_matrix_masks, axis=[0,1,2,3]) / \
+                tf.reduce_sum(object_masks, axis=[0,1,2,3])
         
         # 目标函数值
-        class_loss /= self.batch_size
-        coord_loss /= tf.reduce_sum(self.object_num, axis=[0, 1])
-        object_loss /= tf.reduce_sum(self.object_num, axis=[0, 1])
-        nobject_loss /= tf.reduce_sum(self.object_num, axis=[0, 1])
+        class_loss = class_loss * self.class_scala / self.batch_size
+        coord_loss = coord_loss * self.coord_scala / self.batch_size
+        object_loss = object_loss * self.object_scala / self.batch_size
+        nobject_loss = nobject_loss * self.nobject_scala / self.batch_size
         # 观察值
-        iou_value /= tf.reduce_sum(self.object_num, axis=[0, 1])
-        object_value /= tf.reduce_sum(self.object_num, axis=[0, 1])
-        nobject_value /= tf.reduce_sum(self.object_num, axis=[0, 1])
+        iou_value /= self.batch_size
+        object_value /= self.batch_size
         
         return class_loss, coord_loss, object_loss, nobject_loss, \
-            iou_value, object_value, nobject_value
+            iou_value, object_value
               
     def iou(self, box_pred, box_label):
         box1 = tf.stack([
@@ -283,7 +276,7 @@ class TinyYolo():
         # 模型保存器
         self.saver = tf.train.Saver(
             var_list=tf.global_variables(), write_version=tf.train.SaverDef.V2, 
-            max_to_keep=10)
+            max_to_keep=5)
         # 模型初始化
         self.sess.run(tf.global_variables_initializer())
                 
@@ -330,7 +323,7 @@ class TinyYolo():
                         batch_object_masks, batch_nobject_masks, batch_object_nums = \
                         processor.get_valid_batch(i, batch_size)
                     
-                    [avg_loss, iou_value, object_value, nobject_value] = self.sess.run(
+                    [avg_loss, iou_value, object_value] = self.sess.run(
                         fetches=[self.avg_loss,
                                  self.iou_value,
                                  self.object_value,
@@ -346,15 +339,13 @@ class TinyYolo():
                     valid_loss += avg_loss
                     valid_iou += iou_value
                     valid_object += object_value
-                    valid_nobject += nobject_value
                     
                 valid_loss /= i
                 valid_iou /= i
                 valid_object /= i
-                valid_nobject /= i
                 
-                print('iter[%d], valid: iou: %.8f, object: %.8f, nobject: %.8f' % (
-                    n_iter, valid_iou, valid_object, valid_nobject))
+                print('iter[%d], valid: iou: %.8f, object: %.8f' % (
+                    n_iter, valid_iou, valid_object))
                 sys.stdout.flush()
             
             # 每500轮保存一次模型
