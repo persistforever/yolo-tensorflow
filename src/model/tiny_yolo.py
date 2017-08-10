@@ -220,15 +220,15 @@ class TinyYolo():
                  iou_matrix_masks))
             
             # 计算观察值
-            iou_value += tf.reduce_sum(box_label_used[:,:,:,4:], axis=[0,1,2,3]) / \
-                tf.reduce_sum(iou_matrix_masks, axis=[0,1,2,3])
+            iou_value += (tf.reduce_sum(box_label_used[:,:,:,4:], axis=[0,1,2,3]) + 1e-6) / \
+                (tf.reduce_sum(iou_matrix_masks, axis=[0,1,2,3]) + 1e-6)
             
             object_masks = tf.reshape(
                 tf.reduce_sum(self.object_masks[i,:,:,:], axis=[2]),
                 shape=(self.cell_size, self.cell_size, 1, 1))
-            object_value += tf.reduce_sum(
-                iou_matrix_masks, axis=[0,1,2,3]) / \
-                tf.reduce_sum(object_masks, axis=[0,1,2,3])
+            object_value += (tf.reduce_sum(
+                iou_matrix_masks, axis=[0,1,2,3]) + 1e-6) / \
+                (tf.reduce_sum(object_masks, axis=[0,1,2,3]) + 1e-6)
         
         # 目标函数值
         class_loss = class_loss * self.class_scala / self.batch_size
