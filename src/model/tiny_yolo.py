@@ -77,35 +77,35 @@ class TinyYolo():
             n_size=3, n_filter=16, stride=1, activation='relu', 
             batch_normal=True, weight_decay=1e-4, name='conv1')
         pool_layer1 = PoolLayer(
-            n_size=2, stride=2, mode='max', resp_normal=False, name='pool1')
+            n_size=2, stride=2, mode='max', resp_normal=True, name='pool1')
         
         conv_layer2 = ConvLayer(
             input_shape=(self.batch_size, int(self.image_size/2), int(self.image_size/2), 16), 
             n_size=3, n_filter=32, stride=1, activation='relu',
             batch_normal=True, weight_decay=1e-4, name='conv2')
         pool_layer2 = PoolLayer(
-            n_size=2, stride=2, mode='max', resp_normal=False, name='pool2')
+            n_size=2, stride=2, mode='max', resp_normal=True, name='pool2')
         
         conv_layer3 = ConvLayer(
             input_shape=(self.batch_size, int(self.image_size/4), int(self.image_size/4), 32),
             n_size=3, n_filter=64, stride=1, activation='relu', 
             batch_normal=True, weight_decay=1e-4, name='conv3')
         pool_layer3 = PoolLayer(
-            n_size=2, stride=2, mode='max', resp_normal=False, name='pool3')
+            n_size=2, stride=2, mode='max', resp_normal=True, name='pool3')
         
         conv_layer4 = ConvLayer(
             input_shape=(self.batch_size, int(self.image_size/8), int(self.image_size/8), 64),
             n_size=3, n_filter=128, stride=1, activation='relu', 
             batch_normal=True, weight_decay=1e-4, name='conv4')
         pool_layer4 = PoolLayer(
-            n_size=2, stride=2, mode='max', resp_normal=False, name='pool4')
+            n_size=2, stride=2, mode='max', resp_normal=True, name='pool4')
         
         conv_layer5 = ConvLayer(
             input_shape=(self.batch_size, int(self.image_size/16), int(self.image_size/16), 128),
             n_size=3, n_filter=256, stride=1, activation='relu', 
-            batch_normal=False, weight_decay=1e-4, name='conv5')
-        pool_layer5 = True(
-            n_size=2, stride=2, mode='max', resp_normal=False, name='pool5')
+            batch_normal=True, weight_decay=1e-4, name='conv5')
+        pool_layer5 = PoolLayer(
+            n_size=2, stride=2, mode='max', resp_normal=True, name='pool5')
         
         conv_layer6 = ConvLayer(
             input_shape=(self.batch_size, int(self.image_size/32), int(self.image_size/32), 256),
