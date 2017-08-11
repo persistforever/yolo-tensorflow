@@ -56,13 +56,6 @@ class TinyYolo():
             dtype=tf.float32, shape=[
                 self.batch_size, self.cell_size, self.cell_size, self.max_objects],
             name='object_masks')
-        self.nobject_masks = tf.placeholder(
-            dtype=tf.float32, shape=[
-                self.batch_size, self.cell_size, self.cell_size, self.max_objects],
-            name='nobject_masks')
-        self.object_num = tf.placeholder(
-            dtype=tf.float32, shape=[self.batch_size, self.max_objects],
-            name='object_num')
         self.keep_prob = tf.placeholder(
             dtype=tf.float32, name='keep_prob')
         
@@ -182,7 +175,8 @@ class TinyYolo():
                 self.class_masks[i,:,:], 
                 shape=[self.cell_size, self.cell_size, 1])
             class_loss += tf.nn.l2_loss(
-                (class_pred - class_label) * class_mask)
+                (class_pred - class_label) * class_mask) / \
+                (self.cell_size * self.cell_size * 1.0)
                 
             for j in range(self.max_objects):
                 
@@ -207,7 +201,8 @@ class TinyYolo():
                     dtype=tf.float32)
                 nobject_pred = box_preds[i,:,:,:,4:]
                 nobject_loss += tf.nn.l2_loss(
-                    (nobject_pred - nobject_label) * nobject_mask)
+                    (nobject_pred - nobject_label) * nobject_mask) / \
+                    (self.cell_size * self.cell_size * self.n_boxes * 1.0)
                 
                 # 计算object_loss
                 # object_pred为box_pred的值，尺寸为(cell_size, cell_size, n_box, 1)
@@ -216,7 +211,8 @@ class TinyYolo():
                 object_label = iou_matrix
                 object_pred = box_preds[i,:,:,:,4:]
                 object_loss += tf.nn.l2_loss(
-                    (object_pred - object_label) * iou_matrix_mask)
+                    (object_pred - object_label) * iou_matrix_mask) / \
+                    (self.cell_size * self.cell_size * self.n_boxes * 1.0)
                 
                 # 计算coord_loss
                 # coord_pred为box_pred的值，尺寸为(cell_size, cell_size, n_box, 1)
@@ -225,33 +221,34 @@ class TinyYolo():
                 coord_label = self.box_labels[i,:,:,j:j+1,0:4]
                 coord_pred = box_preds[i,:,:,:,0:4]
                 coord_loss += tf.nn.l2_loss(
-                    (coord_pred - coord_label) * iou_matrix_mask)
+                    (coord_pred[:,:,:,0:2] - coord_label[:,:,:,0:2]) * iou_matrix_mask) / \
+                    (self.cell_size * self.cell_size * self.n_boxes * 1.0)
+                coord_loss += tf.nn.l2_loss(
+                    (tf.sqrt(coord_pred[:,:,:,2:4]) - tf.sqrt(coord_label[:,:,:,2:4])) * \
+                    iou_matrix_mask) / (self.cell_size * self.cell_size * self.n_boxes * 1.0)
                 
                 # 计算iou_value
                 # 每一个cell中，有object，并且iou最大的那个对应的iou
                 iou_value += tf.reduce_sum(
-                    iou_matrix * iou_matrix_mask, axis=[0,1,2,3]) / \
-                    tf.reduce_sum(object_mask, axis=[0,1,2,3])
+                    iou_matrix * iou_matrix_mask, axis=[0,1,2,3])
                 
                 # 计算object_value
                 # 每一个cell中，有object，并且iou最大的那个对应的box_pred中的confidence
                 object_value += tf.reduce_sum(
-                    box_preds[i,:,:,:,4:] * object_mask, axis=[0,1,2,3]) / \
-                    tf.reduce_sum(object_mask, axis=[0,1,2,3])
-                    
-                # 计算nobject_value
-                # 所有的box_pred中的confidence
-                nobject_value += tf.reduce_sum(
-                    box_preds[i,:,:,:,4:], axis=[0,1,2,3]) / \
-                    (self.cell_size * self.cell_size * self.n_boxes * 1.0)
+                    box_preds[i,:,:,:,4:] * iou_matrix_mask, axis=[0,1,2,3])
                     
                 # 计算recall_value
                 # 每一个cell中，有object，并且iou最大的哪个对应的iou如果大于recall_thresh，则加1
                 recall_mask = tf.cast(
                     (iou_matrix * iou_matrix_mask > self.recall_thresh), dtype=tf.float32)
                 recall_value += tf.reduce_sum(
-                    recall_mask, axis=[0,1,2,3]) / \
-                    tf.reduce_sum(object_mask, axis=[0,1,2,3])
+                    recall_mask, axis=[0,1,2,3])
+            
+            # 计算nobject_value
+            # 所有的box_pred中的confidence
+            nobject_value += tf.reduce_sum(
+                box_preds[i,:,:,:,4:], axis=[0,1,2,3]) / \
+                (self.cell_size * self.cell_size * self.n_boxes * 1.0)
             
         # 目标函数值
         class_loss = class_loss * self.class_scala / self.batch_size
@@ -259,10 +256,10 @@ class TinyYolo():
         object_loss = object_loss * self.object_scala / self.batch_size
         nobject_loss = nobject_loss * self.nobject_scala / self.batch_size
         # 观察值
-        iou_value /= self.batch_size
-        object_value /= self.batch_size
+        iou_value /= tf.reduce_sum(self.object_masks, axis=[0,1,2,3])
+        object_value /= tf.reduce_sum(self.object_masks, axis=[0,1,2,3])
         nobject_value /= self.batch_size
-        recall_value /= self.batch_size
+        recall_value /= tf.reduce_sum(self.object_masks, axis=[0,1,2,3])
         
         return class_loss, coord_loss, object_loss, nobject_loss, \
             iou_value, object_value, nobject_value, recall_value
@@ -311,7 +308,7 @@ class TinyYolo():
             start_time = time.time()
             
             batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
-                batch_object_masks, batch_nobject_masks, batch_object_nums = \
+                batch_object_masks, _, _ = \
                 processor.get_train_batch(batch_size)
             [_, avg_loss] = self.sess.run(
                 fetches=[self.optimizer, self.avg_loss], 
@@ -320,8 +317,6 @@ class TinyYolo():
                            self.class_masks: batch_class_masks,
                            self.box_labels: batch_box_labels,
                            self.object_masks: batch_object_masks,
-                           self.nobject_masks: batch_nobject_masks,
-                           self.object_num: batch_object_nums,
                            self.keep_prob: 0.5})
                 
             end_time = time.time()
@@ -341,34 +336,39 @@ class TinyYolo():
             
             # 每100轮观测一次验证集损失值和准确率
             if n_iter % 100 == 0:
-                valid_loss, valid_iou, valid_object, valid_nobject = 0.0, 0.0, 0.0, 0.0
+                valid_loss, valid_iou, valid_object, valid_nobject, \
+                    valid_nobject, valid_recall = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
                 for i in range(0, processor.n_valid-batch_size, batch_size):
                     batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
-                        batch_object_masks, batch_nobject_masks, batch_object_nums = \
+                        batch_object_masks, _, _ = \
                         processor.get_valid_batch(i, batch_size)
                     
-                    [avg_loss, iou_value, object_value] = self.sess.run(
+                    [avg_loss, iou_value, object_value,
+                     nobject_value, recall_value] = self.sess.run(
                         fetches=[self.avg_loss,
-                                 self.iou_value,
-                                 self.object_value],
+                                 self.iou_value, self.object_value,
+                                 self.nobject_value, self.recall_value],
                         feed_dict={self.images: batch_images, 
                                    self.class_labels: batch_class_labels, 
                                    self.class_masks: batch_class_masks,
                                    self.box_labels: batch_box_labels,
                                    self.object_masks: batch_object_masks,
-                                   self.nobject_masks: batch_nobject_masks,
-                                   self.object_num: batch_object_nums,
                                    self.keep_prob: 1.0})
                     valid_loss += avg_loss
                     valid_iou += iou_value
                     valid_object += object_value
+                    valid_nobject += nobject_value
+                    valid_recall += recall_value
                     
                 valid_loss /= i
                 valid_iou /= i
                 valid_object /= i
+                valid_nobject /= i
+                valid_recall /= i
                 
-                print('iter[%d], valid: iou: %.8f, object: %.8f' % (
-                    n_iter, valid_iou, valid_object))
+                print('iter[%d], valid: iou: %.8f, object: %.8f, nobject: %.8f, '
+                      'recall: %.8f' % (
+                    n_iter, valid_iou, valid_object, valid_nobject, valid_recall))
                 sys.stdout.flush()
             
             # 每500轮保存一次模型
