@@ -20,14 +20,14 @@ def train():
     
     tiny_yolo = TinyYolo(
         n_channel=3, n_classes=1, image_size=256, max_objects_per_image=20,
-        cell_size=26, box_per_cell=5, object_scala=10, nobject_scala=0.5,
+        cell_size=8, box_per_cell=5, object_scala=10, nobject_scala=0.5,
         coord_scala=10, class_scala=1, batch_size=32)
     print('Constructing Models finished!\n')
     sys.stdout.flush()
     
     image_processor = ImageProcessor(
         os.path.join(maindir, 'data', 'table-v1'),
-        image_size=256, max_objects_per_image=20, cell_size=7, n_classes=1)
+        image_size=256, max_objects_per_image=20, cell_size=8, n_classes=1)
     print('Processing Images finished!\n')
     sys.stdout.flush()
     
