@@ -64,9 +64,8 @@ class ConvLayer:
         return self.output
     
     def leaky_relu(self, input):
-        hidden = tf.cast(input, dtype=dtype)
-        bool_mask = (hidden > 0)
-        mask = tf.cast(bool_mask, dtype=dtype)
-        output = 1.0 * mask * hidden + alpha * (1 - mask) * hidden
+        hidden = tf.cast(input, dtype=tf.float32)
+        mask = tf.cast((hidden > 0), dtype=tf.float32)
+        output = 1.0 * mask * hidden + 0.1 * (1 - mask) * hidden
         
         return output
