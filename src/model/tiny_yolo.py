@@ -67,20 +67,21 @@ class TinyYolo():
         self.class_loss, self.coord_loss, self.object_loss, self.nobject_loss, \
             self.iou_value, self.object_value, self.nobject_value, self.recall_value = \
             self.loss(self.logits)
-        tf.add_to_collection('losses', self.class_loss)
-        tf.add_to_collection('losses', self.coord_loss)
-        tf.add_to_collection('losses', self.object_loss)
-        tf.add_to_collection('losses', self.nobject_loss)
-        tf.add_to_collection('class_loss', self.class_loss)
-        tf.add_to_collection('coord_loss', self.coord_loss)
-        tf.add_to_collection('object_loss', self.object_loss)
-        tf.add_to_collection('nobject_loss', self.nobject_loss)
+        # tf.add_to_collection('losses', self.class_loss)
+        # tf.add_to_collection('losses', self.coord_loss)
+        # tf.add_to_collection('losses', self.object_loss)
+        # tf.add_to_collection('losses', self.nobject_loss)
+        # tf.add_to_collection('class_loss', self.class_loss)
+        # tf.add_to_collection('coord_loss', self.coord_loss)
+        # tf.add_to_collection('object_loss', self.object_loss)
+        # tf.add_to_collection('nobject_loss', self.nobject_loss)
         # 目标函数和优化器
-        self.class_loss = tf.add_n(tf.get_collection('class_loss'))
-        self.coord_loss = tf.add_n(tf.get_collection('coord_loss'))
-        self.object_loss = tf.add_n(tf.get_collection('object_loss'))
-        self.nobject_loss = tf.add_n(tf.get_collection('nobject_loss'))
-        self.avg_loss = tf.add_n(tf.get_collection('losses'))
+        # self.class_loss = tf.add_n(tf.get_collection('class_loss'))
+        # self.coord_loss = tf.add_n(tf.get_collection('coord_loss'))
+        # self.object_loss = tf.add_n(tf.get_collection('object_loss'))
+        # self.nobject_loss = tf.add_n(tf.get_collection('nobject_loss'))
+        # self.avg_loss = tf.add_n(tf.get_collection('losses'))
+        self.avg_loss = tf.class_loss + self.coord_loss + self.object_loss + self.nobject_loss
         self.optimizer = tf.train.AdamOptimizer(learning_rate=1e-5).minimize(self.avg_loss)
         
     def inference(self, images):
@@ -189,8 +190,7 @@ class TinyYolo():
             dtype=tf.float32)
         nobject_pred = self.box_preds[batch,:,:,:,4:]
         nobject_loss += tf.nn.l2_loss(
-            (nobject_pred - nobject_label) * nobject_mask) / \
-            (self.cell_size * self.cell_size * self.n_boxes * 1.0)
+            (nobject_pred - nobject_label) * nobject_mask)
         
         # 计算object_loss
         # object_pred为box_pred的值，尺寸为(cell_size, cell_size, n_box, 1)
@@ -199,8 +199,7 @@ class TinyYolo():
         object_label = iou_matrix
         object_pred = self.box_preds[batch,:,:,:,4:]
         object_loss += tf.nn.l2_loss(
-            (object_pred - object_label) * iou_matrix_mask) / \
-            (self.cell_size * self.cell_size * self.n_boxes * 1.0)
+            (object_pred - object_label) * iou_matrix_mask)
         
         # 计算coord_loss
         # coord_pred为box_pred的值，尺寸为(cell_size, cell_size, n_box, 1)
@@ -209,11 +208,10 @@ class TinyYolo():
         coord_label = self.box_labels[batch,:,:,num:num+1,0:4]
         coord_pred = self.box_preds[batch,:,:,:,0:4]
         coord_loss += tf.nn.l2_loss(
-            (coord_pred[:,:,:,0:2] - coord_label[:,:,:,0:2]) * iou_matrix_mask) / \
-            (self.cell_size * self.cell_size * self.n_boxes * 1.0)
+            (coord_pred[:,:,:,0:2] - coord_label[:,:,:,0:2]) * iou_matrix_mask)
         coord_loss += tf.nn.l2_loss(
             (tf.sqrt(coord_pred[:,:,:,2:4]) - tf.sqrt(coord_label[:,:,:,2:4])) * \
-            iou_matrix_mask) / (self.cell_size * self.cell_size * self.n_boxes * 1.0)
+            iou_matrix_mask)
         
         # 计算iou_value
         # 每一个cell中，有object，并且iou最大的那个对应的iou
@@ -284,8 +282,7 @@ class TinyYolo():
             # 计算nobject_value
             # 所有的box_pred中的confidence
             nobject_value += tf.reduce_sum(
-                self.box_preds[i,:,:,:,4:], axis=[0,1,2,3]) / \
-                (self.cell_size * self.cell_size * self.n_boxes * 1.0)
+                self.box_preds[i,:,:,:,4:], axis=[0,1,2,3])
             
         # 目标函数值
         class_loss = class_loss * self.class_scala / self.batch_size
