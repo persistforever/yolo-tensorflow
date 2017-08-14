@@ -240,9 +240,7 @@ class ImageProcessor:
             shape=(self.cell_size, self.cell_size, self.max_objects), 
             dtype='float32')
         
-        object_num = numpy.zeros(
-            shape=(self.max_objects), 
-            dtype='int32')
+        object_num = 0
         
         for j in range(self.max_objects):
             
@@ -271,7 +269,7 @@ class ImageProcessor:
                         class_mask[x, y] = 1.0
                 
                 # object_num增加
-                object_num[j] = 1.0
+                object_num += 1
                             
         return class_label, class_mask, box_label, object_mask, nobject_mask, object_num
         

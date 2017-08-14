@@ -17,7 +17,7 @@ class ConvLayer:
         self.weight_decay = weight_decay
         # 权重矩阵
         self.weight = tf.Variable(
-            initial_value=tf.truncated_normal(
+            initial_value=tf.random_normal(
                 shape=[n_size, n_size, self.input_shape[3], self.n_filter],
                 mean=0.0, stddev=numpy.sqrt(
                     2.0 / (self.input_shape[1] * self.input_shape[2] * self.input_shape[3]))),

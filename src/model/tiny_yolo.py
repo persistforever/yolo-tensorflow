@@ -56,6 +56,9 @@ class TinyYolo():
             dtype=tf.float32, shape=[
                 self.batch_size, self.cell_size, self.cell_size, self.max_objects],
             name='object_masks')
+        self.object_nums = tf.placeholder(
+            dtype=tf.int32, shape=[self.batch_size, ],
+            name='object_nums')
         self.keep_prob = tf.placeholder(
             dtype=tf.float32, name='keep_prob')
         
@@ -64,9 +67,19 @@ class TinyYolo():
         self.class_loss, self.coord_loss, self.object_loss, self.nobject_loss, \
             self.iou_value, self.object_value, self.nobject_value, self.recall_value = \
             self.loss(self.logits)
-        tf.add_to_collection('losses', (
-            self.class_loss + self.coord_loss + self.object_loss + self.nobject_loss))
+        tf.add_to_collection('losses', self.class_loss)
+        tf.add_to_collection('losses', self.coord_loss)
+        tf.add_to_collection('losses', self.object_loss)
+        tf.add_to_collection('losses', self.nobject_loss)
+        tf.add_to_collection('class_loss', self.class_loss)
+        tf.add_to_collection('coord_loss', self.coord_loss)
+        tf.add_to_collection('object_loss', self.object_loss)
+        tf.add_to_collection('nobject_loss', self.nobject_loss)
         # 目标函数和优化器
+        self.class_loss = tf.add_n(tf.get_collection('class_loss'))
+        self.coord_loss = tf.add_n(tf.get_collection('coord_loss'))
+        self.object_loss = tf.add_n(tf.get_collection('object_loss'))
+        self.nobject_loss = tf.add_n(tf.get_collection('nobject_loss'))
         self.avg_loss = tf.add_n(tf.get_collection('losses'))
         self.optimizer = tf.train.AdamOptimizer(learning_rate=1e-5).minimize(self.avg_loss)
         
@@ -147,13 +160,89 @@ class TinyYolo():
         # 网络输出
         return output
     
+    def loss_one_example_cond(self, num, object_num, batch, coord_loss, object_loss, 
+                              nobject_loss, iou_value, object_value, recall_value):
+        
+        return num < object_num
+    
+    def loss_one_example_body(self, num, object_num, batch, coord_loss, object_loss, 
+                              nobject_loss, iou_value, object_value, recall_value):
+        # 获取object_mask，表示如果cell中有物体，则为1，如果cell中没有物体，则为0
+        object_mask = tf.reshape(
+            self.object_masks[batch,:,:,num:num+1],
+            shape=[self.cell_size, self.cell_size, 1, 1])
+        
+        # 计算iou_matrix，表示每个cell中，每个box与这个cell中真实物体的iou值
+        iou_matrix = self.iou(self.box_preds[batch,:,:,:,0:4], 
+                              self.box_labels[batch,:,:,num:num+1,0:4])
+        iou_matrix_max = tf.reduce_max(iou_matrix, 2, keep_dims=True)
+        iou_matrix_mask = tf.cast(
+            (iou_matrix >= iou_matrix_max), dtype=tf.float32) * object_mask
+            
+        # 计算nobject_loss
+        # nobject_pred为box_pred的值，尺寸为(cell_size, cell_size, n_box, 1)
+        # 每一个cell中，有object，并且iou > nobject_thresh，则不计算，否则为0
+        nobject_mask = tf.cast(
+            (iou_matrix <= self.nobject_thresh), dtype=tf.float32)
+        nobject_label = tf.zeros(
+            shape=(self.cell_size, self.cell_size, self.n_boxes, 1),
+            dtype=tf.float32)
+        nobject_pred = self.box_preds[batch,:,:,:,4:]
+        nobject_loss += tf.nn.l2_loss(
+            (nobject_pred - nobject_label) * nobject_mask) / \
+            (self.cell_size * self.cell_size * self.n_boxes * 1.0)
+        
+        # 计算object_loss
+        # object_pred为box_pred的值，尺寸为(cell_size, cell_size, n_box, 1)
+        # 每一个cell中，有object，并且iou最大的那个box的object_label为iou，其余为0，
+        # object_label尺寸为(cell_size, cell_size, n_box, 1)
+        object_label = iou_matrix
+        object_pred = self.box_preds[batch,:,:,:,4:]
+        object_loss += tf.nn.l2_loss(
+            (object_pred - object_label) * iou_matrix_mask) / \
+            (self.cell_size * self.cell_size * self.n_boxes * 1.0)
+        
+        # 计算coord_loss
+        # coord_pred为box_pred的值，尺寸为(cell_size, cell_size, n_box, 1)
+        # 每一个cell中，有object，并且iou最大的那个box的coord_label为真实的label，其余为0，
+        # coord_label尺寸为(cell_size, cell_size, n_box, 1)
+        coord_label = self.box_labels[batch,:,:,num:num+1,0:4]
+        coord_pred = self.box_preds[batch,:,:,:,0:4]
+        coord_loss += tf.nn.l2_loss(
+            (coord_pred[:,:,:,0:2] - coord_label[:,:,:,0:2]) * iou_matrix_mask) / \
+            (self.cell_size * self.cell_size * self.n_boxes * 1.0)
+        coord_loss += tf.nn.l2_loss(
+            (tf.sqrt(coord_pred[:,:,:,2:4]) - tf.sqrt(coord_label[:,:,:,2:4])) * \
+            iou_matrix_mask) / (self.cell_size * self.cell_size * self.n_boxes * 1.0)
+        
+        # 计算iou_value
+        # 每一个cell中，有object，并且iou最大的那个对应的iou
+        iou_value += tf.reduce_sum(
+            iou_matrix * iou_matrix_mask, axis=[0,1,2,3])
+        
+        # 计算object_value
+        # 每一个cell中，有object，并且iou最大的那个对应的box_pred中的confidence
+        object_value += tf.reduce_sum(
+            self.box_preds[batch,:,:,:,4:] * iou_matrix_mask, axis=[0,1,2,3])
+            
+        # 计算recall_value
+        # 每一个cell中，有object，并且iou最大的哪个对应的iou如果大于recall_thresh，则加1
+        recall_mask = tf.cast(
+            (iou_matrix * iou_matrix_mask > self.recall_thresh), dtype=tf.float32)
+        recall_value += tf.reduce_sum(
+                recall_mask, axis=[0,1,2,3])
+        num += 1
+        
+        return num, object_num, batch, coord_loss, object_loss, \
+            nobject_loss, iou_value, object_value, recall_value
+    
     def loss(self, logits):
         logits = tf.reshape(
             logits, shape=[self.batch_size, self.cell_size, self.cell_size, 
                            self.n_classes + self.n_boxes * 5])
         
         class_preds = logits[:,:,:,0:self.n_classes]
-        box_preds = tf.reshape(
+        self.box_preds = tf.reshape(
             logits[:,:,:,self.n_classes:], 
             shape=[self.batch_size, self.cell_size, self.cell_size, self.n_boxes, 5])
         
@@ -178,76 +267,24 @@ class TinyYolo():
                 (class_pred - class_label) * class_mask) / \
                 (self.cell_size * self.cell_size * 1.0)
                 
-            for j in range(self.max_objects):
-                
-                # 获取object_mask，表示如果cell中有物体，则为1，如果cell中没有物体，则为0
-                object_mask = tf.reshape(
-                    self.object_masks[i,:,:,j:j+1],
-                    shape=[self.cell_size, self.cell_size, 1, 1])
-                
-                # 计算iou_matrix，表示每个cell中，每个box与这个cell中真实物体的iou值
-                iou_matrix = self.iou(box_preds[i,:,:,:,0:4], self.box_labels[i,:,:,j:j+1,0:4])
-                iou_matrix_max = tf.reduce_max(iou_matrix, 2, keep_dims=True)
-                iou_matrix_mask = tf.cast(
-                    (iou_matrix >= iou_matrix_max), dtype=tf.float32) * object_mask
-                    
-                # 计算nobject_loss
-                # nobject_pred为box_pred的值，尺寸为(cell_size, cell_size, n_box, 1)
-                # 每一个cell中，有object，并且iou > nobject_thresh，则不计算，否则为0
-                nobject_mask = tf.cast(
-                    (iou_matrix <= self.nobject_thresh), dtype=tf.float32)
-                nobject_label = tf.zeros(
-                    shape=(self.cell_size, self.cell_size, self.n_boxes, 1),
-                    dtype=tf.float32)
-                nobject_pred = box_preds[i,:,:,:,4:]
-                nobject_loss += tf.nn.l2_loss(
-                    (nobject_pred - nobject_label) * nobject_mask) / \
-                    (self.cell_size * self.cell_size * self.n_boxes * 1.0)
-                
-                # 计算object_loss
-                # object_pred为box_pred的值，尺寸为(cell_size, cell_size, n_box, 1)
-                # 每一个cell中，有object，并且iou最大的那个box的object_label为iou，其余为0，
-                # object_label尺寸为(cell_size, cell_size, n_box, 1)
-                object_label = iou_matrix
-                object_pred = box_preds[i,:,:,:,4:]
-                object_loss += tf.nn.l2_loss(
-                    (object_pred - object_label) * iou_matrix_mask) / \
-                    (self.cell_size * self.cell_size * self.n_boxes * 1.0)
-                
-                # 计算coord_loss
-                # coord_pred为box_pred的值，尺寸为(cell_size, cell_size, n_box, 1)
-                # 每一个cell中，有object，并且iou最大的那个box的coord_label为真实的label，其余为0，
-                # coord_label尺寸为(cell_size, cell_size, n_box, 1)
-                coord_label = self.box_labels[i,:,:,j:j+1,0:4]
-                coord_pred = box_preds[i,:,:,:,0:4]
-                coord_loss += tf.nn.l2_loss(
-                    (coord_pred[:,:,:,0:2] - coord_label[:,:,:,0:2]) * iou_matrix_mask) / \
-                    (self.cell_size * self.cell_size * self.n_boxes * 1.0)
-                coord_loss += tf.nn.l2_loss(
-                    (tf.sqrt(coord_pred[:,:,:,2:4]) - tf.sqrt(coord_label[:,:,:,2:4])) * \
-                    iou_matrix_mask) / (self.cell_size * self.cell_size * self.n_boxes * 1.0)
-                
-                # 计算iou_value
-                # 每一个cell中，有object，并且iou最大的那个对应的iou
-                iou_value += tf.reduce_sum(
-                    iou_matrix * iou_matrix_mask, axis=[0,1,2,3])
-                
-                # 计算object_value
-                # 每一个cell中，有object，并且iou最大的那个对应的box_pred中的confidence
-                object_value += tf.reduce_sum(
-                    box_preds[i,:,:,:,4:] * iou_matrix_mask, axis=[0,1,2,3])
-                    
-                # 计算recall_value
-                # 每一个cell中，有object，并且iou最大的哪个对应的iou如果大于recall_thresh，则加1
-                recall_mask = tf.cast(
-                    (iou_matrix * iou_matrix_mask > self.recall_thresh), dtype=tf.float32)
-                recall_value += tf.reduce_sum(
-                    recall_mask, axis=[0,1,2,3])
+            # 循环计算每一个example
+            results = tf.while_loop(
+                cond=self.loss_one_example_cond, 
+                body=self.loss_one_example_body, 
+                loop_vars=[tf.constant(0), self.object_nums[i], i,
+                           tf.constant(0.0), tf.constant(0.0), tf.constant(0.0),
+                           tf.constant(0.0), tf.constant(0.0), tf.constant(0.0)])
+            coord_loss += results[3]
+            object_loss += results[4]
+            nobject_loss += results[5]
+            iou_value += results[6]
+            object_value += results[7]
+            recall_value += results[8]
             
             # 计算nobject_value
             # 所有的box_pred中的confidence
             nobject_value += tf.reduce_sum(
-                box_preds[i,:,:,:,4:], axis=[0,1,2,3]) / \
+                self.box_preds[i,:,:,:,4:], axis=[0,1,2,3]) / \
                 (self.cell_size * self.cell_size * self.n_boxes * 1.0)
             
         # 目标函数值
@@ -303,36 +340,56 @@ class TinyYolo():
                 
         # 模型训练
         process_images, train_loss = 0, 0.0
+        class_loss, coord_loss, object_loss, nobject_loss = 0.0, 0.0, 0.0, 0.0
         for n_iter in range(1, n_iters+1):
             # 训练一个batch
             start_time = time.time()
             
             batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
-                batch_object_masks, _, _ = \
+                batch_object_masks, _, batch_object_nums = \
                 processor.get_train_batch(batch_size)
-            [_, avg_loss] = self.sess.run(
-                fetches=[self.optimizer, self.avg_loss], 
+            [_, avg_loss, class_l, coord_l, object_l, nobject_l] = self.sess.run(
+                fetches=[self.optimizer, self.avg_loss, 
+                         self.class_loss, self.coord_loss, self.object_loss, self.nobject_loss], 
                 feed_dict={self.images: batch_images, 
                            self.class_labels: batch_class_labels, 
                            self.class_masks: batch_class_masks,
                            self.box_labels: batch_box_labels,
                            self.object_masks: batch_object_masks,
+                           self.object_nums: batch_object_nums,
                            self.keep_prob: 0.5})
                 
             end_time = time.time()
+            
             train_loss += avg_loss
+            class_loss += class_l
+            coord_loss += coord_l
+            object_loss += object_l
+            nobject_loss += nobject_l
+            
             process_images += batch_images.shape[0]
             speed = 1.0 * batch_images.shape[0] / (end_time - start_time)
                 
             # 每10轮训练观测一次train_loss
             if n_iter % 10 == 0:
                 train_loss /= 10
+                class_loss /= 10
+                coord_loss /= 10
+                object_loss /= 10
+                nobject_loss /= 10
                 
-                print('iter[%d], train loss: %.8f, processed images: %d, speed: %.2f images/s' % (
-                    n_iter, train_loss, process_images, speed))
+                print('iter[%d], train loss: %.8f, class_loss: %.8f, coord_loss: %.8f, '
+                      'object_loss: %.8f, nobject_loss: %.8f, image_nums: %d, '
+                      'speed: %.2f images/s' % (
+                    n_iter, train_loss, class_loss, coord_loss, object_loss, nobject_loss, 
+                    process_images, speed))
                 sys.stdout.flush()
                 
                 train_loss = 0.0
+                class_loss = 0.0
+                coord_loss = 0.0
+                object_loss = 0.0
+                nobject_loss = 0.0
             
             # 每100轮观测一次验证集损失值和准确率
             if n_iter % 100 == 0:
@@ -340,7 +397,7 @@ class TinyYolo():
                     valid_nobject, valid_recall = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
                 for i in range(0, processor.n_valid-batch_size, batch_size):
                     batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
-                        batch_object_masks, _, _ = \
+                        batch_object_masks, _, batch_object_nums = \
                         processor.get_valid_batch(i, batch_size)
                     
                     [avg_loss, iou_value, object_value,
@@ -353,6 +410,7 @@ class TinyYolo():
                                    self.class_masks: batch_class_masks,
                                    self.box_labels: batch_box_labels,
                                    self.object_masks: batch_object_masks,
+                                   self.object_nums: batch_object_nums,
                                    self.keep_prob: 1.0})
                     valid_loss += avg_loss
                     valid_iou += iou_value

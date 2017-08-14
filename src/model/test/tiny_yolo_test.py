@@ -150,3 +150,48 @@ class TinyYoloTestor:
                 tiny_yolo.object_masks: numpy.array([object_mask])})
         sess.close()
         print(output)
+        
+    def test_region_layer(self):
+        label = [[0, 0, 0, 0, 0]] * 5
+        label[0] = [0.25, 0.6, 0.1, 0.2, 1]
+        
+        box_pred = numpy.zeros(shape=(2,2,1,5))
+        box_pred[0,1,0,:] = [0.25, 0.6, 0.05, 0.2, 1.0]
+        class_pred = numpy.zeros(shape=(1, 2, 2, 1))
+        class_pred[0,0,0] = 1
+        class_pred[0,0,1] = 1
+        
+        pred = numpy.concatenate([class_pred, numpy.reshape(box_pred, (1, 2, 2, 1*5))], axis=3)
+        pred = numpy.reshape(pred, (1, 2 * 2 * (1 + 1 * 5)))
+        
+        
+        image_processor = ImageProcessor(
+            'Z:', image_size=64, max_objects_per_image=2, cell_size=2, n_classes=1)
+        class_label, class_mask, box_label, object_mask, nobject_mask, object_num = \
+           image_processor.process_label(label)
+           
+        tiny_yolo = TinyYolo(
+            n_channel=3, n_classes=1, image_size=64, max_objects_per_image=2,
+            cell_size=2, box_per_cell=1, object_scala=1, nobject_scala=1,
+            coord_scala=1, class_scala=1, batch_size=1)
+        
+        image = numpy.array(numpy.random.random(size=(1, 64, 64, 3)) * 255, dtype='float32')
+        
+        logits = tf.placeholder(
+            dtype=tf.float32, shape=[1, 24], name='logits')
+        class_loss, coord_loss, object_loss, nobject_loss, \
+            iou_value, object_value, nobject_value, recall_value = tiny_yolo.loss(logits)
+        
+        sess = tf.Session()
+        sess.run(tf.global_variables_initializer())
+        output = sess.run(
+            fetches=[class_loss, object_loss, nobject_loss, coord_loss, 
+                     iou_value, object_value, nobject_value, recall_value],
+            feed_dict={
+                logits: pred,
+                tiny_yolo.class_labels: numpy.array([class_label]),
+                tiny_yolo.class_masks: numpy.array([class_mask]),
+                tiny_yolo.box_labels: numpy.array([box_label]),
+                tiny_yolo.object_masks: numpy.array([object_mask])})
+        sess.close()
+        print(output)
