@@ -73,7 +73,7 @@ class TinyYolo():
         tf.add_to_collection('losses', self.object_loss)
         tf.add_to_collection('losses', self.nobject_loss)
         self.avg_loss = tf.add_n(tf.get_collection('losses'))
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=1e-3).minimize(self.avg_loss)
+        self.optimizer = tf.train.AdamOptimizer(learning_rate=1e-5).minimize(self.avg_loss)
         
     def inference(self, images):
         # 网络结构
@@ -281,10 +281,10 @@ class TinyYolo():
         object_loss = object_loss * self.object_scala / self.batch_size
         nobject_loss = nobject_loss * self.nobject_scala / self.batch_size
         # 观察值
-        iou_value /= tf.reduce_sum(self.object_masks, axis=[0,1,2,3])
-        object_value /= tf.reduce_sum(self.object_masks, axis=[0,1,2,3])
+        iou_value /= tf.reduce_sum(tf.cast(self.object_nums, tf.float32), axis=[0])
+        object_value /= tf.reduce_sum(tf.cast(self.object_nums, tf.float32), axis=[0])
         nobject_value /= self.batch_size
-        recall_value /= tf.reduce_sum(self.object_masks, axis=[0,1,2,3])
+        recall_value /= tf.reduce_sum(tf.cast(self.object_nums, tf.float32), axis=[0])
         
         return class_loss, coord_loss, object_loss, nobject_loss, \
             iou_value, object_value, nobject_value, recall_value
@@ -340,6 +340,7 @@ class TinyYolo():
             batch_images = processor.data_augmentation(
                 batch_images, flip=False, 
                 crop=True, padding=20, whiten=True)
+            print(batch_images.shape)
             [_, avg_loss, class_l, coord_l, object_l, nobject_l] = self.sess.run(
                 fetches=[self.optimizer, self.avg_loss,
                          self.class_loss, self.coord_loss, self.object_loss, self.nobject_loss], 
@@ -384,17 +385,17 @@ class TinyYolo():
                 nobject_loss = 0.0
             
             # 每100轮观测一次验证集损失值和准确率
+            batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
+                batch_object_masks, _, batch_object_nums = \
+                processor.get_valid_batch(i, batch_size)
+            # 数据增强
+            batch_images = processor.data_augmentation(
+                batch_images, flip=False,
+                crop=False, padding=20, whiten=True)
             if n_iter % 100 == 0:
                 valid_loss, valid_iou, valid_object, valid_nobject, \
                     valid_nobject, valid_recall = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
                 for i in range(0, processor.n_valid-batch_size, batch_size):
-                    batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
-                        batch_object_masks, _, batch_object_nums = \
-                        processor.get_valid_batch(i, batch_size)
-                    # 数据增强
-                    batch_images = processor.data_augmentation(
-                        batch_images, flip=False,
-                        crop=False, padding=20, whiten=True)
                     
                     [avg_loss, iou_value, object_value,
                      nobject_value, recall_value] = self.sess.run(

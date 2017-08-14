@@ -354,23 +354,12 @@ class ImageProcessor:
         new_images = []
         for i in range(images.shape[0]):
             old_image = images[i,:,:,:]
-            old_image = tf.pad(old_image, [[padding, padding], [padding, padding], [0, 0]])
+            old_image = numpy.lib.pad(
+                old_image, ((padding, padding), (padding, padding), (0,0)),
+                'constant', constant_values=((0, 0), (0, 0), (0, 0)))
             left = numpy.random.randint(int(padding*2))
             top = numpy.random.randint(int(padding*2))
-            new_image = old_image[left: left+int(padding*2), top: top+int(padding*2), :]
-            new_images.append(new_image)
-        
-        return numpy.array(new_images)
-    
-    def _image_crop_test(self, images, padding=20):
-        # 图像切割
-        new_images = []
-        for i in range(images.shape[0]):
-            old_image = images[i,:,:,:]
-            old_image = tf.pad(old_image, [[padding, padding], [padding, padding], [0, 0]])
-            left = int((old_image.shape[0] - shape[0]) / 2)
-            top = int((old_image.shape[1] - shape[1]) / 2)
-            new_image = old_image[left: left+shape[0], top: top+shape[1], :]
+            new_image = old_image[left: left+images.shape[1], top: top+images.shape[2], :]
             new_images.append(new_image)
         
         return numpy.array(new_images)
