@@ -19,7 +19,7 @@ def train():
     from src.model.tiny_yolo import TinyYolo
     
     tiny_yolo = TinyYolo(
-        n_channel=3, n_classes=1, image_size=256, max_objects_per_image=20,
+        n_channel=3, n_classes=1, image_size=224, max_objects_per_image=20,
         cell_size=7, box_per_cell=5, object_scala=10, nobject_scala=3,
         coord_scala=10, class_scala=1, batch_size=32, nobject_thresh=0.6,
         recall_thresh=0.5)
@@ -28,7 +28,7 @@ def train():
     
     image_processor = ImageProcessor(
         os.path.join(maindir, 'data', 'table-v1'),
-        image_size=256, max_objects_per_image=20, cell_size=7, n_classes=1)
+        image_size=224, max_objects_per_image=20, cell_size=7, n_classes=1)
     print('Processing Images finished!\n')
     sys.stdout.flush()
     
