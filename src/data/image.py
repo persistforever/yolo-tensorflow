@@ -329,15 +329,14 @@ class ImageProcessor:
         return batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
             batch_object_masks, batch_nobject_masks, batch_object_nums
         
-    def data_augmentation(self, images, mode='train', flip=False, 
-                          crop=False, crop_shape=(24,24,3), whiten=False, 
+    def data_augmentation(self, images, 
+                          flip=False, 
+                          crop=False, padding=20, 
+                          whiten=False, 
                           noise=False, noise_mean=0, noise_std=0.01):
         # 图像切割
         if crop:
-            if mode == 'train':
-                images = self._image_crop(images, shape=crop_shape)
-            elif mode == 'test':
-                images = self._image_crop_test(images, shape=crop_shape)
+                images = self._image_crop(images, padding=padding)
         # 图像翻转
         if flip:
             images = self._image_flip(images)
@@ -350,23 +349,25 @@ class ImageProcessor:
             
         return images
     
-    def _image_crop(self, images, shape):
+    def _image_crop(self, images, padding=20):
         # 图像切割
         new_images = []
         for i in range(images.shape[0]):
             old_image = images[i,:,:,:]
-            left = numpy.random.randint(old_image.shape[0] - shape[0] + 1)
-            top = numpy.random.randint(old_image.shape[1] - shape[1] + 1)
-            new_image = old_image[left: left+shape[0], top: top+shape[1], :]
+            old_image = tf.pad(old_image, [[padding, padding], [padding, padding], [0, 0]])
+            left = numpy.random.randint(int(padding*2))
+            top = numpy.random.randint(int(padding*2))
+            new_image = old_image[left: left+int(padding*2), top: top+int(padding*2), :]
             new_images.append(new_image)
         
         return numpy.array(new_images)
     
-    def _image_crop_test(self, images, shape):
+    def _image_crop_test(self, images, padding=20):
         # 图像切割
         new_images = []
         for i in range(images.shape[0]):
             old_image = images[i,:,:,:]
+            old_image = tf.pad(old_image, [[padding, padding], [padding, padding], [0, 0]])
             left = int((old_image.shape[0] - shape[0]) / 2)
             top = int((old_image.shape[1] - shape[1]) / 2)
             new_image = old_image[left: left+shape[0], top: top+shape[1], :]

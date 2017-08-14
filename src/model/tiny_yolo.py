@@ -73,63 +73,63 @@ class TinyYolo():
         tf.add_to_collection('losses', self.object_loss)
         tf.add_to_collection('losses', self.nobject_loss)
         self.avg_loss = tf.add_n(tf.get_collection('losses'))
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=1e-5).minimize(self.avg_loss)
+        self.optimizer = tf.train.AdamOptimizer(learning_rate=1e-3).minimize(self.avg_loss)
         
     def inference(self, images):
         # 网络结构
         conv_layer1 = ConvLayer(
             input_shape=(self.batch_size, self.image_size, self.image_size, self.n_channel), 
             n_size=3, n_filter=16, stride=1, activation='leaky_relu', 
-            batch_normal=True, weight_decay=5e-5, name='conv1')
+            batch_normal=True, weight_decay=5e-4, name='conv1')
         pool_layer1 = PoolLayer(
             n_size=2, stride=2, mode='max', resp_normal=True, name='pool1')
         
         conv_layer2 = ConvLayer(
             input_shape=(self.batch_size, int(self.image_size/2), int(self.image_size/2), 16), 
             n_size=3, n_filter=32, stride=1, activation='leaky_relu',
-            batch_normal=True, weight_decay=5e-5, name='conv2')
+            batch_normal=True, weight_decay=5e-4, name='conv2')
         pool_layer2 = PoolLayer(
             n_size=2, stride=2, mode='max', resp_normal=True, name='pool2')
         
         conv_layer3 = ConvLayer(
             input_shape=(self.batch_size, int(self.image_size/4), int(self.image_size/4), 32),
             n_size=3, n_filter=64, stride=1, activation='leaky_relu', 
-            batch_normal=True, weight_decay=5e-5, name='conv3')
+            batch_normal=True, weight_decay=5e-4, name='conv3')
         pool_layer3 = PoolLayer(
             n_size=2, stride=2, mode='max', resp_normal=True, name='pool3')
         
         conv_layer4 = ConvLayer(
             input_shape=(self.batch_size, int(self.image_size/8), int(self.image_size/8), 64),
             n_size=3, n_filter=128, stride=1, activation='leaky_relu', 
-            batch_normal=True, weight_decay=5e-5, name='conv4')
+            batch_normal=True, weight_decay=5e-4, name='conv4')
         pool_layer4 = PoolLayer(
             n_size=2, stride=2, mode='max', resp_normal=True, name='pool4')
         
         conv_layer5 = ConvLayer(
             input_shape=(self.batch_size, int(self.image_size/16), int(self.image_size/16), 128),
             n_size=3, n_filter=256, stride=1, activation='leaky_relu', 
-            batch_normal=True, weight_decay=5e-5, name='conv5')
+            batch_normal=True, weight_decay=5e-4, name='conv5')
         pool_layer5 = PoolLayer(
             n_size=2, stride=2, mode='max', resp_normal=True, name='pool5')
         
         conv_layer6 = ConvLayer(
             input_shape=(self.batch_size, int(self.image_size/32), int(self.image_size/32), 256),
             n_size=3, n_filter=512, stride=1, activation='leaky_relu', 
-            batch_normal=True, weight_decay=5e-5, name='conv6')
+            batch_normal=True, weight_decay=5e-4, name='conv6')
         conv_layer7 = ConvLayer(
             input_shape=(self.batch_size, int(self.image_size/32), int(self.image_size/32), 512),
             n_size=3, n_filter=1024, stride=1, activation='leaky_relu', 
-            batch_normal=True, weight_decay=5e-5, name='conv7')
+            batch_normal=True, weight_decay=5e-4, name='conv7')
         conv_layer8 = ConvLayer(
             input_shape=(self.batch_size, int(self.image_size/32), int(self.image_size/32), 1024),
             n_size=3, n_filter=1024, stride=1, activation='leaky_relu', 
-            batch_normal=True, weight_decay=5e-5, name='conv8')
+            batch_normal=True, weight_decay=5e-4, name='conv8')
         
         dense_layer1 = DenseLayer(
             input_shape=(self.batch_size, int(self.image_size/32) * int(self.image_size/32) * 1024), 
             hidden_dim=self.cell_size * self.cell_size * (self.n_classes + self.n_boxes * 5), 
             activation='sigmoid', dropout=False, keep_prob=None,
-            batch_normal=False, weight_decay=5e-5, name='dense1')
+            batch_normal=False, weight_decay=5e-4, name='dense1')
         
         # 数据流
         hidden_conv1 = conv_layer1.get_output(input=images)
@@ -336,8 +336,12 @@ class TinyYolo():
             batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
                 batch_object_masks, _, batch_object_nums = \
                 processor.get_train_batch(batch_size)
+            # 数据增强
+            batch_images = processor.data_augmentation(
+                batch_images, flip=False, 
+                crop=True, padding=20, whiten=True)
             [_, avg_loss, class_l, coord_l, object_l, nobject_l] = self.sess.run(
-                fetches=[self.optimizer, self.avg_loss, 
+                fetches=[self.optimizer, self.avg_loss,
                          self.class_loss, self.coord_loss, self.object_loss, self.nobject_loss], 
                 feed_dict={self.images: batch_images, 
                            self.class_labels: batch_class_labels, 
@@ -387,6 +391,10 @@ class TinyYolo():
                     batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
                         batch_object_masks, _, batch_object_nums = \
                         processor.get_valid_batch(i, batch_size)
+                    # 数据增强
+                    batch_images = processor.data_augmentation(
+                        batch_images, flip=False,
+                        crop=False, padding=20, whiten=True)
                     
                     [avg_loss, iou_value, object_value,
                      nobject_value, recall_value] = self.sess.run(
