@@ -76,78 +76,111 @@ class TinyYolo():
         # 网络结构
         conv_layer1 = ConvLayer(
             input_shape=(self.batch_size, self.image_size, self.image_size, self.n_channel), 
-            n_size=3, n_filter=16, stride=1, activation='leaky_relu', 
+            n_size=7, n_filter=64, stride=2, activation='leaky_relu', 
             batch_normal=True, weight_decay=5e-4, name='conv1')
         pool_layer1 = PoolLayer(
             n_size=2, stride=2, mode='max', resp_normal=True, name='pool1')
         
         conv_layer2 = ConvLayer(
-            input_shape=(self.batch_size, int(self.image_size/2), int(self.image_size/2), 16), 
-            n_size=3, n_filter=32, stride=1, activation='leaky_relu',
+            input_shape=(self.batch_size, int(self.image_size/4), int(self.image_size/4), 64), 
+            n_size=3, n_filter=192, stride=1, activation='leaky_relu',
             batch_normal=True, weight_decay=5e-4, name='conv2')
         pool_layer2 = PoolLayer(
             n_size=2, stride=2, mode='max', resp_normal=True, name='pool2')
         
         conv_layer3 = ConvLayer(
-            input_shape=(self.batch_size, int(self.image_size/4), int(self.image_size/4), 32),
-            n_size=3, n_filter=64, stride=1, activation='leaky_relu', 
+            input_shape=(self.batch_size, int(self.image_size/8), int(self.image_size/8), 192),
+            n_size=1, n_filter=128, stride=1, activation='leaky_relu', 
             batch_normal=True, weight_decay=5e-4, name='conv3')
+        conv_layer4 = ConvLayer(
+            input_shape=(self.batch_size, int(self.image_size/8), int(self.image_size/8), 128),
+            n_size=3, n_filter=256, stride=1, activation='leaky_relu', 
+            batch_normal=True, weight_decay=5e-4, name='conv4')
+        conv_layer5 = ConvLayer(
+            input_shape=(self.batch_size, int(self.image_size/8), int(self.image_size/8), 256),
+            n_size=1, n_filter=128, stride=1, activation='leaky_relu', 
+            batch_normal=True, weight_decay=5e-4, name='conv5')
+        conv_layer6 = ConvLayer(
+            input_shape=(self.batch_size, int(self.image_size/8), int(self.image_size/8), 128),
+            n_size=3, n_filter=256, stride=1, activation='leaky_relu', 
+            batch_normal=True, weight_decay=5e-4, name='conv6')
         pool_layer3 = PoolLayer(
             n_size=2, stride=2, mode='max', resp_normal=True, name='pool3')
         
-        conv_layer4 = ConvLayer(
-            input_shape=(self.batch_size, int(self.image_size/8), int(self.image_size/8), 64),
-            n_size=3, n_filter=128, stride=1, activation='leaky_relu', 
-            batch_normal=True, weight_decay=5e-4, name='conv4')
+        conv_layer7 = ConvLayer(
+            input_shape=(self.batch_size, int(self.image_size/16), int(self.image_size/16), 256),
+            n_size=1, n_filter=256, stride=1, activation='leaky_relu', 
+            batch_normal=True, weight_decay=5e-4, name='conv7')
+        conv_layer8 = ConvLayer(
+            input_shape=(self.batch_size, int(self.image_size/16), int(self.image_size/16), 256),
+            n_size=3, n_filter=512, stride=1, activation='leaky_relu', 
+            batch_normal=True, weight_decay=5e-4, name='conv8')
+        conv_layer9 = ConvLayer(
+            input_shape=(self.batch_size, int(self.image_size/16), int(self.image_size/16), 512),
+            n_size=1, n_filter=512, stride=1, activation='leaky_relu', 
+            batch_normal=True, weight_decay=5e-4, name='conv9')
+        conv_layer10 = ConvLayer(
+            input_shape=(self.batch_size, int(self.image_size/16), int(self.image_size/16), 512),
+            n_size=3, n_filter=1024, stride=1, activation='leaky_relu', 
+            batch_normal=True, weight_decay=5e-4, name='conv10')
         pool_layer4 = PoolLayer(
             n_size=2, stride=2, mode='max', resp_normal=True, name='pool4')
         
-        conv_layer5 = ConvLayer(
-            input_shape=(self.batch_size, int(self.image_size/16), int(self.image_size/16), 128),
-            n_size=3, n_filter=256, stride=1, activation='leaky_relu', 
-            batch_normal=True, weight_decay=5e-4, name='conv5')
-        pool_layer5 = PoolLayer(
-            n_size=2, stride=2, mode='max', resp_normal=True, name='pool5')
-        
-        conv_layer6 = ConvLayer(
-            input_shape=(self.batch_size, int(self.image_size/32), int(self.image_size/32), 256),
-            n_size=3, n_filter=512, stride=1, activation='leaky_relu', 
-            batch_normal=True, weight_decay=5e-4, name='conv6')
-        conv_layer7 = ConvLayer(
+        conv_layer11 = ConvLayer(
+            input_shape=(self.batch_size, int(self.image_size/32), int(self.image_size/32), 1024),
+            n_size=1, n_filter=512, stride=1, activation='leaky_relu', 
+            batch_normal=True, weight_decay=5e-4, name='conv11')
+        conv_layer12 = ConvLayer(
             input_shape=(self.batch_size, int(self.image_size/32), int(self.image_size/32), 512),
             n_size=3, n_filter=1024, stride=1, activation='leaky_relu', 
-            batch_normal=True, weight_decay=5e-4, name='conv7')
-        conv_layer8 = ConvLayer(
+            batch_normal=True, weight_decay=5e-4, name='conv12')
+        conv_layer13 = ConvLayer(
             input_shape=(self.batch_size, int(self.image_size/32), int(self.image_size/32), 1024),
             n_size=3, n_filter=1024, stride=1, activation='leaky_relu', 
-            batch_normal=True, weight_decay=5e-4, name='conv8')
+            batch_normal=True, weight_decay=5e-4, name='conv13')
         
         dense_layer1 = DenseLayer(
             input_shape=(self.batch_size, int(self.image_size/32) * int(self.image_size/32) * 1024), 
+            hidden_dim=4096, 
+            activation='leaky_relu', dropout=True, keep_prob=self.keep_prob,
+            batch_normal=True, weight_decay=5e-4, name='dense1')
+        
+        dense_layer2 = DenseLayer(
+            input_shape=(self.batch_size, 4096), 
             hidden_dim=self.cell_size * self.cell_size * (self.n_classes + self.n_boxes * 5), 
             activation='sigmoid', dropout=False, keep_prob=None,
-            batch_normal=False, weight_decay=5e-4, name='dense1')
+            batch_normal=False, weight_decay=5e-4, name='dense2')
         
         # 数据流
         hidden_conv1 = conv_layer1.get_output(input=images)
         hidden_pool1 = pool_layer1.get_output(input=hidden_conv1)
+        
         hidden_conv2 = conv_layer2.get_output(input=hidden_pool1)
         hidden_pool2 = pool_layer2.get_output(input=hidden_conv2)
+        
         hidden_conv3 = conv_layer3.get_output(input=hidden_pool2)
-        hidden_pool3 = pool_layer3.get_output(input=hidden_conv3)
-        hidden_conv4 = conv_layer4.get_output(input=hidden_pool3)
-        hidden_pool4 = pool_layer4.get_output(input=hidden_conv4)
-        hidden_conv5 = conv_layer5.get_output(input=hidden_pool4)
-        hidden_pool5 = pool_layer5.get_output(input=hidden_conv5)
-        hidden_conv6 = conv_layer6.get_output(input=hidden_pool5)
-        hidden_conv7 = conv_layer7.get_output(input=hidden_conv6)
+        hidden_conv4 = conv_layer4.get_output(input=hidden_conv3)
+        hidden_conv5 = conv_layer5.get_output(input=hidden_conv4)
+        hidden_conv6 = conv_layer6.get_output(input=hidden_conv5)
+        hidden_pool3 = pool_layer3.get_output(input=hidden_conv6)
+        
+        hidden_conv7 = conv_layer7.get_output(input=hidden_pool3)
         hidden_conv8 = conv_layer8.get_output(input=hidden_conv7)
-        input_dense1 = tf.reshape(hidden_conv8, shape=[
+        hidden_conv9 = conv_layer9.get_output(input=hidden_conv8)
+        hidden_conv10 = conv_layer10.get_output(input=hidden_conv9)
+        hidden_pool4 = pool_layer4.get_output(input=hidden_conv10)
+        
+        hidden_conv11 = conv_layer11.get_output(input=hidden_pool4)
+        hidden_conv12 = conv_layer12.get_output(input=hidden_conv11)
+        hidden_conv13 = conv_layer13.get_output(input=hidden_conv12)
+        
+        input_dense1 = tf.reshape(hidden_conv13, shape=[
             -1, int(self.image_size/32) * int(self.image_size/32) * 1024])
-        output = dense_layer1.get_output(input=input_dense1)
+        hidden_dense1 = dense_layer1.get_output(input=input_dense1)
+        logits = dense_layer2.get_output(input=hidden_dense1)
         
         # 网络输出
-        return output
+        return logits
     
     def _loss_one_example_cond(self, num, object_num, batch, coord_loss, object_loss, 
                               nobject_loss, iou_value, object_value, recall_value):
