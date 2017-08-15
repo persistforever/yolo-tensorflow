@@ -187,6 +187,8 @@ class TinyYolo():
         hidden_dense1 = dense_layer1.get_output(input=input_dense1)
         logits = dense_layer2.get_output(input=hidden_dense1)
         
+        print()
+        sys.stdout.flush()
         # 网络输出
         return logits
     
