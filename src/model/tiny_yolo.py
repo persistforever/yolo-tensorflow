@@ -327,7 +327,7 @@ class TinyYolo():
         # 观察值
         iou_value /= tf.reduce_sum(tf.cast(self.object_nums, tf.float32), axis=[0])
         object_value /= tf.reduce_sum(tf.cast(self.object_nums, tf.float32), axis=[0])
-        nobject_value /= self.batch_size
+        nobject_value /= (self.cell_size * self.cell_size * self.n_boxes * self.batch_size)
         recall_value /= tf.reduce_sum(tf.cast(self.object_nums, tf.float32), axis=[0])
         
         return class_loss, coord_loss, object_loss, nobject_loss, \
@@ -361,7 +361,7 @@ class TinyYolo():
         
     def train(self, processor, backup_path, n_iters=500000, batch_size=128):
         # 构建会话
-        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.45)
+        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.95)
         self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
         # 模型保存器
         self.saver = tf.train.Saver(
@@ -467,10 +467,9 @@ class TinyYolo():
                         batch_images, flip=False,
                         crop=False, padding=20, whiten=False)
                     
-                    [avg_loss, iou_value, object_value,
+                    [iou_value, object_value,
                      nobject_value, recall_value] = self.sess.run(
-                        fetches=[self.avg_loss,
-                                 self.iou_value, self.object_value,
+                        fetches=[self.iou_value, self.object_value,
                                  self.nobject_value, self.recall_value],
                         feed_dict={self.images: batch_images, 
                                    self.class_labels: batch_class_labels, 
@@ -479,10 +478,10 @@ class TinyYolo():
                                    self.object_nums: batch_object_nums,
                                    self.keep_prob: 1.0})
                      
-                    valid_iou_value += valid_iou_value * batch_size
-                    valid_object_value += valid_object_value * batch_size
-                    valid_nobject_value += valid_nobject_value * batch_size
-                    valid_recall_value += valid_recall_value * batch_size
+                    valid_iou_value += iou_value * batch_size
+                    valid_object_value += object_value * batch_size
+                    valid_nobject_value += nobject_value * batch_size
+                    valid_recall_value += recall_value * batch_size
                     
                 valid_iou_value /= i
                 valid_object_value /= i

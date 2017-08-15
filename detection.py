@@ -26,8 +26,8 @@ def train():
     print('Constructing Models finished!\n')
     sys.stdout.flush()
     image_processor = ImageProcessor(
-        os.path.join(maindir, 'data', 'dogcat'),
-        image_size=224, max_objects_per_image=30, cell_size=8, n_classes=1)
+        os.path.join(maindir, 'data', 'table-v1'),
+        image_size=224, max_objects_per_image=30, cell_size=7, n_classes=1)
     print('Processing Images finished!\n')
     sys.stdout.flush()
     
