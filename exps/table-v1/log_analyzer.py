@@ -110,7 +110,7 @@ def plot_curve(infos_dict):
 	p1 = plt.plot(infos_dict['train_loss']['iter'], infos_dict['train_loss']['loss'], '.--', color='#66CDAA')
 	plt.grid(True)
 	plt.title('train loss curve')
-	plt.xlabel('# of epoch')
+	plt.xlabel('# of iterations')
 	plt.ylabel('loss')
 	plt.axis([0, 4000, 0, 5])
 
@@ -119,7 +119,7 @@ def plot_curve(infos_dict):
 	# plt.legend((p2[0], p3[0]), ('train_precision', 'valid_precision'))
 	plt.grid(True)
 	plt.title('valid iou curve')
-	plt.xlabel('# of epoch')
+	plt.xlabel('# of iterations')
 	plt.ylabel('accuracy')
 
 	# plt.show()
