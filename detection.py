@@ -23,7 +23,7 @@ def train():
         box_per_cell=5, object_scala=1, nobject_scala=0.5,
         coord_scala=5, class_scala=1, batch_size=64, nobject_thresh=0.6,
         recall_thresh=0.5)
-    print('Constructing Models finished!\n')
+    
     sys.stdout.flush()
     image_processor = ImageProcessor(
         os.path.join(maindir, 'data', 'table-v1'),

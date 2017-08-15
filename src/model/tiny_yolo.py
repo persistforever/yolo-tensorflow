@@ -79,6 +79,8 @@ class TinyYolo():
             n_size=7, n_filter=64, stride=2, activation='leaky_relu', 
             batch_normal=True, weight_decay=5e-4, name='conv1')
         pool_layer1 = PoolLayer(
+            input_shape=(self.batch_size, int(self.image_size/2), 
+                         int(self.image_size/2), 64),
             n_size=2, stride=2, mode='max', resp_normal=True, name='pool1')
         
         conv_layer2 = ConvLayer(
@@ -86,6 +88,7 @@ class TinyYolo():
             n_size=3, n_filter=192, stride=1, activation='leaky_relu',
             batch_normal=True, weight_decay=5e-4, name='conv2')
         pool_layer2 = PoolLayer(
+            input_shape=(self.batch_size, int(self.image_size/4), int(self.image_size/4), 192),
             n_size=2, stride=2, mode='max', resp_normal=True, name='pool2')
         
         conv_layer3 = ConvLayer(
@@ -105,6 +108,7 @@ class TinyYolo():
             n_size=3, n_filter=256, stride=1, activation='leaky_relu', 
             batch_normal=True, weight_decay=5e-4, name='conv6')
         pool_layer3 = PoolLayer(
+            input_shape=(self.batch_size, int(self.image_size/8), int(self.image_size/8), 256),
             n_size=2, stride=2, mode='max', resp_normal=True, name='pool3')
         
         conv_layer7 = ConvLayer(
@@ -124,6 +128,7 @@ class TinyYolo():
             n_size=3, n_filter=1024, stride=1, activation='leaky_relu', 
             batch_normal=True, weight_decay=5e-4, name='conv10')
         pool_layer4 = PoolLayer(
+            input_shape=(self.batch_size, int(self.image_size/16), int(self.image_size/16), 1024),
             n_size=2, stride=2, mode='max', resp_normal=True, name='pool4')
         
         conv_layer11 = ConvLayer(
@@ -140,7 +145,8 @@ class TinyYolo():
             batch_normal=True, weight_decay=5e-4, name='conv13')
         
         dense_layer1 = DenseLayer(
-            input_shape=(self.batch_size, int(self.image_size/32) * int(self.image_size/32) * 1024), 
+            input_shape=(self.batch_size, 
+                         int(self.image_size/32) * int(self.image_size/32) * 1024), 
             hidden_dim=4096, 
             activation='leaky_relu', dropout=True, keep_prob=self.keep_prob,
             batch_normal=True, weight_decay=5e-4, name='dense1')
@@ -152,6 +158,8 @@ class TinyYolo():
             batch_normal=False, weight_decay=5e-4, name='dense2')
         
         # 数据流
+        print('\n%-10s\t%-20s\t%-20s\t%s' % (
+            'Name', 'Filter', 'Input', 'Output'))
         hidden_conv1 = conv_layer1.get_output(input=images)
         hidden_pool1 = pool_layer1.get_output(input=hidden_conv1)
         
