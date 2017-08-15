@@ -65,7 +65,16 @@ class DenseLayer:
             self.output = tf.nn.softmax(self.hidden)
         elif self.activation == 'sigmoid':
             self.output = tf.sigmoid(self.hidden)
+        elif self.activation == 'leaky_relu':
+            self.output = self.leaky_relu(self.hidden)
         elif self.activation == 'none':
             self.output = self.hidden
         
         return self.output
+    
+    def leaky_relu(self, input):
+        hidden = tf.cast(input, dtype=tf.float32)
+        mask = tf.cast((hidden > 0), dtype=tf.float32)
+        output = 1.0 * mask * hidden + 0.1 * (1 - mask) * hidden
+        
+        return output

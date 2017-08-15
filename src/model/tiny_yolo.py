@@ -64,10 +64,10 @@ class TinyYolo():
             self.iou_value, self.object_value, self.nobject_value, self.recall_value = \
             self.loss(self.logits)
         # 目标函数和优化器
-        # tf.add_to_collection('losses', self.class_loss)
+        tf.add_to_collection('losses', self.class_loss)
         tf.add_to_collection('losses', self.coord_loss)
-        # tf.add_to_collection('losses', self.object_loss)
-        # tf.add_to_collection('losses', self.nobject_loss)
+        tf.add_to_collection('losses', self.object_loss)
+        tf.add_to_collection('losses', self.nobject_loss)
         self.avg_loss = tf.add_n(tf.get_collection('losses'))
         self.optimizer = tf.train.MomentumOptimizer(
             learning_rate=1e-3, momentum=0.9).minimize(self.avg_loss)
@@ -117,18 +117,16 @@ class TinyYolo():
             input_shape=(self.batch_size, int(self.image_size/32), int(self.image_size/32), 512),
             n_size=3, n_filter=1024, stride=1, activation='leaky_relu', 
             batch_normal=True, weight_decay=5e-4, name='conv7')
+        conv_layer8 = ConvLayer(
+            input_shape=(self.batch_size, int(self.image_size/32), int(self.image_size/32), 1024),
+            n_size=3, n_filter=1024, stride=1, activation='leaky_relu', 
+            batch_normal=True, weight_decay=5e-4, name='conv8')
         
         dense_layer1 = DenseLayer(
             input_shape=(self.batch_size, int(self.image_size/32) * int(self.image_size/32) * 1024), 
-            hidden_dim=1024, 
-            activation='leaky_relu', dropout=True, keep_prob=self.keep_prob,
-            batch_normal=True, weight_decay=5e-4, name='dense1')
-        
-        dense_layer2 = DenseLayer(
-            input_shape=(self.batch_size, int(self.image_size/32) * int(self.image_size/32) * 1024), 
             hidden_dim=self.cell_size * self.cell_size * (self.n_classes + self.n_boxes * 5), 
             activation='sigmoid', dropout=False, keep_prob=None,
-            batch_normal=False, weight_decay=5e-4, name='dense2')
+            batch_normal=False, weight_decay=5e-4, name='dense1')
         
         # 数据流
         hidden_conv1 = conv_layer1.get_output(input=images)
@@ -340,23 +338,31 @@ class TinyYolo():
         self.sess.run(tf.global_variables_initializer())
                 
         # 模型训练
-        process_images, train_loss = 0, 0.0
-        class_loss, coord_loss, object_loss, nobject_loss = 0.0, 0.0, 0.0, 0.0
+        process_images = 0
+        train_avg_loss, train_class_loss, train_coord_loss, \
+            train_object_loss, train_nobject_loss = 0.0, 0.0, 0.0, 0.0, 0.0
+        train_iou_value, train_object_value, \
+            train_nobject_value, train_recall_value = 0.0, 0.0, 0.0, 0.0 
+        
         for n_iter in range(1, n_iters+1):
-            # 训练一个batch
+            # 训练一个batch，计算从准备数据到训练结束的时间
             start_time = time.time()
             
+            # 获取数据并进行数据增强
             batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
                 batch_object_nums = \
                 processor.get_train_batch(batch_size)
-            # 数据增强
             batch_images = processor.data_augmentation(
                 batch_images, flip=False, 
-                crop=True, padding=20, whiten=False)
+                crop=False, padding=20, whiten=False)
             
-            [_, avg_loss, class_l, coord_l, object_l, nobject_l] = self.sess.run(
+            [_, avg_loss, class_loss, coord_loss, object_loss, nobject_loss,
+             iou_value, object_value, nobject_value, recall_value] = self.sess.run(
                 fetches=[self.optimizer, self.avg_loss,
-                         self.class_loss, self.coord_loss, self.object_loss, self.nobject_loss], 
+                         self.class_loss, self.coord_loss,
+                         self.object_loss, self.nobject_loss,
+                         self.iou_value, self.object_value,
+                         self.nobject_value, self.recall_value], 
                 feed_dict={self.images: batch_images, 
                            self.class_labels: batch_class_labels, 
                            self.class_masks: batch_class_masks,
@@ -366,45 +372,64 @@ class TinyYolo():
                 
             end_time = time.time()
             
-            train_loss += avg_loss
-            class_loss += class_l
-            coord_loss += coord_l
-            object_loss += object_l
-            nobject_loss += nobject_l
+            train_avg_loss += avg_loss
+            train_class_loss += class_loss
+            train_coord_loss += coord_loss
+            train_object_loss += object_loss
+            train_nobject_loss += nobject_loss
+            train_iou_value += iou_value
+            train_object_value += object_value
+            train_nobject_value += nobject_value
+            train_recall_value += recall_value
             
-            process_images += batch_images.shape[0]
-            speed = 1.0 * batch_images.shape[0] / (end_time - start_time)
+            process_images += batch_size
+            speed = 1.0 * batch_size / (end_time - start_time)
                 
             # 每10轮训练观测一次train_loss
             if n_iter % 10 == 0:
-                train_loss /= 10
-                class_loss /= 10
-                coord_loss /= 10
-                object_loss /= 10
-                nobject_loss /= 10
+                train_avg_loss /= 10
+                train_class_loss /= 10
+                train_coord_loss /= 10
+                train_object_loss /= 10
+                train_nobject_loss /= 10
                 
-                print('iter[%d], train loss: %.8f, class_loss: %.8f, coord_loss: %.8f, '
-                      'object_loss: %.8f, nobject_loss: %.8f, image_nums: %d, '
+                print('{TRAIN} iter[%d], train loss: %.6f, class_loss: %.6f, coord_loss: %.6f, '
+                      'object_loss: %.6f, nobject_loss: %.6f, image_nums: %d, '
                       'speed: %.2f images/s' % (
-                    n_iter, train_loss, class_loss, coord_loss, object_loss, nobject_loss, 
-                    process_images, speed))
+                    n_iter, train_avg_loss, train_class_loss, train_coord_loss, 
+                    train_object_loss, train_nobject_loss, process_images, speed))
                 sys.stdout.flush()
                 
-                train_loss = 0.0
-                class_loss = 0.0
-                coord_loss = 0.0
-                object_loss = 0.0
-                nobject_loss = 0.0
+                train_avg_loss, train_class_loss, train_coord_loss, \
+                    train_object_loss, train_nobject_loss = 0.0, 0.0, 0.0, 0.0, 0.0
             
-            # 每100轮观测一次验证集损失值和准确率
+            # 每50轮观测一次训练集evaluation
+            if n_iter % 50 == 0:
+                train_iou_value /= 50
+                train_object_value /= 50
+                train_nobject_value /= 50
+                train_recall_value /= 50
+                
+                print('{TRAIN} iter[%d], iou: %.6f, object: %.6f, '
+                      'nobject: %.6f, recall: %.6f' % (
+                    n_iter, train_iou_value, train_object_value, 
+                    train_nobject_value, train_recall_value))
+                sys.stdout.flush()
+                
+                train_iou_value, train_object_value, \
+                    train_nobject_value, train_recall_value = 0.0, 0.0, 0.0, 0.0 
+            
+            # 每100轮观测一次验证集evaluation
             if n_iter % 100 == 0:
-                valid_loss, valid_iou, valid_object, valid_nobject, \
-                    valid_nobject, valid_recall = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+                valid_iou_value, valid_object_value, \
+                    valid_nobject_value, valid_recall_value = 0.0, 0.0, 0.0, 0.0 
+                
                 for i in range(0, processor.n_valid-batch_size, batch_size):
+                    
+                    # 获取数据并进行数据增强
                     batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
                         batch_object_nums = \
                         processor.get_valid_batch(i, batch_size)
-                    # 数据增强
                     batch_images = processor.data_augmentation(
                         batch_images, flip=False,
                         crop=False, padding=20, whiten=False)
@@ -420,24 +445,24 @@ class TinyYolo():
                                    self.box_labels: batch_box_labels,
                                    self.object_nums: batch_object_nums,
                                    self.keep_prob: 1.0})
-                    valid_loss += avg_loss
-                    valid_iou += iou_value
-                    valid_object += object_value
-                    valid_nobject += nobject_value
-                    valid_recall += recall_value
+                     
+                    valid_iou_value += valid_iou_value * batch_size
+                    valid_object_value += valid_object_value * batch_size
+                    valid_nobject_value += valid_nobject_value * batch_size
+                    valid_recall_value += valid_recall_value * batch_size
                     
-                valid_loss /= i
-                valid_iou /= i
-                valid_object /= i
-                valid_nobject /= i
-                valid_recall /= i
+                valid_iou_value /= i
+                valid_object_value /= i
+                valid_nobject_value /= i
+                valid_recall_value /= i
                 
-                print('iter[%d], valid: iou: %.8f, object: %.8f, nobject: %.8f, '
-                      'recall: %.8f' % (
-                    n_iter, valid_iou, valid_object, valid_nobject, valid_recall))
+                print('{VALID} iter[%d], valid: iou: %.8f, object: %.8f, '
+                      'nobject: %.8f, recall: %.8f' % (
+                    n_iter, valid_iou_value, valid_object_value, 
+                    valid_nobject_value, valid_recall_value))
                 sys.stdout.flush()
             
-            # 每500轮保存一次模型
+            # 每1000轮保存一次模型
             if n_iter % 1000 == 0:
                 saver_path = self.saver.save(
                     self.sess, os.path.join(backup_path, 'model_%d.ckpt' % (n_iter)))

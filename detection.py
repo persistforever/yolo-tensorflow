@@ -19,21 +19,21 @@ def train():
     from src.model.tiny_yolo import TinyYolo
     
     tiny_yolo = TinyYolo(
-        n_channel=3, n_classes=1, image_size=256, max_objects_per_image=20,
+        n_channel=3, n_classes=1, image_size=256, max_objects_per_image=5,
         box_per_cell=5, object_scala=5, nobject_scala=0.5,
-        coord_scala=5, class_scala=1, batch_size=32, nobject_thresh=0.6,
+        coord_scala=5, class_scala=1, batch_size=2, nobject_thresh=0.6,
         recall_thresh=0.5)
     print('Constructing Models finished!\n')
     sys.stdout.flush()
     image_processor = ImageProcessor(
-        os.path.join(maindir, 'data', 'table-v1'),
-        image_size=256, max_objects_per_image=20, cell_size=8, n_classes=1)
+        os.path.join(maindir, 'data', 'dogcat'),
+        image_size=256, max_objects_per_image=5, cell_size=8, n_classes=1)
     print('Processing Images finished!\n')
     sys.stdout.flush()
     
     tiny_yolo.train(
         processor=image_processor, backup_path=os.path.join(maindir, 'backup', 'table-v1'),
-        n_iters=500000, batch_size=32)
+        n_iters=500000, batch_size=2)
     
 def uint_test():
     from src.model.test.tiny_yolo_test import TinyYoloTestor
