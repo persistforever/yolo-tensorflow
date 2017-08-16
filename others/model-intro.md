@@ -66,3 +66,17 @@ yolo-v1中提出的19层卷积网络，网络的结构如下表。
 验证过程观测这些信息：iou、object、nobject、recall。
 
 训练和验证曲线如下。
+
+
+
+# table-v2
+
+数据预处理不进行改进
+
+## 1. 网络结构
+
+根据yolo-v2中提出的dimension clusters和direct location prediction进行改进。
+
+### dimension clusters
+
+对所有训练集中的box进行聚类，以（1 - 和质心box的iou值）做为距离进行聚类，聚类中心分别设置为1~15，每次聚类迭代50轮，并且计算每个box到距离其最近的质心的iou值作为聚类评估指标，绘制如下的折线图。
