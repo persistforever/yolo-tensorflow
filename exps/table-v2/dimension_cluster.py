@@ -121,16 +121,17 @@ def clustering(box_lists, n_centroid=5, n_iters=1000):
                 centroids[i,:] = numpy.mean(points, axis=0)
 
 def plot_curve():
-    ious = [0.3384, 0.4402, 0.4971, 0.5248, 0.5700, 0.5946, 0.6122, 0.6232]
+    ious = [0.1906, 0.3357, 0.4385, 0.4948, 0.5223, 0.5687, 0.5924, 0.6108, 0.62260, 0.6333, 0.6482, 0.6563, 0.6661, 0.6659, 0.6791]
 
-    fig = plt.figure(figsize=(10, 5))
+    fig = plt.figure(figsize=(10, 8))
 
-    p1 = plt.plot(range(1,16), ious, '.--', color='#66CDAA')
+    p1 = plt.plot(range(1,16), ious, 'o-', color='#66CDAA', markersize=10.0, linewidth=2.0)
     plt.grid(True)
-    plt.title('demension clustering')
+    plt.title('Dimension Clusters')
     plt.xlabel('# of clusters')
     plt.ylabel('average IOU')
-    plt.show()
+    # plt.show()
+    plt.savefig('E:\\Github\\table-detection\\exps\\table-v2\\cluster.png', dpi=72, format='png')
 
 """
 box_lists = read_box(maindir)
