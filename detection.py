@@ -32,8 +32,9 @@ def train():
     sys.stdout.flush()
     
     tiny_yolo.train(
-        processor=image_processor, backup_path=os.path.join(maindir, 'backup', 'table-v1'),
+        processor=image_processor, backup_path=os.path.join(maindir, 'backup', 'table-v2'),
         n_iters=500000, batch_size=64)
+    
     
 def uint_test():
     from src.model.test.tiny_yolo_test import TinyYoloTestor

@@ -57,20 +57,33 @@ class TinyYolo():
             name='object_nums')
         self.keep_prob = tf.placeholder(
             dtype=tf.float32, name='keep_prob')
+        self.global_step = tf.Variable(
+            0, dtype=tf.int32, name='global_step')
         
         # 待输出的中间变量
         self.logits = self.inference(self.images)
         self.class_loss, self.coord_loss, self.object_loss, self.nobject_loss, \
             self.iou_value, self.object_value, self.nobject_value, self.recall_value = \
             self.loss(self.logits)
+            
         # 目标函数和优化器
         tf.add_to_collection('losses', self.class_loss)
         tf.add_to_collection('losses', self.coord_loss)
         tf.add_to_collection('losses', self.object_loss)
         tf.add_to_collection('losses', self.nobject_loss)
         self.avg_loss = tf.add_n(tf.get_collection('losses'))
+        
+        # 设置学习率
+        lr = tf.cond(tf.less(self.global_step, 100), 
+                     lambda: tf.constant(0.001),
+                     lambda: tf.cond(tf.less(self.global_step, 8000),
+                                     lambda: tf.constant(0.01),
+                                     lambda: tf.cond(tf.less(self.global_step, 100000),
+                                                     lambda: tf.constant(0.001),
+                                                     lambda: tf.constant(0.0001))))
         self.optimizer = tf.train.MomentumOptimizer(
-            learning_rate=1e-3, momentum=0.9).minimize(self.avg_loss)
+            learning_rate=lr, momentum=0.9).minimize(
+                self.avg_loss, global_step=self.global_step)
         
     def inference(self, images):
         # 网络结构
@@ -396,8 +409,8 @@ class TinyYolo():
                 batch_object_nums = \
                 processor.get_train_batch(batch_size)
             batch_images = processor.data_augmentation(
-                batch_images, flip=False, 
-                crop=False, padding=20, whiten=False)
+                batch_images, flip=True, 
+                crop=False, padding=20, whiten=True)
             
             [_, avg_loss, class_loss, coord_loss, object_loss, nobject_loss,
              iou_value, object_value, nobject_value, recall_value] = self.sess.run(
@@ -475,7 +488,7 @@ class TinyYolo():
                         processor.get_valid_batch(i, batch_size)
                     batch_images = processor.data_augmentation(
                         batch_images, flip=False,
-                        crop=False, padding=20, whiten=False)
+                        crop=False, padding=20, whiten=True)
                     
                     [iou_value, object_value,
                      nobject_value, recall_value] = self.sess.run(

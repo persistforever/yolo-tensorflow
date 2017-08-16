@@ -112,7 +112,8 @@ def plot_curve(infos_dict):
 	plt.title('train loss curve')
 	plt.xlabel('# of iterations')
 	plt.ylabel('loss')
-	plt.axis([0, 4000, 0, 5])
+	plt.xlim(xmin=0)
+	plt.ylim(ymin=0, ymax=5)
 
 	plt.subplot(122)
 	p1 = plt.plot(infos_dict['valid']['iter'], infos_dict['valid']['iou'], '.--', color='#66CDAA')
@@ -121,11 +122,12 @@ def plot_curve(infos_dict):
 	plt.title('valid iou curve')
 	plt.xlabel('# of iterations')
 	plt.ylabel('accuracy')
+	plt.xlim(xmin=0)
 
-	# plt.show()
-	plt.savefig('E:\\Github\\table-detection\\exps\\table-v1\\table-v1.png', dpi=72, format='png')
+	plt.show()
+ 	# plt.savefig('E:\\Github\\table-detection\\exps\\table-v1\\table-v1.png', dpi=72, format='png')
 
 
 infos_dict = load_log('E:\\Github\\table-detection\\exps\\table-v1\\table-v1.txt')
-infos_dict = curve_smooth(infos_dict, batch_size=1)
+infos_dict = curve_smooth(infos_dict, batch_size=10)
 plot_curve(infos_dict)
