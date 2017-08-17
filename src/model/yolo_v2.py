@@ -167,7 +167,7 @@ class TinyYolo():
         dense_layer2 = DenseLayer(
             input_shape=(self.batch_size, 4096), 
             hidden_dim=self.cell_size * self.cell_size * (self.n_classes + self.n_boxes * 5), 
-            activation='sigmoid', dropout=False, keep_prob=None,
+            activation='none', dropout=False, keep_prob=None,
             batch_normal=False, weight_decay=5e-4, name='dense2')
         
         # 数据流
@@ -205,6 +205,35 @@ class TinyYolo():
         # 网络输出
         return logits
     
+    def _get_box_pred(self, box_pred):
+        # 计算bx
+        offset_x = tf.reshape(tf.range(0, self.cell_size), shape=(1, self.cell_size, 1, 1))
+        offset_x = tf.tile(offset_x, (self.cell_size, 1, self.n_boxes, 1))
+        offset_x = tf.cast(offset_x, dtype=tf.float32) / self.cell_size
+        x_pred = tf.sigmoid(box_pred[:,:,:,0:1]) + offset_x
+        
+        # 计算by
+        offset_y = tf.reshape(tf.range(0, self.cell_size), shape=(self.cell_size, 1, 1, 1))
+        offset_y = tf.tile(offset_y, (1, self.cell_size, self.n_boxes, 1))
+        offset_y = tf.cast(offset_y, dtype=tf.float32) / self.cell_size
+        y_pred = tf.sigmoid(box_pred[:,:,:,1:2]) + offset_y
+        
+        # 计算pw
+        prior_w = tf.cast([0.495, 0.495, 0.495, 0.5, 0.495, 0.495], dtype=tf.float32)
+        prior_w = tf.reshape(prior_w, shape=(1, 1, self.n_boxes, 1))
+        prior_w = tf.tile(prior_w, (self.cell_size, self.cell_size, 1, 1))
+        w_pred = prior_w * tf.exp(box_pred[:,:,:,2:3])
+        
+        # 计算ph
+        prior_h = tf.cast([0.06, 0.115, 0.085, 0.325, 0.11, 0.055], dtype=tf.float32)
+        prior_h = tf.reshape(prior_h, shape=(1, 1, self.n_boxes, 1))
+        prior_h = tf.tile(prior_h, (self.cell_size, self.cell_size, 1, 1))
+        h_pred = prior_h * tf.exp(box_pred[:,:,:,3:4])
+        
+        box_pred = tf.concat([x_pred, y_pred, w_pred, h_pred], axis=3)
+        
+        return box_pred
+    
     def _loss_one_example_cond(self, num, object_num, batch, coord_loss, object_loss, 
                               nobject_loss, iou_value, object_value, recall_value):
         
@@ -232,8 +261,11 @@ class TinyYolo():
                            [0, self.n_boxes-1], [0, 0]], dtype=tf.int32)
         box_label = tf.pad(box_label, paddings=padding, mode='CONSTANT')
         
+        box_pred = self._get_box_pred(self.box_preds[batch,:,:,:,0:4])
+        confidence_pred = tf.nn.sigmoid(self.box_preds[batch,:,:,:,4:])
+        
         # 计算iou_matrix，表示每个cell中，每个box与这个cell中真实物体的iou值
-        iou_matrix = self.iou(self.box_preds[batch,:,:,:,0:4], box_label)
+        iou_matrix = self.iou(box_pred, box_label)
         iou_matrix_max = tf.reduce_max(iou_matrix, 2, keep_dims=True)
         iou_matrix_mask = tf.cast(
             (iou_matrix >= iou_matrix_max), dtype=tf.float32) * object_mask
@@ -245,7 +277,7 @@ class TinyYolo():
         nobject_label = tf.zeros(
             shape=(self.cell_size, self.cell_size, self.n_boxes, 1),
             dtype=tf.float32)
-        nobject_pred = self.box_preds[batch,:,:,:,4:]
+        nobject_pred = confidence_pred
         nobject_loss += tf.nn.l2_loss(
             (nobject_pred - nobject_label) * nobject_mask)
         
@@ -254,7 +286,7 @@ class TinyYolo():
         # 每一个cell中，有object，并且iou最大的那个box的object_label为iou，其余为0，
         # object_label尺寸为(cell_size, cell_size, n_box, 1)
         object_label = iou_matrix
-        object_pred = self.box_preds[batch,:,:,:,4:]
+        object_pred = confidence_pred
         object_loss += tf.nn.l2_loss(
             (object_pred - object_label) * iou_matrix_mask)
         
@@ -263,7 +295,7 @@ class TinyYolo():
         # 每一个cell中，有object，并且iou最大的那个box的coord_label为真实的label，其余为0，
         # coord_label尺寸为(cell_size, cell_size, n_box, 1)
         coord_label = box_label
-        coord_pred = self.box_preds[batch,:,:,:,0:4]
+        coord_pred = box_pred
         coord_loss += tf.nn.l2_loss(
             (coord_pred[:,:,:,0:2] - coord_label[:,:,:,0:2]) * iou_matrix_mask)
         coord_loss += tf.nn.l2_loss(
@@ -278,7 +310,7 @@ class TinyYolo():
         # 计算object_value
         # 每一个cell中，有object，并且iou最大的那个对应的box_pred中的confidence
         object_value += tf.reduce_sum(
-            self.box_preds[batch,:,:,:,4:] * iou_matrix_mask, axis=[0,1,2,3])
+            confidence_pred * iou_matrix_mask, axis=[0,1,2,3])
             
         # 计算recall_value
         # 每一个cell中，有object，并且iou最大的哪个对应的iou如果大于recall_thresh，则加1
@@ -389,7 +421,7 @@ class TinyYolo():
         # 模型保存器
         self.saver = tf.train.Saver(
             var_list=tf.global_variables(), write_version=tf.train.SaverDef.V2, 
-            max_to_keep=5)
+            max_to_keep=1)
         # 模型初始化
         self.sess.run(tf.global_variables_initializer())
                 
@@ -520,7 +552,7 @@ class TinyYolo():
             # 每1000轮保存一次模型
             if n_iter % 1000 == 0:
                 saver_path = self.saver.save(
-                    self.sess, os.path.join(backup_path, 'model_%d.ckpt' % (n_iter)))
+                    self.sess, os.path.join(backup_path, 'model.ckpt'))
                 
         self.sess.close()
                 

@@ -16,11 +16,11 @@ elif 'Linux' in platform.platform():
 
 def train():
     from src.data.image import ImageProcessor
-    from src.model.yolo_v1 import TinyYolo
+    from src.model.yolo_v2 import TinyYolo
     
     tiny_yolo = TinyYolo(
         n_channel=3, n_classes=1, image_size=224, max_objects_per_image=30,
-        box_per_cell=5, object_scala=1, nobject_scala=0.5,
+        box_per_cell=6, object_scala=1, nobject_scala=0.5,
         coord_scala=5, class_scala=1, batch_size=64, nobject_thresh=0.6,
         recall_thresh=0.5)
     
