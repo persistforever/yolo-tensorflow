@@ -218,18 +218,18 @@ class TinyYolo():
         y_pred = tf.sigmoid(box_pred[:,:,:,1:2]) + offset_y
         
         # 计算pw
-        prior_w = tf.cast([0.73, 0.73, 0.71, 0.76, 0.73, 0.73], dtype=tf.float32)
+        prior_w = tf.constant([0.73, 0.73, 0.71, 0.76, 0.73, 0.73], dtype=tf.float32)
         prior_w = tf.reshape(prior_w, shape=(1, 1, self.n_boxes, 1))
         prior_w = tf.tile(prior_w, (self.cell_size, self.cell_size, 1, 1))
         w_pred = prior_w * tf.exp(box_pred[:,:,:,2:3])
         
         # 计算ph
-        prior_h = tf.cast([0.12, 0.23, 0.17, 0.65, 0.22, 0.11], dtype=tf.float32)
+        prior_h = tf.constant([0.12, 0.23, 0.17, 0.65, 0.22, 0.11], dtype=tf.float32)
         prior_h = tf.reshape(prior_h, shape=(1, 1, self.n_boxes, 1))
         prior_h = tf.tile(prior_h, (self.cell_size, self.cell_size, 1, 1))
         h_pred = prior_h * tf.exp(box_pred[:,:,:,3:4])
         
-        box_pred = tf.concat([x_pred, y_pred, w_pred, h_pred], axis=3)
+        box_pred = tf.sigmoid(tf.concat([x_pred, y_pred, w_pred, h_pred], axis=3))
         
         return box_pred
     
