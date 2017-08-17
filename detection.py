@@ -43,4 +43,4 @@ def uint_test():
     testor.test_get_box_pred()
     
 
-train()
+uint_test()

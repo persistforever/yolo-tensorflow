@@ -55,12 +55,9 @@ class TinyYolo():
         self.object_nums = tf.placeholder(
             dtype=tf.int32, shape=[self.batch_size, ],
             name='object_nums')
-        self.keep_prob = tf.placeholder(
-            dtype=tf.float32, name='keep_prob')
-        self.global_step = tf.Variable(
-            0, dtype=tf.int32, name='global_step')
-        self.net_seen = tf.Variable(
-            0, dtype=tf.int32, name='net_seen')
+        self.keep_prob = tf.placeholder(dtype=tf.float32, name='keep_prob')
+        
+        self.global_step = tf.Variable(0, dtype=tf.int32, name='global_step')
         
         # 待输出的中间变量
         self.logits = self.inference(self.images)
@@ -332,7 +329,7 @@ class TinyYolo():
         object_coord_loss += tf.nn.l2_loss(
             (tf.sqrt(coord_pred[:,:,:,2:4]) - tf.sqrt(coord_label[:,:,:,2:4])) * \
             iou_matrix_mask)
-        coord_loss += tf.cond(tf.less(self.net_seen, 12800),
+        coord_loss += tf.cond(tf.less(self.global_step, 200),
                               lambda: object_nobject_coord_loss,
                               lambda: object_coord_loss)
         
@@ -350,8 +347,7 @@ class TinyYolo():
         # 每一个cell中，有object，并且iou最大的哪个对应的iou如果大于recall_thresh，则加1
         recall_mask = tf.cast(
             (iou_matrix * iou_matrix_mask > self.recall_thresh), dtype=tf.float32)
-        recall_value += tf.reduce_sum(
-                recall_mask, axis=[0,1,2,3])
+        recall_value += tf.reduce_sum(recall_mask, axis=[0,1,2,3])
         num += 1
         
         return num, object_num, batch, coord_loss, object_loss, \
@@ -418,8 +414,6 @@ class TinyYolo():
         object_value /= tf.reduce_sum(tf.cast(self.object_nums, tf.float32), axis=[0])
         nobject_value /= (self.cell_size * self.cell_size * self.n_boxes * self.batch_size)
         recall_value /= tf.reduce_sum(tf.cast(self.object_nums, tf.float32), axis=[0])
-        # 计算net_seen
-        self.net_seen += self.batch_size
         
         return class_loss, coord_loss, object_loss, nobject_loss, \
             iou_value, object_value, nobject_value, recall_value

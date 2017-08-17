@@ -22,7 +22,7 @@ class TinyYoloTestor:
         label[2] = [0.5, 0.9, 0.6, 0.1, 1]
         
         pred = numpy.zeros(shape=(3,3,6,5)) 
-        pred[1,0,4,:] = [-1.6, -1.73, 0.09, -0.09, 1.0]
+        pred[0,1,4,:] = [-1.6, -1.73, 0.09, -0.09, 1.0]
         # pred[1,0,4,:] = [0.0, 0.0, 0.0, 0.0, 1.0]
         
         image_processor = ImageProcessor(
