@@ -243,8 +243,8 @@ class ImageProcessor:
                         _class_label = numpy.zeros(
                             shape=[self.n_classes,], dtype='int32')
                         _class_label[int(class_index)-1] = 1
-                        class_label[x, y, :] = _class_label
-                        class_mask[x, y] = 1.0
+                        class_label[y, x, :] = _class_label
+                        class_mask[y, x] = 1.0
                 
                 # object_num增加
                 object_num += 1

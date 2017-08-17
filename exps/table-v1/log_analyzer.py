@@ -103,13 +103,14 @@ def curve_smooth(infos_dict, batch_size=1):
 	return new_infos_dict
 	
 
-def plot_curve(infos_dict1, infos_dict2, infos_dict3):
+def plot_curve(infos_dict1, infos_dict2, infos_dict3, infos_dict4):
 	fig = plt.figure(figsize=(10, 5))
 
 	plt.subplot(121)
 	p1 = plt.plot(infos_dict1['train_loss']['iter'], infos_dict1['train_loss']['loss'], '.--', color='#66CDAA')
 	p1 = plt.plot(infos_dict2['train_loss']['iter'], infos_dict2['train_loss']['loss'], '.--', color='#1E90FF')
 	p1 = plt.plot(infos_dict3['train_loss']['iter'], infos_dict3['train_loss']['loss'], '.--', color='#FF6347')
+	p1 = plt.plot(infos_dict4['train_loss']['iter'], infos_dict4['train_loss']['loss'], '.--', color='#FFD700')
 	plt.grid(True)
 	plt.title('train loss curve')
 	plt.xlabel('# of iterations')
@@ -121,6 +122,7 @@ def plot_curve(infos_dict1, infos_dict2, infos_dict3):
 	p1 = plt.plot(infos_dict1['valid']['iter'], infos_dict1['valid']['iou'], '.--', color='#66CDAA')
 	p1 = plt.plot(infos_dict2['valid']['iter'], infos_dict2['valid']['iou'], '.--', color='#1E90FF')
 	p1 = plt.plot(infos_dict3['valid']['iter'], infos_dict3['valid']['iou'], '.--', color='#FF6347')
+	p1 = plt.plot(infos_dict4['valid']['iter'], infos_dict4['valid']['iou'], '.--', color='#FFD700')
 	# plt.legend((p2[0], p3[0]), ('train_precision', 'valid_precision'))
 	plt.grid(True)
 	plt.title('valid iou curve')
@@ -135,9 +137,12 @@ def plot_curve(infos_dict1, infos_dict2, infos_dict3):
 infos_dict1 = load_log('E:\\Github\\table-detection\\exps\\table-v1\\table-v1.txt')
 infos_dict2 = load_log('E:\\Github\\table-detection\\exps\\table-v1\\table-v2.txt')
 infos_dict3 = load_log('E:\\Github\\table-detection\\exps\\table-v1\\table-v3.txt')
+infos_dict4 = load_log('E:\\Github\\table-detection\\exps\\table-v1\\table-v4.txt')
 
-infos_dict1 = curve_smooth(infos_dict1, batch_size=5)
-infos_dict2 = curve_smooth(infos_dict2, batch_size=5)
-infos_dict3 = curve_smooth(infos_dict3, batch_size=5)
+batch_size = 1
+infos_dict1 = curve_smooth(infos_dict1, batch_size=batch_size)
+infos_dict2 = curve_smooth(infos_dict2, batch_size=batch_size)
+infos_dict3 = curve_smooth(infos_dict3, batch_size=batch_size)
+infos_dict4 = curve_smooth(infos_dict4, batch_size=batch_size)
 
-plot_curve(infos_dict1, infos_dict2, infos_dict3)
+plot_curve(infos_dict1, infos_dict2, infos_dict3, infos_dict4)
