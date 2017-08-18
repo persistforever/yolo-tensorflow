@@ -76,41 +76,26 @@ def load_log(path):
 def curve_smooth(infos_dict, batch_size=1):
 	new_infos_dict = {'train_loss':{}, 'train_eval': {}, 'valid': {}}
 
-	new_list, data_list = [], infos_dict['train_loss']['iter']
-	for i in range(int(len(data_list) / batch_size)):
-		batch = data_list[i*batch_size: (i+1)*batch_size]
-		new_list.append(1.0 * sum(batch) / len(batch))
-	new_infos_dict['train_loss']['iter'] = new_list
-	
-	new_list, data_list = [], infos_dict['train_loss']['loss']
-	for i in range(int(len(data_list) / batch_size)):
-		batch = data_list[i*batch_size: (i+1)*batch_size]
-		new_list.append(1.0 * sum(batch) / len(batch))
-	new_infos_dict['train_loss']['loss'] = new_list
-	
-	new_list, data_list = [], infos_dict['valid']['iter']
-	for i in range(int(len(data_list) / batch_size)):
-		batch = data_list[i*batch_size: (i+1)*batch_size]
-		new_list.append(1.0 * sum(batch) / len(batch))
-	new_infos_dict['valid']['iter'] = new_list
-
-	new_list, data_list = [], infos_dict['valid']['iou']
-	for i in range(int(len(data_list) / batch_size)):
-		batch = data_list[i*batch_size: (i+1)*batch_size]
-		new_list.append(1.0 * sum(batch) / len(batch))
-	new_infos_dict['valid']['iou'] = new_list
+	k = [['train_loss', 'iter'], ['train_loss', 'loss'], ['train_eval', 'iter'], ['train_eval', 'iou'],
+		['valid', 'iter'], ['valid', 'iou']]
+	for k1, k2 in k:
+		new_list, data_list = [], infos_dict[k1][k2]
+		for i in range(int(len(data_list) / batch_size)):
+			batch = data_list[i*batch_size: (i+1)*batch_size]
+			new_list.append(1.0 * sum(batch) / len(batch))
+		new_infos_dict[k1][k2] = new_list
 
 	return new_infos_dict
-	
 
 def plot_curve(infos_dict1, infos_dict2, infos_dict3, infos_dict4):
 	fig = plt.figure(figsize=(10, 5))
 
 	plt.subplot(121)
 	p1 = plt.plot(infos_dict1['train_loss']['iter'], infos_dict1['train_loss']['loss'], '.--', color='#66CDAA')
-	p1 = plt.plot(infos_dict2['train_loss']['iter'], infos_dict2['train_loss']['loss'], '.--', color='#1E90FF')
-	p1 = plt.plot(infos_dict3['train_loss']['iter'], infos_dict3['train_loss']['loss'], '.--', color='#FF6347')
+	p2 = plt.plot(infos_dict2['train_loss']['iter'], infos_dict2['train_loss']['loss'], '.--', color='#1E90FF')
+	p3 = plt.plot(infos_dict3['train_loss']['iter'], infos_dict3['train_loss']['loss'], '.--', color='#FF6347')
 	# p1 = plt.plot(infos_dict4['train_loss']['iter'], infos_dict4['train_loss']['loss'], '.--', color='#FFD700')
+	plt.legend((p1[0], p2[0], p3[0]), ('yolo-v1', 'data augmentation', 'change learning rate'))
 	plt.grid(True)
 	plt.title('train loss curve')
 	plt.xlabel('# of iterations')
@@ -120,18 +105,18 @@ def plot_curve(infos_dict1, infos_dict2, infos_dict3, infos_dict4):
 
 	plt.subplot(122)
 	p1 = plt.plot(infos_dict1['valid']['iter'], infos_dict1['valid']['iou'], '.--', color='#66CDAA')
-	p1 = plt.plot(infos_dict2['valid']['iter'], infos_dict2['valid']['iou'], '.--', color='#1E90FF')
-	p1 = plt.plot(infos_dict3['valid']['iter'], infos_dict3['valid']['iou'], '.--', color='#FF6347')
-	# p1 = plt.plot(infos_dict4['valid']['iter'], infos_dict4['valid']['iou'], '.--', color='#FFD700')
-	# plt.legend((p2[0], p3[0]), ('train_precision', 'valid_precision'))
+	p2 = plt.plot(infos_dict2['valid']['iter'], infos_dict2['valid']['iou'], '.--', color='#1E90FF')
+	p3 = plt.plot(infos_dict3['valid']['iter'], infos_dict3['valid']['iou'], '.--', color='#FF6347')
+	# p1 = plt.plot(infos_dict4['train_eval']['iter'], infos_dict4['train_eval']['iou'], '.--', color='#FFD700')
+	plt.legend((p1[0], p2[0], p3[0]), ('yolo-v1', 'data augmentation', 'change learning rate'))
 	plt.grid(True)
 	plt.title('valid iou curve')
 	plt.xlabel('# of iterations')
 	plt.ylabel('accuracy')
 	plt.xlim(xmin=0)
 
-	plt.show()
-	# plt.savefig('E:\\Github\\table-detection\\exps\\table-v1\\table-v1.png', dpi=72, format='png')
+	# plt.show()
+	plt.savefig('E:\\Github\\table-detection\\exps\\table-v1\\table-v1.png', dpi=72, format='png')
 
 
 infos_dict1 = load_log('E:\\Github\\table-detection\\exps\\table-v1\\table-v1.txt')

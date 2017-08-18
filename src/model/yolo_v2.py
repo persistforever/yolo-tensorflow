@@ -350,8 +350,8 @@ class TinyYolo():
             (tf.sqrt(coord_pred[:,:,:,2:4]) - tf.sqrt(coord_label[:,:,:,2:4])) * \
             iou_matrix_mask)
         coord_loss += tf.cond(tf.less(self.global_step, -1),
-                              lambda: object_nobject_coord_loss,
-                              lambda: object_coord_loss)
+                              lambda: object_coord_loss,
+                              lambda: object_nobject_coord_loss)
         
         # 计算iou_value
         # 每一个cell中，有object，并且iou最大的那个对应的iou
