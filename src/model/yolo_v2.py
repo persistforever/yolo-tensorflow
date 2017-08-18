@@ -221,15 +221,15 @@ class TinyYolo():
         prior_w = tf.constant([0.73, 0.73, 0.71, 0.76, 0.73, 0.73], dtype=tf.float32)
         prior_w = tf.reshape(prior_w, shape=(1, 1, self.n_boxes, 1))
         prior_w = tf.tile(prior_w, (self.cell_size, self.cell_size, 1, 1))
-        w_pred = prior_w * tf.exp(box_pred[:,:,:,2:3])
+        w_pred = prior_w * tf.nn.relu(box_pred[:,:,:,2:3])
         
         # 计算ph
         prior_h = tf.constant([0.12, 0.23, 0.17, 0.65, 0.22, 0.11], dtype=tf.float32)
         prior_h = tf.reshape(prior_h, shape=(1, 1, self.n_boxes, 1))
         prior_h = tf.tile(prior_h, (self.cell_size, self.cell_size, 1, 1))
-        h_pred = prior_h * tf.exp(box_pred[:,:,:,3:4])
+        h_pred = prior_h * tf.nn.relu(box_pred[:,:,:,3:4])
         
-        box_pred = tf.sigmoid(tf.concat([x_pred, y_pred, w_pred, h_pred], axis=3))
+        box_pred = tf.concat([x_pred, y_pred, w_pred, h_pred], axis=3)
         
         return box_pred
     
@@ -419,6 +419,24 @@ class TinyYolo():
             iou_value, object_value, nobject_value, recall_value
               
     def iou(self, box_pred, box_label):
+        # x和y的pred
+        pred_x = tf.zeros(shape=(self.cell_size, self.cell_size, self.n_boxes, 1))
+        pred_y = tf.zeros(shape=(self.cell_size, self.cell_size, self.n_boxes, 1))
+        # w的pred
+        pred_w = tf.cast([0.73, 0.73, 0.71, 0.76, 0.73, 0.73], dtype=tf.float32)
+        pred_w = tf.reshape(pred_w, shape=(1, 1, self.n_boxes, 1))
+        pred_w = tf.tile(pred_w, (self.cell_size, self.cell_size, 1, 1))
+        # h的pred
+        pred_h = tf.cast([0.12, 0.23, 0.17, 0.65, 0.22, 0.11], dtype=tf.float32)
+        pred_h = tf.reshape(pred_h, shape=(1, 1, self.n_boxes, 1))
+        pred_h = tf.tile(pred_h, (self.cell_size, self.cell_size, 1, 1))
+        box_pred = tf.concat([pred_x, pred_y, pred_w, pred_h], axis=3)
+        
+        # x和y的label
+        label_x = tf.zeros(shape=(self.cell_size, self.cell_size, self.n_boxes, 1))
+        label_y = tf.zeros(shape=(self.cell_size, self.cell_size, self.n_boxes, 1))
+        box_label = tf.concat([label_x, label_y, box_label[:,:,:,2:4]], axis=3)
+        
         box1 = tf.stack([
             box_pred[:,:,:,0] - box_pred[:,:,:,2] / 2,
             box_pred[:,:,:,1] - box_pred[:,:,:,3] / 2,
@@ -503,39 +521,26 @@ class TinyYolo():
             process_images += batch_size
             speed = 1.0 * batch_size / (end_time - start_time)
                 
-            # 每10轮训练观测一次train_loss
-            if n_iter % 10 == 0:
-                train_avg_loss /= 10
-                train_class_loss /= 10
-                train_coord_loss /= 10
-                train_object_loss /= 10
-                train_nobject_loss /= 10
-                
-                print('{TRAIN} iter[%d], train loss: %.6f, class_loss: %.6f, coord_loss: %.6f, '
-                      'object_loss: %.6f, nobject_loss: %.6f, image_nums: %d, '
-                      'speed: %.2f images/s' % (
-                    n_iter, train_avg_loss, train_class_loss, train_coord_loss, 
-                    train_object_loss, train_nobject_loss, process_images, speed))
-                sys.stdout.flush()
-                
-                train_avg_loss, train_class_loss, train_coord_loss, \
-                    train_object_loss, train_nobject_loss = 0.0, 0.0, 0.0, 0.0, 0.0
+            # 每1轮训练观测一次train_loss    
+            print('{TRAIN} iter[%d], train loss: %.6f, class_loss: %.6f, coord_loss: %.6f, '
+                  'object_loss: %.6f, nobject_loss: %.6f, image_nums: %d, '
+                  'speed: %.2f images/s' % (
+                n_iter, train_avg_loss, train_class_loss, train_coord_loss, 
+                train_object_loss, train_nobject_loss, process_images, speed))
+            sys.stdout.flush()
             
-            # 每50轮观测一次训练集evaluation
-            if n_iter % 50 == 0:
-                train_iou_value /= 50
-                train_object_value /= 50
-                train_nobject_value /= 50
-                train_recall_value /= 50
-                
-                print('{TRAIN} iter[%d], iou: %.6f, object: %.6f, '
-                      'nobject: %.6f, recall: %.6f' % (
-                    n_iter, train_iou_value, train_object_value, 
-                    train_nobject_value, train_recall_value))
-                sys.stdout.flush()
-                
-                train_iou_value, train_object_value, \
-                    train_nobject_value, train_recall_value = 0.0, 0.0, 0.0, 0.0 
+            train_avg_loss, train_class_loss, train_coord_loss, \
+                train_object_loss, train_nobject_loss = 0.0, 0.0, 0.0, 0.0, 0.0
+            
+            # 每1轮观测一次训练集evaluation
+            print('{TRAIN} iter[%d], iou: %.6f, object: %.6f, '
+                  'nobject: %.6f, recall: %.6f' % (
+                n_iter, train_iou_value, train_object_value, 
+                train_nobject_value, train_recall_value))
+            sys.stdout.flush()
+            
+            train_iou_value, train_object_value, \
+                train_nobject_value, train_recall_value = 0.0, 0.0, 0.0, 0.0 
             
             # 每100轮观测一次验证集evaluation
             if n_iter % 100 == 0:
