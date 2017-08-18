@@ -366,3 +366,8 @@ class ImageProcessor:
             images[i,:,:,:] = new_image
         
         return images
+    
+    def _image_resize(self, images):
+        # 图像尺寸变换
+        # todo
+        pass
