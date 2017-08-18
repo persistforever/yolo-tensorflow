@@ -17,7 +17,7 @@ from src.layer.pool_layer import PoolLayer
 class TinyYolo():
     
     def __init__(self, n_channel=3, n_classes=1, image_size=288, max_objects_per_image=20,
-                 box_per_cell=5, object_scala=1, nobject_scala=1,
+                 cell_size=5, box_per_cell=5, object_scala=1, nobject_scala=1,
                  coord_scala=1, class_scala=1, batch_size=2, nobject_thresh=0.6,
                  recall_thresh=0.5):
         # 设置参数
@@ -25,7 +25,7 @@ class TinyYolo():
         self.image_size = image_size
         self.n_channel = n_channel
         self.max_objects = max_objects_per_image
-        self.cell_size = int(self.image_size / 32)
+        self.cell_size = cell_size
         self.n_boxes = box_per_cell
         self.class_scala = float(class_scala)
         self.object_scala = float(object_scala)
@@ -283,10 +283,30 @@ class TinyYolo():
         confidence_pred = tf.sigmoid(self.box_preds[batch,:,:,:,4:])
         
         # 计算iou_matrix，表示每个cell中，每个box与这个cell中真实物体的iou值
-        iou_matrix = self.iou(box_pred, box_label)
-        iou_matrix_max = tf.reduce_max(iou_matrix, 2, keep_dims=True)
+        # x和y的pred
+        pred_x = tf.zeros(shape=(self.cell_size, self.cell_size, self.n_boxes, 1))
+        pred_y = tf.zeros(shape=(self.cell_size, self.cell_size, self.n_boxes, 1))
+        # w的pred
+        pred_w = tf.cast([0.73, 0.73, 0.71, 0.76, 0.73, 0.73], dtype=tf.float32)
+        pred_w = tf.reshape(pred_w, shape=(1, 1, self.n_boxes, 1))
+        pred_w = tf.tile(pred_w, (self.cell_size, self.cell_size, 1, 1))
+        # h的pred
+        pred_h = tf.cast([0.12, 0.23, 0.17, 0.65, 0.22, 0.11], dtype=tf.float32)
+        pred_h = tf.reshape(pred_h, shape=(1, 1, self.n_boxes, 1))
+        pred_h = tf.tile(pred_h, (self.cell_size, self.cell_size, 1, 1))
+        new_box_pred = tf.concat([pred_x, pred_y, pred_w, pred_h], axis=3)
+        
+        # x和y的label
+        label_x = tf.zeros(shape=(self.cell_size, self.cell_size, self.n_boxes, 1))
+        label_y = tf.zeros(shape=(self.cell_size, self.cell_size, self.n_boxes, 1))
+        new_box_label = tf.concat([label_x, label_y, box_label[:,:,:,2:4]], axis=3)
+        
+        new_iou_matrix = self.iou(new_box_pred, new_box_label)
+        iou_matrix_max = tf.reduce_max(new_iou_matrix, 2, keep_dims=True)
         iou_matrix_mask = tf.cast(
-            (iou_matrix >= iou_matrix_max), dtype=tf.float32) * object_mask
+            (new_iou_matrix >= iou_matrix_max), dtype=tf.float32) * object_mask
+        
+        iou_matrix = self.iou(box_pred, box_label)
             
         # 计算nobject_loss
         # nobject_pred为box_pred的值，尺寸为(cell_size, cell_size, n_box, 1)
@@ -329,7 +349,7 @@ class TinyYolo():
         object_coord_loss += tf.nn.l2_loss(
             (tf.sqrt(coord_pred[:,:,:,2:4]) - tf.sqrt(coord_label[:,:,:,2:4])) * \
             iou_matrix_mask)
-        coord_loss += tf.cond(tf.less(self.global_step, 200),
+        coord_loss += tf.cond(tf.less(self.global_step, -1),
                               lambda: object_nobject_coord_loss,
                               lambda: object_coord_loss)
         
@@ -419,24 +439,6 @@ class TinyYolo():
             iou_value, object_value, nobject_value, recall_value
               
     def iou(self, box_pred, box_label):
-        # x和y的pred
-        pred_x = tf.zeros(shape=(self.cell_size, self.cell_size, self.n_boxes, 1))
-        pred_y = tf.zeros(shape=(self.cell_size, self.cell_size, self.n_boxes, 1))
-        # w的pred
-        pred_w = tf.cast([0.73, 0.73, 0.71, 0.76, 0.73, 0.73], dtype=tf.float32)
-        pred_w = tf.reshape(pred_w, shape=(1, 1, self.n_boxes, 1))
-        pred_w = tf.tile(pred_w, (self.cell_size, self.cell_size, 1, 1))
-        # h的pred
-        pred_h = tf.cast([0.12, 0.23, 0.17, 0.65, 0.22, 0.11], dtype=tf.float32)
-        pred_h = tf.reshape(pred_h, shape=(1, 1, self.n_boxes, 1))
-        pred_h = tf.tile(pred_h, (self.cell_size, self.cell_size, 1, 1))
-        box_pred = tf.concat([pred_x, pred_y, pred_w, pred_h], axis=3)
-        
-        # x和y的label
-        label_x = tf.zeros(shape=(self.cell_size, self.cell_size, self.n_boxes, 1))
-        label_y = tf.zeros(shape=(self.cell_size, self.cell_size, self.n_boxes, 1))
-        box_label = tf.concat([label_x, label_y, box_label[:,:,:,2:4]], axis=3)
-        
         box1 = tf.stack([
             box_pred[:,:,:,0] - box_pred[:,:,:,2] / 2,
             box_pred[:,:,:,1] - box_pred[:,:,:,3] / 2,
