@@ -5,6 +5,7 @@ import sys
 import os
 import time
 import numpy
+import random
 import matplotlib.pyplot as plt
 import cv2
 from src.data.image import ImageProcessor
@@ -47,4 +48,17 @@ class ImageProcessorTestor:
             cv2.rectangle(image, (xmin, ymin), (xmax, ymax), (255, 99, 71), 0)
             
         plt.imshow(image)
+        plt.show()
+        
+    def test_image_resize(self):
+        image = numpy.zeros(shape=[525, 828, 3], dtype='uint8') + numpy.array([[[50, 75, 150]]], dtype='uint8')
+        plt.imshow(image)
+        plt.show()
+        
+        image_processor = ImageProcessor(
+            'Z:', image_size=300, max_objects_per_image=5, cell_size=3, n_classes=1)
+        
+        new_images = image_processor.image_resize(numpy.array([image]))
+        
+        plt.imshow(new_images[0])
         plt.show()

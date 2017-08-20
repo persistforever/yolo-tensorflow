@@ -37,10 +37,10 @@ def train():
     
     
 def uint_test():
-    from src.model.test.yolo_v2_test import TinyYoloTestor
+    from src.data.test.image_test import ImageProcessorTestor
     
-    testor = TinyYoloTestor()
-    testor.test_get_box_pred()
+    testor = ImageProcessorTestor()
+    testor.test_image_resize()
     
-
+    
 train()

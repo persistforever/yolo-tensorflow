@@ -490,9 +490,12 @@ class TinyYolo():
             batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
                 batch_object_nums = \
                 processor.get_train_batch(batch_size)
-            batch_images = processor.data_augmentation(
-                batch_images, flip=True, 
-                crop=False, padding=20, whiten=True)
+            batch_images, batch_box_labels = processor.data_augmentation(
+                batch_images, batch_box_labels, 
+                flip=True, 
+                crop=False, padding=20, 
+                whiten=True,
+                resize=True, jitter=0.2)
             
             [_, avg_loss, class_loss, coord_loss, object_loss, nobject_loss,
              iou_value, object_value, nobject_value, recall_value] = self.sess.run(
@@ -555,9 +558,12 @@ class TinyYolo():
                     batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
                         batch_object_nums = \
                         processor.get_valid_batch(i, batch_size)
-                    batch_images = processor.data_augmentation(
-                        batch_images, flip=False,
-                        crop=False, padding=20, whiten=True)
+                    batch_images, batch_box_labels = processor.data_augmentation(
+                        batch_images, batch_box_labels, 
+                        flip=False, 
+                        crop=False, padding=20,
+                        whiten=True,
+                        resize=False, jitter=0.2)
                     
                     [iou_value, object_value,
                      nobject_value, recall_value] = self.sess.run(
