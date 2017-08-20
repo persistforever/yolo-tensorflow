@@ -382,7 +382,7 @@ class ImageProcessor:
     
     def image_resize(self, images, box_labels, jitter=0.2):
         # 图像尺寸变换
-        w, h = 256, 256
+        w, h = self.image_size, self.image_size
         new_images = []
         
         for i in range(images.shape[0]):
