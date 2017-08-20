@@ -88,7 +88,7 @@ class ImageProcessor:
                 # 读取图像
                 image = cv2.imread(image_path)
                 [image_h, image_w, _] = image.shape
-                # image = cv2.resize(image, (self.image_size, self.image_size))
+                image = cv2.resize(image, (self.image_size, self.image_size))
                 
                 # 处理 label
                 i, n_objects = 0, 0
@@ -348,10 +348,13 @@ class ImageProcessor:
             images[i,:,:,:] = new_image
             
             # 重新计算box label
-            center_x = 1.0 - box_labels[i,2]
-            center_cell_x = int(math.floor(self.cell_size * center_x - 1e-6))
-            box_labels[i,0] = center_cell_x
-            box_labels[i,2] = center_x
+            for j in range(self.max_objects):
+                if sum(box_labels[i,j,:]) == 0:
+                    break
+                center_x = 1.0 - box_labels[i,j,2]
+                center_cell_x = int(math.floor(self.cell_size * center_x - 1e-6))
+                box_labels[i,j,0] = center_cell_x
+                box_labels[i,j,2] = center_x
         
         return images, box_labels
     
@@ -387,8 +390,9 @@ class ImageProcessor:
             dw, dh = old_image.shape[1] * jitter, old_image.shape[0] * jitter
             print(dw, dh)
             
-            new_ar = (old_image.shape[1] + random.randint(-int(dw), int(dw))) / \
+            new_ar = 1.0 * (old_image.shape[1] + random.randint(-int(dw), int(dw))) / \
                 (old_image.shape[0] + random.randint(-int(dh), int(dh)))
+            print(new_ar)
             scala = random.random() * (2 - 0.5) + 0.5
             
             # 新图像事原图像的scala的缩放，并使新图像的比例为new_ar
@@ -398,6 +402,7 @@ class ImageProcessor:
             else:
                 nw = int(scala * w)
                 nh = int(nw / new_ar)
+            print(nw, nh)
             
             temp_image = cv2.resize(old_image, dsize=(nw, nh))
             
@@ -426,24 +431,27 @@ class ImageProcessor:
             new_images.append(new_image)
             
             # 重新计算box label
-            if w > nw:
-                center_x = (box_labels[i,2] / old_image.shape[1] * nw + dx) / w
-            else:
-                center_x = (box_labels[i,2] / old_image.shape[1] * nw - dx) / w
-                
-            if h > nh:
-                center_y = (box_labels[i,3] / old_image.shape[0] * nh + dy) / h
-            else:
-                center_y = (box_labels[i,3] / old_image.shape[0] * nh - dy) / h
-                
-            center_cell_x = int(math.floor(self.cell_size * center_x - 1e-6))
-            center_cell_y = int(math.floor(self.cell_size * center_y - 1e-6))
-            box_labels[i,0] = center_cell_x
-            box_labels[i,1] = center_cell_y
-            box_labels[i,2] = center_x
-            box_labels[i,3] = center_x
-            box_labels[i,4] = box_labels[i,4] / old_image.shape[1] * nw / w
-            box_labels[i,5] = box_labels[i,5] / old_image.shape[0] * nh / h
+            for j in range(self.max_objects):
+                if sum(box_labels[i,j,:]) == 0:
+                    break
+                if w > nw:
+                    center_x = (box_labels[i,j,2] * nw + dx) / w
+                else:
+                    center_x = (box_labels[i,j,2] * nw - dx) / w
+                    
+                if h > nh:
+                    center_y = (box_labels[i,j,3] * nh + dy) / h
+                else:
+                    center_y = (box_labels[i,j,3] * nh - dy) / h
+                    
+                center_cell_x = int(math.floor(self.cell_size * center_x - 1e-6))
+                center_cell_y = int(math.floor(self.cell_size * center_y - 1e-6))
+                box_labels[i,j,0] = center_cell_x
+                box_labels[i,j,1] = center_cell_y
+                box_labels[i,j,2] = center_x
+                box_labels[i,j,3] = center_x
+                box_labels[i,j,4] = box_labels[i,j,4] / old_image.shape[1] * nw / w
+                box_labels[i,j,5] = box_labels[i,j,5] / old_image.shape[0] * nh / h
         
         return numpy.array(new_images, dtype='uint8'), box_labels
             
