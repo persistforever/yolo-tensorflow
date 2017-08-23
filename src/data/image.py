@@ -324,6 +324,14 @@ class ImageProcessor:
         # 图像尺寸变换
         if resize:
             images, labels = self.image_resize(images, labels, jitter=jitter)
+        else:
+            new_labels = []
+            for i in range(len(labels)):
+                label = []
+                for j in range(len(labels[i])):
+                    label.append(labels[i][j][2:6] + [0.1])
+                new_labels.append(label)
+            labels = new_labels
         # 图像切割
         if crop:
             images = self.image_crop(images, padding=padding)
@@ -385,6 +393,7 @@ class ImageProcessor:
             images[i,:,:,:] = new_image
             
             # 重新计算box label
+        for i in range(len(labels)):
             for j in range(len(labels[i])):
                 if sum(labels[i][j]) == 0:
                     break
@@ -464,8 +473,9 @@ class ImageProcessor:
             new_images.append(new_image)
             
             # 重新计算box label
-            labels = []
-            for j in range(labels[i]):
+        for i in range(len(labels)):
+            label = []
+            for j in range(len(labels[i])):
                 if sum(labels[i][j]) == 0:
                     break
                 if resized_w > nw:
@@ -482,8 +492,8 @@ class ImageProcessor:
                 new_h = min(labels[i][j][5] * nh / resized_h, 1.0)
                     
                 if 0 < center_x < 1 and 0 < center_y < 1:
-                    labels.append([center_x, center_y, new_w, new_h, 1.0])
+                    label.append([center_x, center_y, new_w, new_h, 1.0])
             
-            new_labels.append(labels)
+            new_labels.append(label)
         
         return numpy.array(new_images, dtype='uint8'), new_labels
