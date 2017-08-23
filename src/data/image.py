@@ -461,8 +461,8 @@ class ImageProcessor:
                 else:
                     center_y = (box_labels[i,j,3] * nh - dy) / resized_h
                 
-                new_w = box_labels[i,j,4] / old_image.shape[1] * nw / resized_w
-                new_h = box_labels[i,j,5] / old_image.shape[0] * nh / resized_h
+                new_w = box_labels[i,j,4] * nw / resized_w
+                new_h = box_labels[i,j,5] * nh / resized_h
                     
                 if 0 < center_x < 1 and 0 < center_y < 1:
                     labels.append([center_x, center_y, new_w, new_h, 1.0])
