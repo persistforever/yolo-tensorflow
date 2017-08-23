@@ -234,10 +234,16 @@ class ImageProcessor:
                     [center_cell_x, center_cell_y, center_x, center_y, w, h])
                 
                 # 计算类别标记
-                left_cell_x = int(math.floor(self.cell_size * (center_x - w / 2.0) - 1e-6))
-                right_cell_x = int(math.floor(self.cell_size * (center_x + w / 2.0) - 1e-6))
-                top_cell_y = int(math.floor(self.cell_size * (center_y - h / 2.0) - 1e-6))
-                bottom_cell_y = int(math.floor(self.cell_size * (center_y + h / 2.0) - 1e-6))
+                left_cell_x = max(
+                    0, int(math.floor(self.cell_size * (center_x - w / 2.0) - 1e-6)))
+                right_cell_x = min(
+                    int(math.floor(self.cell_size * (center_x + w / 2.0) - 1e-6)), 
+                    self._cell_size-1)
+                top_cell_y = max(
+                    0, int(math.floor(self.cell_size * (center_y - h / 2.0) - 1e-6)))
+                bottom_cell_y = min(
+                    int(math.floor(self.cell_size * (center_y + h / 2.0) - 1e-6)),
+                    self._cell_size-1)
                 for x in range(left_cell_x, right_cell_x+1):
                     for y in range(top_cell_y, bottom_cell_y+1):
                         _class_label = numpy.zeros(
@@ -304,9 +310,20 @@ class ImageProcessor:
                           whiten=False, 
                           noise=False, noise_mean=0, noise_std=0.01,
                           resize=False, jitter=0.2):
+        labels = []
+        for i in range(box_labels.shape[0]):
+            label = []
+            for j in range(box_labels.shape[1]):
+                if sum(box_labels[i,j,:]) != 0:
+                    label.append(box_labels[i,j,:])
+            if label:
+                labels.append(label)
+            else:
+                break
+        
         # 图像尺寸变换
         if resize:
-            images, labels = self.image_resize(images, box_labels, jitter=jitter)
+            images, labels = self.image_resize(images, labels, jitter=jitter)
         # 图像切割
         if crop:
             images = self.image_crop(images, padding=padding)
@@ -398,7 +415,7 @@ class ImageProcessor:
         
         return images
     
-    def image_resize(self, images, box_labels, jitter=0.2):
+    def image_resize(self, images, labels, jitter=0.2):
         # 图像尺寸变换
         resized_w, resized_h = int(self.image_size), int(self.image_size)
         new_images, new_labels = [], []
@@ -448,21 +465,21 @@ class ImageProcessor:
             
             # 重新计算box label
             labels = []
-            for j in range(self.max_objects):
+            for j in range(range(labels[i])):
                 if sum(box_labels[i,j,:]) == 0:
                     break
                 if resized_w > nw:
-                    center_x = (box_labels[i,j,2] * nw + dx) / resized_w
+                    center_x = (labels[i][j][2] * nw + dx) / resized_w
                 else:
-                    center_x = (box_labels[i,j,2] * nw - dx) / resized_w
+                    center_x = (labels[i][j][2] * nw - dx) / resized_w
                     
                 if resized_h > nh:
-                    center_y = (box_labels[i,j,3] * nh + dy) / resized_h
+                    center_y = (labels[i][j][3] * nh + dy) / resized_h
                 else:
-                    center_y = (box_labels[i,j,3] * nh - dy) / resized_h
+                    center_y = (labels[i][j][3] * nh - dy) / resized_h
                 
-                new_w = box_labels[i,j,4] * nw / resized_w
-                new_h = box_labels[i,j,5] * nh / resized_h
+                new_w = min(labels[i][j][4] * nw / resized_w, 1.0)
+                new_h = min(labels[i][j][5] * nh / resized_h, 1.0)
                     
                 if 0 < center_x < 1 and 0 < center_y < 1:
                     labels.append([center_x, center_y, new_w, new_h, 1.0])
