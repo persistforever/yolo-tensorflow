@@ -326,8 +326,8 @@ class ImageProcessor:
             
         for i in range(len(labels)):
             label = [[0, 0, 0, 0, 0]] * self.max_objects
-            for j in range(len(labels)):
-                label[j] = label[i][j]
+            for j in range(len(labels[i])):
+                label[j] = labels[i][j]
             class_label, class_mask, box_label, object_num = self.process_label(label)
             batch_class_labels.append(class_label)
             batch_class_masks.append(class_mask)
