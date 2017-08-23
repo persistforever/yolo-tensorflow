@@ -298,7 +298,7 @@ class ImageProcessor:
         return batch_images, batch_class_labels, batch_class_masks, \
             batch_box_labels, batch_object_nums
         
-    def data_augmentation(self, images,
+    def data_augmentation(self, images, box_labels, 
                           flip=False, 
                           crop=False, padding=20, 
                           whiten=False, 
@@ -309,7 +309,7 @@ class ImageProcessor:
             images, labels = self.image_resize(images, box_labels, jitter=jitter)
         # 图像切割
         if crop:
-                images = self.image_crop(images, padding=padding)
+            images = self.image_crop(images, padding=padding)
         # 图像翻转
         if flip:
             images, labels = self.image_flip(images, labels)
@@ -324,7 +324,7 @@ class ImageProcessor:
         batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
             batch_object_nums = [], [], [], [], []
             
-        for i in range(batch_size):
+        for i in range(len(labels)):
             label = [[0, 0, 0, 0, 0]] * self.max_objects
             for j in range(len(labels)):
                 label[j] = label[i][j]
@@ -400,49 +400,47 @@ class ImageProcessor:
     
     def image_resize(self, images, box_labels, jitter=0.2):
         # 图像尺寸变换
-        w, h = self.image_size, self.image_size
+        resized_w, resized_h = int(self.image_size), int(self.image_size)
         new_images, new_labels = [], []
         
         for i in range(images.shape[0]):
             old_image = images[i,:,:,:]
             dw, dh = old_image.shape[1] * jitter, old_image.shape[0] * jitter
-            print(dw, dh)
             
             new_ar = 1.0 * (old_image.shape[1] + random.randint(-int(dw), int(dw))) / \
                 (old_image.shape[0] + random.randint(-int(dh), int(dh)))
-            print(new_ar)
             scala = random.random() * (2 - 0.5) + 0.5
             
             # 新图像事原图像的scala的缩放，并使新图像的比例为new_ar
             if new_ar < 1:
-                nh = int(scala * h)
-                nw = int(nh * new_ar)
+                nh = scala * resized_h
+                nw = nh * new_ar
             else:
-                nw = int(scala * w)
-                nh = int(nw / new_ar)
-            print(nw, nh)
+                nw = scala * resized_w
+                nh = nw / new_ar
+            nw, nh = int(nw), int(nh)
             
             temp_image = cv2.resize(old_image, dsize=(nw, nh))
             
-            if w > nw:
-                dx = random.randint(0, w - nw)
+            if resized_w > nw:
+                dx = random.randint(0, resized_w - nw)
                 old_sx, old_ex = 0, nw
                 new_sx, new_ex = dx, dx + nw
             else:
-                dx = random.randint(0, nw - w)
-                old_sx, old_ex = dx, dx + w
-                new_sx, new_ex = 0, w
+                dx = random.randint(0, nw - resized_w)
+                old_sx, old_ex = dx, dx + resized_w
+                new_sx, new_ex = 0, resized_w
                 
-            if h > nh:
-                dy = random.randint(0, h - nh)
+            if resized_h > nh:
+                dy = random.randint(0, resized_h - nh)
                 old_sy, old_ey = 0, nh
                 new_sy, new_ey = dy, dy + nh
             else:
-                dy = random.randint(0, nh - h)
-                old_sy, old_ey = dy, dy + h
-                new_sy, new_ey = 0,     h
+                dy = random.randint(0, nh - resized_h)
+                old_sy, old_ey = dy, dy + resized_h
+                new_sy, new_ey = 0, resized_h
             
-            new_image = numpy.zeros(shape=(h, w, 3)) + 128
+            new_image = numpy.zeros(shape=(resized_h, resized_w, 3)) + 128
             new_image[new_sy: new_ey, new_sx: new_ex, :] = \
                 temp_image[old_sy: old_ey, old_sx: old_ex, :]
             
@@ -453,22 +451,22 @@ class ImageProcessor:
             for j in range(self.max_objects):
                 if sum(box_labels[i,j,:]) == 0:
                     break
-                if w > nw:
-                    center_x = (box_labels[i,j,2] * nw + dx) / w
+                if resized_w > nw:
+                    center_x = (box_labels[i,j,2] * nw + dx) / resized_w
                 else:
-                    center_x = (box_labels[i,j,2] * nw - dx) / w
+                    center_x = (box_labels[i,j,2] * nw - dx) / resized_w
                     
-                if h > nh:
-                    center_y = (box_labels[i,j,3] * nh + dy) / h
+                if resized_h > nh:
+                    center_y = (box_labels[i,j,3] * nh + dy) / resized_h
                 else:
-                    center_y = (box_labels[i,j,3] * nh - dy) / h
+                    center_y = (box_labels[i,j,3] * nh - dy) / resized_h
                 
-                w = box_labels[i,j,4] / old_image.shape[1] * nw / w
-                h = box_labels[i,j,5] / old_image.shape[0] * nh / h
+                new_w = box_labels[i,j,4] / old_image.shape[1] * nw / resized_w
+                new_h = box_labels[i,j,5] / old_image.shape[0] * nh / resized_h
                     
                 if 0 < center_x < 1 and 0 < center_y < 1:
-                    labels.append([center_x, center_y, w, h, 1.0])
+                    labels.append([center_x, center_y, new_w, new_h, 1.0])
+            
+            new_labels.append(labels)
         
-        return numpy.array(new_images, dtype='uint8'), labels
-            
-            
+        return numpy.array(new_images, dtype='uint8'), new_labels

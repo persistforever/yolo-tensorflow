@@ -491,7 +491,7 @@ class TinyYolo():
                 batch_object_nums = processor.get_train_batch(batch_size)
             batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
                 batch_object_nums = processor.data_augmentation(
-                batch_images, batch_box_labels, 
+                batch_images, batch_box_labels,
                 flip=True, 
                 crop=False, padding=20, 
                 whiten=True,
@@ -559,7 +559,7 @@ class TinyYolo():
                         batch_object_nums = processor.get_valid_batch(i, batch_size)
                     batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
                         batch_object_nums = processor.data_augmentation(
-                        batch_images, 
+                        batch_images, batch_box_labels,
                         flip=False,
                         crop=False, padding=20,
                         whiten=True,
