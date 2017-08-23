@@ -238,12 +238,12 @@ class ImageProcessor:
                     0, int(math.floor(self.cell_size * (center_x - w / 2.0) - 1e-6)))
                 right_cell_x = min(
                     int(math.floor(self.cell_size * (center_x + w / 2.0) - 1e-6)), 
-                    self._cell_size-1)
+                    self.cell_size-1)
                 top_cell_y = max(
                     0, int(math.floor(self.cell_size * (center_y - h / 2.0) - 1e-6)))
                 bottom_cell_y = min(
                     int(math.floor(self.cell_size * (center_y + h / 2.0) - 1e-6)),
-                    self._cell_size-1)
+                    self.cell_size-1)
                 for x in range(left_cell_x, right_cell_x+1):
                     for y in range(top_cell_y, bottom_cell_y+1):
                         _class_label = numpy.zeros(
