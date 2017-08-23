@@ -465,8 +465,8 @@ class ImageProcessor:
             
             # 重新计算box label
             labels = []
-            for j in range(range(labels[i])):
-                if sum(box_labels[i,j,:]) == 0:
+            for j in range(labels[i]):
+                if sum(labels[i][j]) == 0:
                     break
                 if resized_w > nw:
                     center_x = (labels[i][j][2] * nw + dx) / resized_w
