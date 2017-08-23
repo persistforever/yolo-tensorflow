@@ -298,29 +298,49 @@ class ImageProcessor:
         return batch_images, batch_class_labels, batch_class_masks, \
             batch_box_labels, batch_object_nums
         
-    def data_augmentation(self, images, box_labels,
+    def data_augmentation(self, images,
                           flip=False, 
                           crop=False, padding=20, 
                           whiten=False, 
                           noise=False, noise_mean=0, noise_std=0.01,
                           resize=False, jitter=0.2):
+        # 图像尺寸变换
+        if resize:
+            images, labels = self.image_resize(images, box_labels, jitter=jitter)
         # 图像切割
         if crop:
                 images = self.image_crop(images, padding=padding)
         # 图像翻转
         if flip:
-            images, box_labels = self.image_flip(images, box_labels)
+            images, labels = self.image_flip(images, labels)
         # 图像白化
         if whiten:
             images = self.image_whitening(images)
         # 图像噪声
         if noise:
             images = self.image_noise(images, mean=noise_mean, std=noise_std)
-        # 图像尺寸变换
-        if resize:
-            images, box_labels = self.image_resize(images, box_labels, jitter=jitter)
+        
+        # 重新根据labels计算输入网络的变量
+        batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
+            batch_object_nums = [], [], [], [], []
             
-        return images, box_labels
+        for i in range(batch_size):
+            label = [[0, 0, 0, 0, 0]] * self.max_objects
+            for j in range(len(labels)):
+                label[j] = label[i][j]
+            class_label, class_mask, box_label, object_num = self.process_label(label)
+            batch_class_labels.append(class_label)
+            batch_class_masks.append(class_mask)
+            batch_box_labels.append(box_label)
+            batch_object_nums.append(object_num)
+        
+        batch_class_labels = numpy.array(batch_class_labels, dtype='int32')
+        batch_class_masks = numpy.array(batch_class_masks, dtype='float32')
+        batch_box_labels = numpy.array(batch_box_labels, dtype='float32')
+        batch_object_nums = numpy.array(batch_object_nums, dtype='int32')
+            
+        return images, batch_class_labels, batch_class_masks, \
+            batch_box_labels, batch_object_nums
     
     def image_crop(self, images, padding=20):
         # 图像切割
@@ -337,7 +357,7 @@ class ImageProcessor:
         
         return numpy.array(new_images)
     
-    def image_flip(self, images, box_labels):
+    def image_flip(self, images, labels):
         # 图像翻转
         for i in range(images.shape[0]):
             old_image = images[i,:,:,:]
@@ -348,15 +368,13 @@ class ImageProcessor:
             images[i,:,:,:] = new_image
             
             # 重新计算box label
-            for j in range(self.max_objects):
-                if sum(box_labels[i,j,:]) == 0:
+            for j in range(len(labels[i])):
+                if sum(labels[i][j]) == 0:
                     break
-                center_x = 1.0 - box_labels[i,j,2]
-                center_cell_x = int(math.floor(self.cell_size * center_x - 1e-6))
-                box_labels[i,j,0] = center_cell_x
-                box_labels[i,j,2] = center_x
+                center_x = 1.0 - labels[i][j][0]
+                labels[i][j][0] = center_x
         
-        return images, box_labels
+        return images, labels
     
     def image_whitening(self, images):
         # 图像白化
@@ -383,7 +401,7 @@ class ImageProcessor:
     def image_resize(self, images, box_labels, jitter=0.2):
         # 图像尺寸变换
         w, h = self.image_size, self.image_size
-        new_images = []
+        new_images, new_labels = [], []
         
         for i in range(images.shape[0]):
             old_image = images[i,:,:,:]
@@ -422,7 +440,7 @@ class ImageProcessor:
             else:
                 dy = random.randint(0, nh - h)
                 old_sy, old_ey = dy, dy + h
-                new_sy, new_ey = 0, h
+                new_sy, new_ey = 0,     h
             
             new_image = numpy.zeros(shape=(h, w, 3)) + 128
             new_image[new_sy: new_ey, new_sx: new_ex, :] = \
@@ -431,6 +449,7 @@ class ImageProcessor:
             new_images.append(new_image)
             
             # 重新计算box label
+            labels = []
             for j in range(self.max_objects):
                 if sum(box_labels[i,j,:]) == 0:
                     break
@@ -443,16 +462,13 @@ class ImageProcessor:
                     center_y = (box_labels[i,j,3] * nh + dy) / h
                 else:
                     center_y = (box_labels[i,j,3] * nh - dy) / h
+                
+                w = box_labels[i,j,4] / old_image.shape[1] * nw / w
+                h = box_labels[i,j,5] / old_image.shape[0] * nh / h
                     
-                center_cell_x = int(math.floor(self.cell_size * center_x - 1e-6))
-                center_cell_y = int(math.floor(self.cell_size * center_y - 1e-6))
-                box_labels[i,j,0] = center_cell_x
-                box_labels[i,j,1] = center_cell_y
-                box_labels[i,j,2] = center_x
-                box_labels[i,j,3] = center_x
-                box_labels[i,j,4] = box_labels[i,j,4] / old_image.shape[1] * nw / w
-                box_labels[i,j,5] = box_labels[i,j,5] / old_image.shape[0] * nh / h
+                if 0 < center_x < 1 and 0 < center_y < 1:
+                    labels.append([center_x, center_y, w, h, 1.0])
         
-        return numpy.array(new_images, dtype='uint8'), box_labels
+        return numpy.array(new_images, dtype='uint8'), labels
             
             
