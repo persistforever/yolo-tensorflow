@@ -326,7 +326,7 @@ class ImageProcessor:
             
             # 重新计算box label
         for i in range(len(labels)):
-            for j in range(self.max_objects):
+            for j in range(len(labels[i])):
                 if sum(labels[i][j]) == 0:
                     break
                 center_x = 1.0 - labels[i][j][0]
@@ -336,23 +336,23 @@ class ImageProcessor:
     
     def image_whitening(self, images):
         # 图像白化
-        for i in range(images.shape[0]):
-            old_image = images[i,:,:,:]
+        for i in range(len(images)):
+            old_image = images[i]
             new_image = (old_image - numpy.mean(old_image)) / numpy.std(old_image)
-            images[i,:,:,:] = new_image
+            images[i] = new_image
         
         return images
     
     def image_noise(self, images, mean=0, std=0.01):
         # 图像噪声
-        for i in range(images.shape[0]):
-            old_image = images[i,:,:,:]
+        for i in range(len(images)):
+            old_image = images[i]
             new_image = old_image
             for i in range(image.shape[0]):
                 for j in range(image.shape[1]):
                     for k in range(image.shape[2]):
                         new_image[i, j, k] += random.gauss(mean, std)
-            images[i,:,:,:] = new_image
+            images[i] = new_image
         
         return images
     
@@ -407,7 +407,7 @@ class ImageProcessor:
         # 重新计算labels
         for i in range(len(labels)):
             new_label = []
-            for j in range(self.max_objects):
+            for j in range(len(labels[i])):
                 if sum(labels[i][j]) == 0:
                     break
                 if resized_w > nw:
