@@ -411,17 +411,17 @@ class ImageProcessor:
                 if sum(labels[i][j]) == 0:
                     break
                 if resized_w > nw:
-                    center_x = (labels[i][j][2] * nw + dx) / resized_w
+                    center_x = (labels[i][j][0] * nw + dx) / resized_w
                 else:
-                    center_x = (labels[i][j][2] * nw - dx) / resized_w
+                    center_x = (labels[i][j][0] * nw - dx) / resized_w
                     
                 if resized_h > nh:
-                    center_y = (labels[i][j][3] * nh + dy) / resized_h
+                    center_y = (labels[i][j][1] * nh + dy) / resized_h
                 else:
-                    center_y = (labels[i][j][3] * nh - dy) / resized_h
+                    center_y = (labels[i][j][1] * nh - dy) / resized_h
                 
-                new_w = min(labels[i][j][4] * nw / resized_w, 1.0)
-                new_h = min(labels[i][j][5] * nh / resized_h, 1.0)
+                new_w = min(labels[i][j][2] * nw / resized_w, 1.0)
+                new_h = min(labels[i][j][3] * nh / resized_h, 1.0)
                     
                 if 0 < center_x < 1 and 0 < center_y < 1:
                     new_label.append([center_x, center_y, new_w, new_h, 1.0])
