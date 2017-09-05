@@ -557,7 +557,7 @@ class TinyYolo():
                         batch_images, batch_box_labels, mode='test',
                         flip=False,
                         whiten=True,
-                        resize=False, jitter=0.2)
+                        resize=True, jitter=0.2)
                     batch_class_labels, batch_class_masks, batch_box_labels, batch_object_nums = \
                         processor.process_batch_labels(batch_labels)
                     

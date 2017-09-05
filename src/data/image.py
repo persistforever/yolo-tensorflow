@@ -434,14 +434,6 @@ class ImageProcessor:
                 old_image = images[i]
                 new_image = cv2.resize(old_image, (self.image_size, self.image_size))
                 new_images.append(new_image)
-                
-                new_label = [[0, 0, 0, 0, 0]] * self.max_objects
-                n = 0
-                for j in range(len(labels[i])):
-                    if sum(labels[i][j]) == 0:
-                        break
-                    new_label[n] = labels[i]
-                    n += 1
-                new_labels.append(new_label)
+                new_labels.append(labels[i])
         
         return new_images, new_labels
