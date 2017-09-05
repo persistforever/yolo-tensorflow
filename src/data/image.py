@@ -421,14 +421,31 @@ class ImageProcessor:
                             center_y = (labels[i][j][1] * nh + dy) / resized_h
                         else:
                             center_y = (labels[i][j][1] * nh - dy) / resized_h
-                        
-                        new_w = min(labels[i][j][2] * nw / resized_w, 1.0)
-                        new_h = min(labels[i][j][3] * nh / resized_h, 1.0)
                             
                         if 0 < center_x < 1 and 0 < center_y < 1:
+                        
+                            new_w = min(labels[i][j][2] * nw / resized_w, 1.0)
+                            new_h = min(labels[i][j][3] * nh / resized_h, 1.0)
+                            
+                            left = max(0.0, center_x - new_w / 2.0)
+                            right = min(center_x + new_w / 2.0, 1.0)
+                            top = max(0.0, center_y - new_h / 2.0)
+                            bottom = min(center_y + new_h / 2.0, 1.0)
+                            
+                            center_x = (left + right) / 2.0
+                            center_y = (top + bottom) / 2.0
+                            new_w = right - left
+                            new_h = bottom - top
+                            
                             new_label[n] = [center_x, center_y, new_w, new_h, 1.0]
                             n += 1
-                
+                """
+                cv2.imwrite('old.png', old_image)
+                print(labels[i])
+                cv2.imwrite('new.png', new_image)
+                print(new_label)
+                exit()
+                """
                 new_labels.append(new_label)
             else:
                 old_image = images[i]
