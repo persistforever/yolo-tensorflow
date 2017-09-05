@@ -424,8 +424,8 @@ class ImageProcessor:
                             
                         if 0 < center_x < 1 and 0 < center_y < 1:
                         
-                            new_w = min(labels[i][j][2] * nw / resized_w, 1.0)
-                            new_h = min(labels[i][j][3] * nh / resized_h, 1.0)
+                            new_w = labels[i][j][2] * nw / resized_w
+                            new_h = labels[i][j][3] * nh / resized_h
                             
                             left = max(0.0, center_x - new_w / 2.0)
                             right = min(center_x + new_w / 2.0, 1.0)

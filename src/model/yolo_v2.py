@@ -554,7 +554,7 @@ class TinyYolo():
                     # 获取数据并进行数据增强
                     batch_images, batch_labels = processor.get_valid_batch(i, batch_size)
                     batch_images, batch_labels = processor.data_augmentation(
-                        batch_images, batch_box_labels, mode='test',
+                        batch_images, batch_labels, mode='test',
                         flip=False,
                         whiten=True,
                         resize=True)
