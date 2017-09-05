@@ -39,28 +39,20 @@ class ImageProcessor:
             
             # 读取验证集
             valid_file = os.path.join(directory, 'valid.txt')
-            self.valid_images, self.valid_class_labels, self.valid_class_masks, \
-                self.valid_box_labels, self.valid_object_nums = \
-                    self.load_dataset_whole(valid_file, n_thread=5)
+            self.valid_images, self.valid_labels = \
+                self.load_dataset_whole(valid_file, n_thread=5)
             self.n_valid = self.valid_images.shape[0]
             
             # 读取测试集
             test_file = os.path.join(directory, 'test.txt')
-            self.test_images, self.test_class_labels, self.test_class_masks, \
-                self.test_box_labels, self.test_object_nums = \
-                    self.load_dataset_whole(test_file, n_thread=5)
+            self.test_images, self.test_labels = \
+                self.load_dataset_whole(test_file, n_thread=5)
             self.n_test = self.test_images.shape[0]
             
             print('valid images: ', self.valid_images.shape, 
-                  ', valid class labels: ', self.valid_class_labels.shape, 
-                  ', valid class masks: ', self.valid_class_masks.shape,
-                  ', valid box labels: ', self.valid_box_labels.shape,
-                  ', valid object num: ', self.valid_object_nums.shape)
+                  ', valid labels: ', self.valid_labels.shape)
             print('test images: ', self.test_images.shape, 
-                  ', test class labels: ', self.test_class_labels.shape, 
-                  ', test class masks: ', self.test_class_masks.shape,
-                  ', test box labels: ', self.test_box_labels.shape,
-                  ', test object nums: ', self.test_object_nums.shape)
+                  ', test labels: ', self.test_labels.shape)
             print()
             sys.stdout.flush()
         
@@ -88,7 +80,7 @@ class ImageProcessor:
                 # 读取图像
                 image = cv2.imread(image_path)
                 [image_h, image_w, _] = image.shape
-                image = cv2.resize(image, (self.image_size, self.image_size))
+                # image = cv2.resize(image, (self.image_size, self.image_size))
                 
                 # 处理 label
                 i, n_objects = 0, 0
@@ -109,10 +101,8 @@ class ImageProcessor:
                     label[n_objects] = [center_x, center_y, w, h, class_index]
                     i += 5
                     n_objects += 1
-                
-                class_label, class_mask, box_label, object_num = self.process_label(label)
                     
-                dataset.put([image, class_label, class_mask, box_label, object_num])
+                dataset.put([image, label])
                 
         # 以多线程的方式进行数据预处理
         thread_list = []
@@ -125,23 +115,16 @@ class ImageProcessor:
             thread.join()
         
         # 处理dataset，将其分解成images和labels
-        images, class_labels, class_masks, box_labels, \
-            object_nums = [], [], [], [], []
+        images, labels = [], []
         while not dataset.empty():
-            image, class_label, class_mask, box_label, object_num = dataset.get()
+            image, label = dataset.get()
             images.append(image)
-            class_labels.append(class_label)
-            class_masks.append(class_mask)
-            box_labels.append(box_label)
-            object_nums.append(object_num)
+            labels.append(label)
         
         images = numpy.array(images, dtype='uint8')
-        class_labels = numpy.array(class_labels, dtype='int32')
-        class_masks = numpy.array(class_masks, dtype='float32')
-        box_labels = numpy.array(box_labels, dtype='float32')
-        object_nums = numpy.array(object_nums, dtype='int32')
+        labels = numpy.array(labels, dtype='float32')
         
-        return images, class_labels, class_masks, box_labels, object_nums
+        return images, labels
         
     def load_dataset_loop(self, filename, n_thread=10):
         # 读取训练集/验证集/测试集
@@ -169,7 +152,7 @@ class ImageProcessor:
                     # 读取图像
                     image = cv2.imread(image_path)
                     [image_h, image_w, _] = image.shape
-                    image = cv2.resize(image, (self.image_size, self.image_size))
+                    # image = cv2.resize(image, (self.image_size, self.image_size))
                     
                     # 处理 label
                     i, n_objects = 0, 0
@@ -190,12 +173,8 @@ class ImageProcessor:
                         label[n_objects] = [center_x, center_y, w, h, class_index]
                         i += 5
                         n_objects += 1
-                    
-                    class_label, class_mask, box_label, object_num = \
-                        self.process_label(label)
                         
-                    self.train_dataset.put(
-                        [image, class_label, class_mask, box_label, object_num])
+                    self.train_dataset.put([image, label])
                 
         # 以多线程的方式进行数据预处理
         thread_list = []
@@ -256,6 +235,24 @@ class ImageProcessor:
                 object_num += 1
                             
         return class_label, class_mask, box_label, object_num
+    
+    def process_batch_labels(self, batch_labels):
+        batch_class_labels, batch_class_masks, batch_box_labels, \
+            batch_object_nums = [], [], [], []
+            
+        for i in range(batch_labels.shape[0]):
+            class_label, class_mask, box_label, object_num = self.process_label(batch_labels[i])
+            batch_class_labels.append(class_label)
+            batch_class_masks.append(class_mask)
+            batch_box_labels.append(box_label)
+            batch_object_nums.append(object_num)
+        
+        batch_class_labels = numpy.array(batch_class_labels, dtype='int32')
+        batch_class_masks = numpy.array(batch_class_masks, dtype='float32')
+        batch_box_labels = numpy.array(batch_box_labels, dtype='float32')
+        batch_object_nums = numpy.array(batch_object_nums, dtype='int32')
+        
+        return batch_class_labels, batch_class_masks, batch_box_labels, batch_object_nums
         
     def _shuffle_datasets(self, images, labels):
         index = list(range(images.shape[0]))
@@ -264,63 +261,36 @@ class ImageProcessor:
         return images[index], labels[index]
     
     def get_train_batch(self, batch_size):
-        batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
-            batch_object_nums = [], [], [], [], []
+        batch_images, batch_labels = [], []
             
         for i in range(batch_size):
-            image, class_label, class_mask, box_label, object_num = self.train_dataset.get()
+            image, label = self.train_dataset.get()
             batch_images.append(image)
-            batch_class_labels.append(class_label)
-            batch_class_masks.append(class_mask)
-            batch_box_labels.append(box_label)
-            batch_object_nums.append(object_num)
+            batch_labels.append(label)
         
         batch_images = numpy.array(batch_images, dtype='uint8')
-        batch_class_labels = numpy.array(batch_class_labels, dtype='int32')
-        batch_class_masks = numpy.array(batch_class_masks, dtype='float32')
-        batch_box_labels = numpy.array(batch_box_labels, dtype='float32')
-        batch_object_nums = numpy.array(batch_object_nums, dtype='int32')
+        batch_labels = numpy.array(batch_labels, dtype='float32')
             
-        return batch_images, batch_class_labels, batch_class_masks, \
-            batch_box_labels, batch_object_nums
+        return batch_images, batch_labels
             
     def get_valid_batch(self, i, batch_size):
         batch_images = self.valid_images[i: i+batch_size]
-        batch_class_labels = self.valid_class_labels[i: i+batch_size]
-        batch_class_masks = self.valid_class_masks[i: i+batch_size]
-        batch_box_labels = self.valid_box_labels[i: i+batch_size]
-        batch_object_nums = self.valid_object_nums[i: i+batch_size]
+        batch_labels = self.valid_labels[i: i+batch_size]
         
-        return batch_images, batch_class_labels, batch_class_masks, \
-            batch_box_labels, batch_object_nums
+        return batch_images, batch_labels
     
     def get_test_batch(self, i, batch_size):
         batch_images = self.test_images[i: i+batch_size]
-        batch_class_labels = self.test_class_labels[i: i+batch_size]
-        batch_class_masks = self.test_class_masks[i: i+batch_size]
-        batch_box_labels = self.test_box_labels[i: i+batch_size]
-        batch_object_nums = self.test_object_nums[i: i+batch_size]
+        batch_labels = self.test_labels[i: i+batch_size]
         
-        return batch_images, batch_class_labels, batch_class_masks, \
-            batch_box_labels, batch_object_nums
+        return batch_images, batch_labels
         
-    def data_augmentation(self, images, box_labels, 
+    def data_augmentation(self, images, labels, 
                           flip=False, 
                           crop=False, padding=20, 
                           whiten=False, 
                           noise=False, noise_mean=0, noise_std=0.01,
                           resize=False, jitter=0.2):
-        labels = []
-        for i in range(box_labels.shape[0]):
-            label = []
-            for j in range(box_labels.shape[1]):
-                if sum(box_labels[i,j,:]) != 0:
-                    label.append(box_labels[i,j,:])
-            if label:
-                labels.append(label)
-            else:
-                break
-        
         # 图像尺寸变换
         if resize:
             images, labels = self.image_resize(images, labels, jitter=jitter)
@@ -344,28 +314,8 @@ class ImageProcessor:
         # 图像噪声
         if noise:
             images = self.image_noise(images, mean=noise_mean, std=noise_std)
-        
-        # 重新根据labels计算输入网络的变量
-        batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
-            batch_object_nums = [], [], [], [], []
             
-        for i in range(len(labels)):
-            label = [[0, 0, 0, 0, 0]] * self.max_objects
-            for j in range(len(labels[i])):
-                label[j] = labels[i][j]
-            class_label, class_mask, box_label, object_num = self.process_label(label)
-            batch_class_labels.append(class_label)
-            batch_class_masks.append(class_mask)
-            batch_box_labels.append(box_label)
-            batch_object_nums.append(object_num)
-        
-        batch_class_labels = numpy.array(batch_class_labels, dtype='int32')
-        batch_class_masks = numpy.array(batch_class_masks, dtype='float32')
-        batch_box_labels = numpy.array(batch_box_labels, dtype='float32')
-        batch_object_nums = numpy.array(batch_object_nums, dtype='int32')
-            
-        return images, batch_class_labels, batch_class_masks, \
-            batch_box_labels, batch_object_nums
+        return images, labels
     
     def image_crop(self, images, padding=20):
         # 图像切割
@@ -425,10 +375,10 @@ class ImageProcessor:
         return images
     
     def image_resize(self, images, labels, jitter=0.2):
-        # 图像尺寸变换
-        resized_w, resized_h = int(self.image_size), int(self.image_size)
         new_images, new_labels = [], []
+        resized_w, resized_h = int(self.image_size), int(self.image_size)
         
+        # 图像尺寸变换
         for i in range(images.shape[0]):
             old_image = images[i,:,:,:]
             dw, dh = old_image.shape[1] * jitter, old_image.shape[0] * jitter
@@ -472,24 +422,24 @@ class ImageProcessor:
             
             new_images.append(new_image)
             
-            # 重新计算box label
-        for i in range(len(labels)):
+        # 重新计算labels
+        for i in range(labels.shape[0]):
             label = []
-            for j in range(len(labels[i])):
-                if sum(labels[i][j]) == 0:
+            for j in range(labels.shape[1]):
+                if sum(labels[i,j]) == 0:
                     break
                 if resized_w > nw:
-                    center_x = (labels[i][j][2] * nw + dx) / resized_w
+                    center_x = (labels[i,j,2] * nw + dx) / resized_w
                 else:
-                    center_x = (labels[i][j][2] * nw - dx) / resized_w
+                    center_x = (labels[i,j,2] * nw - dx) / resized_w
                     
                 if resized_h > nh:
-                    center_y = (labels[i][j][3] * nh + dy) / resized_h
+                    center_y = (labels[i,j,3] * nh + dy) / resized_h
                 else:
-                    center_y = (labels[i][j][3] * nh - dy) / resized_h
+                    center_y = (labels[i,j,3] * nh - dy) / resized_h
                 
-                new_w = min(labels[i][j][4] * nw / resized_w, 1.0)
-                new_h = min(labels[i][j][5] * nh / resized_h, 1.0)
+                new_w = min(labels[i,j,4] * nw / resized_w, 1.0)
+                new_h = min(labels[i,j,5] * nh / resized_h, 1.0)
                     
                 if 0 < center_x < 1 and 0 < center_y < 1:
                     label.append([center_x, center_y, new_w, new_h, 1.0])

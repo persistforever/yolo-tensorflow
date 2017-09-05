@@ -487,15 +487,15 @@ class TinyYolo():
             start_time = time.time()
             
             # 获取数据并进行数据增强
-            batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
-                batch_object_nums = processor.get_train_batch(batch_size)
-            batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
-                batch_object_nums = processor.data_augmentation(
+            batch_images, batch_labels = processor.get_train_batch(batch_size)
+            batch_images, batch_labels = processor.data_augmentation(
                 batch_images, batch_box_labels,
                 flip=True, 
                 crop=False, padding=20, 
                 whiten=True,
                 resize=True, jitter=0.2)
+            batch_class_labels, batch_class_masks, batch_box_labels, batch_object_nums = \
+                processor.process_batch_labels(batch_labels)
             
             [_, avg_loss, class_loss, coord_loss, object_loss, nobject_loss,
              iou_value, object_value, nobject_value, recall_value] = self.sess.run(
@@ -555,15 +555,15 @@ class TinyYolo():
                 for i in range(0, processor.n_valid-batch_size, batch_size):
                     
                     # 获取数据并进行数据增强
-                    batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
-                        batch_object_nums = processor.get_valid_batch(i, batch_size)
-                    batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
-                        batch_object_nums = processor.data_augmentation(
+                    batch_images, batch_labels = processor.get_valid_batch(i, batch_size)
+                    batch_images, batch_labels = processor.data_augmentation(
                         batch_images, batch_box_labels,
                         flip=False,
                         crop=False, padding=20,
                         whiten=True,
                         resize=False, jitter=0.2)
+                    batch_class_labels, batch_class_masks, batch_box_labels, batch_object_nums = \
+                        processor.process_batch_labels(batch_labels)
                     
                     [iou_value, object_value,
                      nobject_value, recall_value] = self.sess.run(
