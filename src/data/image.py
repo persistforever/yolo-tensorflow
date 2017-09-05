@@ -77,7 +77,6 @@ class ImageProcessor:
                 # 读取图像
                 image = cv2.imread(image_path)
                 [image_h, image_w, _] = image.shape
-                # image = cv2.resize(image, (self.image_size, self.image_size))
                 
                 # 处理 label
                 i, n_objects = 0, 0
@@ -275,7 +274,8 @@ class ImageProcessor:
         
         return batch_images, batch_labels
         
-    def data_augmentation(self, images, labels, 
+    def data_augmentation(self, images, labels,
+                          mode='train', 
                           flip=False, 
                           crop=False, padding=20, 
                           whiten=False, 
@@ -283,7 +283,7 @@ class ImageProcessor:
                           resize=False, jitter=0.2):
         # 图像尺寸变换
         if resize:
-            images, labels = self.image_resize(images, labels, jitter=jitter)
+            images, labels = self.image_resize(images, labels, jitter=jitter, mode=mode)
         # 图像切割
         if crop:
             images = self.image_crop(images, padding=padding)
@@ -356,76 +356,92 @@ class ImageProcessor:
         
         return images
     
-    def image_resize(self, images, labels, jitter=0.2):
+    def image_resize(self, images, labels, jitter=0.2, mode='train'):
         new_images, new_labels = [], []
         resized_w, resized_h = int(self.image_size), int(self.image_size)
         
-        # 图像尺寸变换
         for i in range(len(images)):
-            old_image = images[i]
-            dw, dh = old_image.shape[1] * jitter, old_image.shape[0] * jitter
-            
-            new_ar = 1.0 * (old_image.shape[1] + random.randint(-int(dw), int(dw))) / \
-                (old_image.shape[0] + random.randint(-int(dh), int(dh)))
-            scala = random.random() * (2 - 0.5) + 0.5
-            
-            # 新图像事原图像的scala的缩放，并使新图像的比例为new_ar
-            if new_ar < 1:
-                nh = scala * resized_h
-                nw = nh * new_ar
-            else:
-                nw = scala * resized_w
-                nh = nw / new_ar
-            nw, nh = int(nw), int(nh)
-            
-            temp_image = cv2.resize(old_image, dsize=(nw, nh))
-            
-            if resized_w > nw:
-                dx = random.randint(0, resized_w - nw)
-                old_sx, old_ex = 0, nw
-                new_sx, new_ex = dx, dx + nw
-            else:
-                dx = random.randint(0, nw - resized_w)
-                old_sx, old_ex = dx, dx + resized_w
-                new_sx, new_ex = 0, resized_w
+            # 图像尺寸变换
+            if mode == 'train':
+                old_image = images[i]
+                dw, dh = old_image.shape[1] * jitter, old_image.shape[0] * jitter
                 
-            if resized_h > nh:
-                dy = random.randint(0, resized_h - nh)
-                old_sy, old_ey = 0, nh
-                new_sy, new_ey = dy, dy + nh
-            else:
-                dy = random.randint(0, nh - resized_h)
-                old_sy, old_ey = dy, dy + resized_h
-                new_sy, new_ey = 0, resized_h
-            
-            new_image = numpy.zeros(shape=(resized_h, resized_w, 3)) + 128
-            new_image[new_sy: new_ey, new_sx: new_ex, :] = \
-                temp_image[old_sy: old_ey, old_sx: old_ex, :]
-            
-            new_images.append(new_image)
-            
-        # 重新计算labels
-        for i in range(len(labels)):
-            new_label = []
-            for j in range(len(labels[i])):
-                if sum(labels[i][j]) == 0:
-                    break
-                if resized_w > nw:
-                    center_x = (labels[i][j][0] * nw + dx) / resized_w
+                new_ar = 1.0 * (old_image.shape[1] + random.randint(-int(dw), int(dw))) / \
+                    (old_image.shape[0] + random.randint(-int(dh), int(dh)))
+                scala = random.random() * (2 - 0.5) + 0.5
+                
+                # 新图像事原图像的scala的缩放，并使新图像的比例为new_ar
+                if new_ar < 1:
+                    nh = scala * resized_h
+                    nw = nh * new_ar
                 else:
-                    center_x = (labels[i][j][0] * nw - dx) / resized_w
+                    nw = scala * resized_w
+                    nh = nw / new_ar
+                nw, nh = int(nw), int(nh)
+                
+                temp_image = cv2.resize(old_image, dsize=(nw, nh))
+                
+                if resized_w > nw:
+                    dx = random.randint(0, resized_w - nw)
+                    old_sx, old_ex = 0, nw
+                    new_sx, new_ex = dx, dx + nw
+                else:
+                    dx = random.randint(0, nw - resized_w)
+                    old_sx, old_ex = dx, dx + resized_w
+                    new_sx, new_ex = 0, resized_w
                     
                 if resized_h > nh:
-                    center_y = (labels[i][j][1] * nh + dy) / resized_h
+                    dy = random.randint(0, resized_h - nh)
+                    old_sy, old_ey = 0, nh
+                    new_sy, new_ey = dy, dy + nh
                 else:
-                    center_y = (labels[i][j][1] * nh - dy) / resized_h
+                    dy = random.randint(0, nh - resized_h)
+                    old_sy, old_ey = dy, dy + resized_h
+                    new_sy, new_ey = 0, resized_h
                 
-                new_w = min(labels[i][j][2] * nw / resized_w, 1.0)
-                new_h = min(labels[i][j][3] * nh / resized_h, 1.0)
-                    
-                if 0 < center_x < 1 and 0 < center_y < 1:
-                    new_label.append([center_x, center_y, new_w, new_h, 1.0])
+                new_image = numpy.zeros(shape=(resized_h, resized_w, 3)) + 128
+                new_image[new_sy: new_ey, new_sx: new_ex, :] = \
+                    temp_image[old_sy: old_ey, old_sx: old_ex, :]
             
-            new_labels.append(new_label)
+                new_images.append(new_image)
+            
+                # 重新计算labels
+                new_label = [[0, 0, 0, 0, 0]] * self.max_objects
+                n = 0
+                for j in range(len(labels[i])):
+                    if sum(labels[i][j]) == 0:
+                        break
+                    if mode == 'train':
+                        if resized_w > nw:
+                            center_x = (labels[i][j][0] * nw + dx) / resized_w
+                        else:
+                            center_x = (labels[i][j][0] * nw - dx) / resized_w
+                            
+                        if resized_h > nh:
+                            center_y = (labels[i][j][1] * nh + dy) / resized_h
+                        else:
+                            center_y = (labels[i][j][1] * nh - dy) / resized_h
+                        
+                        new_w = min(labels[i][j][2] * nw / resized_w, 1.0)
+                        new_h = min(labels[i][j][3] * nh / resized_h, 1.0)
+                            
+                        if 0 < center_x < 1 and 0 < center_y < 1:
+                            new_label[n] = [center_x, center_y, new_w, new_h, 1.0]
+                            n += 1
+                
+                new_labels.append(new_label)
+            else:
+                old_image = images[i]
+                new_image = cv2.resize(old_image, (self.image_size, self.image_size))
+                new_images.append(new_image)
+                
+                new_label = [[0, 0, 0, 0, 0]] * self.max_objects
+                n = 0
+                for j in range(len(labels[i])):
+                    if sum(labels[i][j]) == 0:
+                        break
+                    new_label[n] = labels[i]
+                    n += 1
+                new_labels.append(new_label)
         
         return new_images, new_labels
