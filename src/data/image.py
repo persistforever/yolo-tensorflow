@@ -41,18 +41,15 @@ class ImageProcessor:
             valid_file = os.path.join(directory, 'valid.txt')
             self.valid_images, self.valid_labels = \
                 self.load_dataset_whole(valid_file, n_thread=5)
-            self.n_valid = self.valid_images.shape[0]
+            self.n_valid = len(self.valid_images)
             
             # 读取测试集
             test_file = os.path.join(directory, 'test.txt')
             self.test_images, self.test_labels = \
                 self.load_dataset_whole(test_file, n_thread=5)
-            self.n_test = self.test_images.shape[0]
+            self.n_test = len(self.test_images)
             
-            print('valid images: ', self.valid_images.shape, 
-                  ', valid labels: ', self.valid_labels.shape)
-            print('test images: ', self.test_images.shape, 
-                  ', test labels: ', self.test_labels.shape)
+            print('# of valid images: %d, # of test images %d' % (self.n_valid, self.n_test))
             print()
             sys.stdout.flush()
         
@@ -121,9 +118,6 @@ class ImageProcessor:
             images.append(image)
             labels.append(label)
         
-        images = numpy.array(images, dtype='uint8')
-        labels = numpy.array(labels, dtype='float32')
-        
         return images, labels
         
     def load_dataset_loop(self, filename, n_thread=10):
@@ -152,7 +146,6 @@ class ImageProcessor:
                     # 读取图像
                     image = cv2.imread(image_path)
                     [image_h, image_w, _] = image.shape
-                    # image = cv2.resize(image, (self.image_size, self.image_size))
                     
                     # 处理 label
                     i, n_objects = 0, 0
@@ -240,7 +233,7 @@ class ImageProcessor:
         batch_class_labels, batch_class_masks, batch_box_labels, \
             batch_object_nums = [], [], [], []
             
-        for i in range(batch_labels.shape[0]):
+        for i in range(len(batch_labels)):
             class_label, class_mask, box_label, object_num = self.process_label(batch_labels[i])
             batch_class_labels.append(class_label)
             batch_class_masks.append(class_mask)
@@ -267,9 +260,6 @@ class ImageProcessor:
             image, label = self.train_dataset.get()
             batch_images.append(image)
             batch_labels.append(label)
-        
-        batch_images = numpy.array(batch_images, dtype='uint8')
-        batch_labels = numpy.array(batch_labels, dtype='float32')
             
         return batch_images, batch_labels
             
@@ -294,14 +284,6 @@ class ImageProcessor:
         # 图像尺寸变换
         if resize:
             images, labels = self.image_resize(images, labels, jitter=jitter)
-        else:
-            new_labels = []
-            for i in range(len(labels)):
-                label = []
-                for j in range(len(labels[i])):
-                    label.append(labels[i][j][2:6] + [0.1])
-                new_labels.append(label)
-            labels = new_labels
         # 图像切割
         if crop:
             images = self.image_crop(images, padding=padding)
@@ -315,7 +297,7 @@ class ImageProcessor:
         if noise:
             images = self.image_noise(images, mean=noise_mean, std=noise_std)
             
-        return images, labels
+        return numpy.array(images, dtype='uint8'), numpy.array(labels, dtype='float32')
     
     def image_crop(self, images, padding=20):
         # 图像切割
@@ -334,17 +316,17 @@ class ImageProcessor:
     
     def image_flip(self, images, labels):
         # 图像翻转
-        for i in range(images.shape[0]):
-            old_image = images[i,:,:,:]
+        for i in range(len(images)):
+            old_image = images[i]
             if numpy.random.random() < 0.5:
                 new_image = cv2.flip(old_image, 1)
             else:
                 new_image = old_image
-            images[i,:,:,:] = new_image
+            images[i] = new_image
             
             # 重新计算box label
         for i in range(len(labels)):
-            for j in range(len(labels[i])):
+            for j in range(self.max_objects):
                 if sum(labels[i][j]) == 0:
                     break
                 center_x = 1.0 - labels[i][j][0]
@@ -379,8 +361,8 @@ class ImageProcessor:
         resized_w, resized_h = int(self.image_size), int(self.image_size)
         
         # 图像尺寸变换
-        for i in range(images.shape[0]):
-            old_image = images[i,:,:,:]
+        for i in range(len(images)):
+            old_image = images[i]
             dw, dh = old_image.shape[1] * jitter, old_image.shape[0] * jitter
             
             new_ar = 1.0 * (old_image.shape[1] + random.randint(-int(dw), int(dw))) / \
@@ -423,27 +405,27 @@ class ImageProcessor:
             new_images.append(new_image)
             
         # 重新计算labels
-        for i in range(labels.shape[0]):
-            label = []
-            for j in range(labels.shape[1]):
-                if sum(labels[i,j]) == 0:
+        for i in range(len(labels)):
+            new_label = []
+            for j in range(self.max_objects):
+                if sum(labels[i][j]) == 0:
                     break
                 if resized_w > nw:
-                    center_x = (labels[i,j,2] * nw + dx) / resized_w
+                    center_x = (labels[i][j][2] * nw + dx) / resized_w
                 else:
-                    center_x = (labels[i,j,2] * nw - dx) / resized_w
+                    center_x = (labels[i][j][2] * nw - dx) / resized_w
                     
                 if resized_h > nh:
-                    center_y = (labels[i,j,3] * nh + dy) / resized_h
+                    center_y = (labels[i][j][3] * nh + dy) / resized_h
                 else:
-                    center_y = (labels[i,j,3] * nh - dy) / resized_h
+                    center_y = (labels[i][j][3] * nh - dy) / resized_h
                 
-                new_w = min(labels[i,j,4] * nw / resized_w, 1.0)
-                new_h = min(labels[i,j,5] * nh / resized_h, 1.0)
+                new_w = min(labels[i][j][4] * nw / resized_w, 1.0)
+                new_h = min(labels[i][j][5] * nh / resized_h, 1.0)
                     
                 if 0 < center_x < 1 and 0 < center_y < 1:
-                    label.append([center_x, center_y, new_w, new_h, 1.0])
+                    new_label.append([center_x, center_y, new_w, new_h, 1.0])
             
-            new_labels.append(label)
+            new_labels.append(new_label)
         
-        return numpy.array(new_images, dtype='uint8'), new_labels
+        return new_images, new_labels
