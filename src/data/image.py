@@ -80,7 +80,7 @@ class ImageProcessor:
                 
                 # 处理 label
                 i, n_objects = 0, 0
-                label = [[0, 0, 0, 0, 0]] * self.max_objects
+                label = [{}] * self.max_objects
                 while i < len(label_infos) and n_objects < self.max_objects:
                     xmin = int(label_infos[i])
                     ymin = int(label_infos[i+1])
@@ -88,13 +88,12 @@ class ImageProcessor:
                     ymax = int(label_infos[i+3])
                     class_index = int(label_infos[i+4])
                     
-                    # 转化成 center_x, center_y, w, h
-                    center_x = (1.0 * (xmin + xmax) / 2.0) / image_w
-                    center_y = (1.0 * (ymin + ymax) / 2.0) / image_h
-                    w = (1.0 * (xmax - xmin)) / image_w
-                    h = (1.0 * (ymax - ymin)) / image_h
+                    left = max(0.0, 1.0 * xmin / image_w)
+                    right = min(1.0 * xmax / image_w, 1.0)
+                    top = max(0.0, 1.0 * ymin / image_h)
+                    bottom = min(1.0 * ymax / image_h, 1.0)
                     
-                    label[n_objects] = [center_x, center_y, w, h, class_index]
+                    label[n_objects] = [left, right, top, bottom, class_index]
                     i += 5
                     n_objects += 1
                     
@@ -155,14 +154,13 @@ class ImageProcessor:
                         xmax = int(label_infos[i+2])
                         ymax = int(label_infos[i+3])
                         class_index = int(label_infos[i+4])
+                    
+                        left = max(0.0, 1.0 * xmin / image_w)
+                        right = min(1.0 * xmax / image_w, 1.0)
+                        top = max(0.0, 1.0 * ymin / image_h)
+                        bottom = min(1.0 * ymax / image_h, 1.0)
                         
-                        # 转化成 center_x, center_y, w, h
-                        center_x = (1.0 * (xmin + xmax) / 2.0) / image_w
-                        center_y = (1.0 * (ymin + ymax) / 2.0) / image_h
-                        w = (1.0 * (xmax - xmin)) / image_w
-                        h = (1.0 * (ymax - ymin)) / image_h
-                        
-                        label[n_objects] = [center_x, center_y, w, h, class_index]
+                        label[n_objects] = [left, right, top, bottom, class_index]
                         i += 5
                         n_objects += 1
                         
@@ -195,26 +193,31 @@ class ImageProcessor:
         
         for j in range(self.max_objects):
             
-            [center_x, center_y, w, h, class_index] = label[j]
+            [left, right, top, bottom, class_index] = label[j]
+            center_x = (left + right) / 2.0
+            center_y = (top + bottom) / 2.0
+            w = right - left
+            h = bottom - top
             
             if class_index != 0:
                 # 计算包围框标记
-                center_cell_x = int(math.floor(self.cell_size * center_x - 1e-6))
-                center_cell_y = int(math.floor(self.cell_size * center_y - 1e-6))
+                center_cell_x = int(math.floor(self.cell_size * center_x))
+                center_cell_y = int(math.floor(self.cell_size * center_y))
                 box_label[j, :] = numpy.array(
                     [center_cell_x, center_cell_y, center_x, center_y, w, h])
                 
                 # 计算类别标记
                 left_cell_x = max(
-                    0, int(math.floor(self.cell_size * (center_x - w / 2.0) - 1e-6)))
+                    0, int(math.floor(self.cell_size * left)))
                 right_cell_x = min(
-                    int(math.floor(self.cell_size * (center_x + w / 2.0) - 1e-6)), 
+                    int(math.floor(self.cell_size * right)), 
                     self.cell_size-1)
                 top_cell_y = max(
-                    0, int(math.floor(self.cell_size * (center_y - h / 2.0) - 1e-6)))
+                    0, int(math.floor(self.cell_size * top)))
                 bottom_cell_y = min(
-                    int(math.floor(self.cell_size * (center_y + h / 2.0) - 1e-6)),
+                    int(math.floor(self.cell_size * bottom)),
                     self.cell_size-1)
+                
                 for x in range(left_cell_x, right_cell_x+1):
                     for y in range(top_cell_y, bottom_cell_y+1):
                         _class_label = numpy.zeros(
@@ -329,8 +332,10 @@ class ImageProcessor:
             for j in range(len(labels[i])):
                 if sum(labels[i][j]) == 0:
                     break
-                center_x = 1.0 - labels[i][j][0]
-                labels[i][j][0] = center_x
+                right = 1.0 - labels[i][j][0]
+                left = 1.0 - labels[i][j][1]
+                labels[i][j][0] = left
+                labels[i][j][1] = right
         
         return images, labels
     
@@ -412,32 +417,34 @@ class ImageProcessor:
                     if sum(labels[i][j]) == 0:
                         break
                     if mode == 'train':
+                            
+                        left = labels[i][j][0]
+                        right = labels[i][j][1]
+                        top = labels[i][j][2]
+                        bottom = labels[i][j][3]
+                            
                         if resized_w > nw:
-                            center_x = (labels[i][j][0] * nw + dx) / resized_w
+                            new_left = (left * nw + dx) / resized_w
+                            new_right = (right * nw + dx) / resized_w
                         else:
-                            center_x = (labels[i][j][0] * nw - dx) / resized_w
+                            new_left = (left * nw - dx) / resized_w
+                            new_right = (right * nw - dx) / resized_w
                             
                         if resized_h > nh:
-                            center_y = (labels[i][j][1] * nh + dy) / resized_h
+                            new_top = (top * nh + dy) / resized_h
+                            new_bottom = (bottom * nh + dy) / resized_h
                         else:
-                            center_y = (labels[i][j][1] * nh - dy) / resized_h
+                            new_top = (top * nh - dy) / resized_h
+                            new_bottom = (bottom * nh - dy) / resized_h
                             
-                        if 0 < center_x < 1 and 0 < center_y < 1:
+                        new_left = min(max(0.0, new_left), 1.0 - 1e-6)
+                        new_right = max(0.0, min(new_right, 1.0 - 1e-6))
+                        new_top = min(max(0.0, new_top), 1.0 - 1e-6)
+                        new_bottom = max(0.0, min(new_bottom, 1.0 - 1e-6))
                         
-                            new_w = labels[i][j][2] * nw / resized_w
-                            new_h = labels[i][j][3] * nh / resized_h
-                            
-                            left = max(0.0, center_x - new_w / 2.0)
-                            right = min(center_x + new_w / 2.0, 1.0)
-                            top = max(0.0, center_y - new_h / 2.0)
-                            bottom = min(center_y + new_h / 2.0, 1.0)
-                            
-                            center_x = (left + right) / 2.0
-                            center_y = (top + bottom) / 2.0
-                            new_w = right - left
-                            new_h = bottom - top
-                            
-                            new_label[n] = [center_x, center_y, new_w, new_h, 1.0]
+                        if new_right > new_left and new_bottom > new_top:
+                            new_label[n] = [new_left, new_right, new_top, new_bottom, 
+                                            labels[i][j][4]]
                             n += 1
                 """
                 cv2.imwrite('old.png', old_image)

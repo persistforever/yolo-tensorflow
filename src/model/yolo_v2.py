@@ -253,7 +253,6 @@ class TinyYolo():
             tf.pad(object_mask, paddings=padding, mode='CONSTANT'),
             shape=(self.cell_size, self.cell_size, 1, 1))
         
-        # 根据坐标计算出box_label
         box_label = tf.cast(self.box_labels[batch,num,2:6], dtype=tf.float32)
         box_label = tf.reshape(box_label, shape=(1, 1, 1, 4))
         padding = tf.cast([[cell_y, self.cell_size-cell_y-1], 
@@ -351,7 +350,7 @@ class TinyYolo():
             iou_matrix_mask)
         coord_loss += tf.cond(tf.less(self.global_step, -1),
                               lambda: object_coord_loss,
-                              lambda: object_nobject_coord_loss)
+                              lambda: object_coord_loss)
         
         # 计算iou_value
         # 每一个cell中，有object，并且iou最大的那个对应的iou

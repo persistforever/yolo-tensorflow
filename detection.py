@@ -6,7 +6,7 @@ import os
 import platform
 
 os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
-os.environ['CUDA_VISIBLE_DEVICES'] = '3'
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 if 'Windows' in platform.platform():
     maindir = 'E:\Github\\table-detection\\'
@@ -16,7 +16,7 @@ elif 'Linux' in platform.platform():
 
 def train():
     from src.data.image import ImageProcessor
-    from src.model.yolo_v2 import TinyYolo
+    from src.model.yolo_v1 import TinyYolo
     
     tiny_yolo = TinyYolo(
         n_channel=3, n_classes=1, image_size=224, max_objects_per_image=30,

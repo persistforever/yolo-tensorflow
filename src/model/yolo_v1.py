@@ -17,7 +17,7 @@ from src.layer.pool_layer import PoolLayer
 class TinyYolo():
     
     def __init__(self, n_channel=3, n_classes=1, image_size=288, max_objects_per_image=20,
-                 box_per_cell=5, object_scala=1, nobject_scala=1,
+                 cell_size=7, box_per_cell=5, object_scala=1, nobject_scala=1,
                  coord_scala=1, class_scala=1, batch_size=2, nobject_thresh=0.6,
                  recall_thresh=0.5):
         # 设置参数
@@ -25,7 +25,7 @@ class TinyYolo():
         self.image_size = image_size
         self.n_channel = n_channel
         self.max_objects = max_objects_per_image
-        self.cell_size = int(self.image_size / 32)
+        self.cell_size = cell_size
         self.n_boxes = box_per_cell
         self.class_scala = float(class_scala)
         self.object_scala = float(object_scala)
@@ -389,7 +389,7 @@ class TinyYolo():
         # 模型保存器
         self.saver = tf.train.Saver(
             var_list=tf.global_variables(), write_version=tf.train.SaverDef.V2, 
-            max_to_keep=5)
+            max_to_keep=1)
         # 模型初始化
         self.sess.run(tf.global_variables_initializer())
                 
@@ -405,12 +405,12 @@ class TinyYolo():
             start_time = time.time()
             
             # 获取数据并进行数据增强
-            batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
-                batch_object_nums = \
-                processor.get_train_batch(batch_size)
-            batch_images = processor.data_augmentation(
-                batch_images, flip=True, 
-                crop=False, padding=20, whiten=True)
+            batch_images, batch_labels = processor.get_train_batch(batch_size)
+            batch_images, batch_labels = processor.data_augmentation(
+                batch_images, batch_labels, mode='train',
+                flip=True, whiten=True, resize=True, jitter=0.2)
+            batch_class_labels, batch_class_masks, batch_box_labels, batch_object_nums = \
+                processor.process_batch_labels(batch_labels)
             
             [_, avg_loss, class_loss, coord_loss, object_loss, nobject_loss,
              iou_value, object_value, nobject_value, recall_value] = self.sess.run(
@@ -441,39 +441,26 @@ class TinyYolo():
             process_images += batch_size
             speed = 1.0 * batch_size / (end_time - start_time)
                 
-            # 每10轮训练观测一次train_loss
-            if n_iter % 10 == 0:
-                train_avg_loss /= 10
-                train_class_loss /= 10
-                train_coord_loss /= 10
-                train_object_loss /= 10
-                train_nobject_loss /= 10
-                
-                print('{TRAIN} iter[%d], train loss: %.6f, class_loss: %.6f, coord_loss: %.6f, '
-                      'object_loss: %.6f, nobject_loss: %.6f, image_nums: %d, '
-                      'speed: %.2f images/s' % (
-                    n_iter, train_avg_loss, train_class_loss, train_coord_loss, 
-                    train_object_loss, train_nobject_loss, process_images, speed))
-                sys.stdout.flush()
-                
-                train_avg_loss, train_class_loss, train_coord_loss, \
-                    train_object_loss, train_nobject_loss = 0.0, 0.0, 0.0, 0.0, 0.0
+            # 每1轮训练观测一次train_loss    
+            print('{TRAIN} iter[%d], train loss: %.6f, class_loss: %.6f, coord_loss: %.6f, '
+                  'object_loss: %.6f, nobject_loss: %.6f, image_nums: %d, '
+                  'speed: %.2f images/s' % (
+                n_iter, train_avg_loss, train_class_loss, train_coord_loss, 
+                train_object_loss, train_nobject_loss, process_images, speed))
+            sys.stdout.flush()
             
-            # 每50轮观测一次训练集evaluation
-            if n_iter % 50 == 0:
-                train_iou_value /= 50
-                train_object_value /= 50
-                train_nobject_value /= 50
-                train_recall_value /= 50
-                
-                print('{TRAIN} iter[%d], iou: %.6f, object: %.6f, '
-                      'nobject: %.6f, recall: %.6f' % (
-                    n_iter, train_iou_value, train_object_value, 
-                    train_nobject_value, train_recall_value))
-                sys.stdout.flush()
-                
-                train_iou_value, train_object_value, \
-                    train_nobject_value, train_recall_value = 0.0, 0.0, 0.0, 0.0 
+            train_avg_loss, train_class_loss, train_coord_loss, \
+                train_object_loss, train_nobject_loss = 0.0, 0.0, 0.0, 0.0, 0.0
+            
+            # 每1轮观测一次训练集evaluation
+            print('{TRAIN} iter[%d], iou: %.6f, object: %.6f, '
+                  'nobject: %.6f, recall: %.6f' % (
+                n_iter, train_iou_value, train_object_value, 
+                train_nobject_value, train_recall_value))
+            sys.stdout.flush()
+            
+            train_iou_value, train_object_value, \
+                train_nobject_value, train_recall_value = 0.0, 0.0, 0.0, 0.0 
             
             # 每100轮观测一次验证集evaluation
             if n_iter % 100 == 0:
@@ -483,12 +470,14 @@ class TinyYolo():
                 for i in range(0, processor.n_valid-batch_size, batch_size):
                     
                     # 获取数据并进行数据增强
-                    batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
-                        batch_object_nums = \
-                        processor.get_valid_batch(i, batch_size)
-                    batch_images = processor.data_augmentation(
-                        batch_images, flip=False,
-                        crop=False, padding=20, whiten=True)
+                    batch_images, batch_labels = processor.get_valid_batch(i, batch_size)
+                    batch_images, batch_labels = processor.data_augmentation(
+                        batch_images, batch_labels, mode='test',
+                        flip=False,
+                        whiten=True,
+                        resize=True)
+                    batch_class_labels, batch_class_masks, batch_box_labels, batch_object_nums = \
+                        processor.process_batch_labels(batch_labels)
                     
                     [iou_value, object_value,
                      nobject_value, recall_value] = self.sess.run(
