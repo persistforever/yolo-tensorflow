@@ -189,7 +189,7 @@ class ImageProcessor:
                           resize=False, jitter=0.2,
                           flip=False,
                           whiten=False):
-        images, labels = [], []
+        new_images, new_labels = [], []
         
         for i in range(len(image_paths)):
             image = cv2.imread(image_paths[i])
@@ -205,10 +205,10 @@ class ImageProcessor:
             if whiten:
                 image = self.image_whitening(image)
                 
-            images.append(image)
-            labels.append(label)
+            new_images.append(image)
+            new_labels.append(label)
             
-        return numpy.array(images, dtype='uint8'), numpy.array(labels, dtype='float32')
+        return numpy.array(new_images, dtype='uint8'), numpy.array(new_labels, dtype='float32')
     
     def image_flip(self, image, label):
         # 图像翻转
