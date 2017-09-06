@@ -16,20 +16,17 @@ elif 'Linux' in platform.platform():
 
 def train():
     from src.data.image import ImageProcessor
-    from src.model.yolo_v1 import TinyYolo
+    from src.model.yolo_v2 import TinyYolo
+    
+    image_processor = ImageProcessor(
+        os.path.join(maindir, 'data', 'table-v1'),
+        image_size=224, max_objects_per_image=30, cell_size=7, n_classes=1)
     
     tiny_yolo = TinyYolo(
         n_channel=3, n_classes=1, image_size=224, max_objects_per_image=30,
         cell_size=7, box_per_cell=6, object_scala=1, nobject_scala=0.5,
         coord_scala=5, class_scala=1, batch_size=64, nobject_thresh=0.6,
         recall_thresh=0.5)
-    
-    sys.stdout.flush()
-    image_processor = ImageProcessor(
-        os.path.join(maindir, 'data', 'table-v1'),
-        image_size=224, max_objects_per_image=30, cell_size=7, n_classes=1)
-    print('Processing Images finished!\n')
-    sys.stdout.flush()
     
     tiny_yolo.train(
         processor=image_processor, backup_path=os.path.join(maindir, 'backup', 'table-v6'),

@@ -208,26 +208,26 @@ class TinyYolo():
         # 计算bx
         offset_x = tf.reshape(tf.range(0, self.cell_size), shape=(1, self.cell_size, 1, 1))
         offset_x = tf.tile(offset_x, (self.cell_size, 1, self.n_boxes, 1))
-        offset_x = tf.cast(offset_x, dtype=tf.float32) / self.cell_size
-        x_pred = tf.sigmoid(box_pred[:,:,:,0:1]) + offset_x
+        offset_x = tf.cast(offset_x, dtype=tf.float32)
+        x_pred = (tf.sigmoid(box_pred[:,:,:,0:1]) + offset_x) / self.cell_size
         
         # 计算by
         offset_y = tf.reshape(tf.range(0, self.cell_size), shape=(self.cell_size, 1, 1, 1))
         offset_y = tf.tile(offset_y, (1, self.cell_size, self.n_boxes, 1))
-        offset_y = tf.cast(offset_y, dtype=tf.float32) / self.cell_size
-        y_pred = tf.sigmoid(box_pred[:,:,:,1:2]) + offset_y
+        offset_y = tf.cast(offset_y, dtype=tf.float32)
+        y_pred = (tf.sigmoid(box_pred[:,:,:,1:2]) + offset_y) / self.cell_size
         
         # 计算pw
         prior_w = tf.constant([0.73, 0.73, 0.71, 0.76, 0.73, 0.73], dtype=tf.float32)
         prior_w = tf.reshape(prior_w, shape=(1, 1, self.n_boxes, 1))
         prior_w = tf.tile(prior_w, (self.cell_size, self.cell_size, 1, 1))
-        w_pred = prior_w * tf.nn.relu(box_pred[:,:,:,2:3])
+        w_pred = prior_w * tf.exp(box_pred[:,:,:,2:3]) / self.cell_size
         
         # 计算ph
         prior_h = tf.constant([0.12, 0.23, 0.17, 0.65, 0.22, 0.11], dtype=tf.float32)
         prior_h = tf.reshape(prior_h, shape=(1, 1, self.n_boxes, 1))
         prior_h = tf.tile(prior_h, (self.cell_size, self.cell_size, 1, 1))
-        h_pred = prior_h * tf.nn.relu(box_pred[:,:,:,3:4])
+        h_pred = prior_h * tf.exp(box_pred[:,:,:,3:4]) / self.cell_size
         
         box_pred = tf.concat([x_pred, y_pred, w_pred, h_pred], axis=3)
         
@@ -486,9 +486,10 @@ class TinyYolo():
             start_time = time.time()
             
             # 获取数据并进行数据增强
-            batch_images, batch_labels = processor.get_train_batch(batch_size)
+            batch_image_paths, batch_labels = processor.get_random_batch(
+                processor.trainsets, batch_size)
             batch_images, batch_labels = processor.data_augmentation(
-                batch_images, batch_labels, mode='train',
+                batch_image_paths, batch_labels, mode='train',
                 flip=True, whiten=True, resize=True, jitter=0.2)
             batch_class_labels, batch_class_masks, batch_box_labels, batch_object_nums = \
                 processor.process_batch_labels(batch_labels)
