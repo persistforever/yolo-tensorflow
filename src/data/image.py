@@ -315,13 +315,13 @@ class ImageProcessor:
                     new_label[n] = [new_left, new_right, new_top, new_bottom, 
                                     label[j][4]]
                     n += 1
-            
+            """
             cv2.imwrite('old.png', old_image)
             print(labels[i])
             cv2.imwrite('new.png', new_image)
             print(new_label)
             exit()
-            
+            """
         else:
             new_image = cv2.resize(image, (resized_h, resized_w))
             
