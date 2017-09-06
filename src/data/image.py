@@ -88,7 +88,7 @@ class ImageProcessor:
             
         for i in range(batch_size):
             index = random.randint(0, len(dataset))
-            image_path, label = dataset[i]
+            image_path, label = dataset[index]
             batch_image_paths.append(image_path)
             batch_labels.append(label)
             
