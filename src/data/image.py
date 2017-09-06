@@ -258,7 +258,7 @@ class ImageProcessor:
                 nh = nw / new_ar
             nw, nh = int(nw), int(nh)
             
-            temp_image = cv2.resize(image, dsize=(nh, nw))
+            temp_image = cv2.resize(image, dsize=(nw, nh))
             
             if resized_w > nw:
                 dx = random.randint(0, resized_w - nw)
