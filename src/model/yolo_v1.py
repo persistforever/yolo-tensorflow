@@ -264,7 +264,7 @@ class TinyYolo():
         box_pred = self.box_preds[example,:,:,:,0:4]
         
         iou_tensor = self.calculate_iou(box_pred, box_label)
-        padding = tf.cast([[0, 0], [0, 0], [0, 0], [num, object_num-num-1]], dtype=tf.int32)
+        padding = tf.cast([[0, 0], [0, 0], [0, 0], [num, self.max_objects-num-1]], dtype=tf.int32)
         iou_tensor = tf.pad(iou_tensor, paddings=padding, mode='CONSTANT')
         
         iou_tensor_whole += iou_tensor
