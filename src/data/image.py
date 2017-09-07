@@ -317,7 +317,7 @@ class ImageProcessor:
                     n += 1
             """
             cv2.imwrite('old.png', old_image)
-            print(labels[i])
+            print(label)
             cv2.imwrite('new.png', new_image)
             print(new_label)
             exit()

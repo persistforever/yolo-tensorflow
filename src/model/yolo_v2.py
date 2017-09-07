@@ -552,12 +552,11 @@ class TinyYolo():
                 for i in range(0, processor.n_valid-batch_size, batch_size):
                     
                     # 获取数据并进行数据增强
-                    batch_images, batch_labels = processor.get_valid_batch(i, batch_size)
+                    batch_image_paths, batch_labels = processor.get_index_batch(
+                        processor.trainsets, i, batch_size)
                     batch_images, batch_labels = processor.data_augmentation(
-                        batch_images, batch_labels, mode='test',
-                        flip=False,
-                        whiten=True,
-                        resize=True)
+                        batch_image_paths, batch_labels, mode='test',
+                        flip=False, whiten=True, resize=True, jitter=0.2)
                     batch_class_labels, batch_class_masks, batch_box_labels, batch_object_nums = \
                         processor.process_batch_labels(batch_labels)
                     
