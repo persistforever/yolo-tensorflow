@@ -269,6 +269,8 @@ class TinyYolo():
         
         iou_tensor_whole += iou_tensor
         
+        num += 1
+        
         return example, num, object_num, iou_tensor_whole
     
     def _one_object_loss_cond(self, example, num, object_num, coord_loss, object_loss, 
