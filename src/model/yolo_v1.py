@@ -134,7 +134,7 @@ class TinyYolo():
             batch_normal=True, weight_decay=5e-4, name='conv8')
         conv_layer9 = ConvLayer(
             input_shape=(self.batch_size, int(self.image_size/64), int(self.image_size/64), 1024), 
-            n_size=1, n_filter=self.n_boxes*5, stride=1, activation='none',
+            n_size=1, n_filter=self.n_boxes*5, stride=1, activation='sigmoid',
             batch_normal=False, weight_decay=5e-4, name='conv9')
         
         # 数据流

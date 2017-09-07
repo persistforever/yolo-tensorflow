@@ -68,6 +68,8 @@ class ConvLayer:
             self.output = tf.nn.tanh(self.hidden)
         elif self.activation == 'leaky_relu':
             self.output = self.leaky_relu(self.hidden)
+        elif self.activation == 'sigmoid':
+            self.output = tf.nn.sigmoid(self.hidden)
         elif self.activation == 'none':
             self.output = self.hidden
         
