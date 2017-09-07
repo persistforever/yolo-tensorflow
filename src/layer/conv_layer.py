@@ -68,6 +68,8 @@ class ConvLayer:
             self.output = tf.nn.tanh(self.hidden)
         elif self.activation == 'leaky_relu':
             self.output = self.leaky_relu(self.hidden)
+        elif self.activation == 'none':
+            self.output = self.hidden
         
         # 打印网络权重、输入、输出信息
         print('%-10s\t%-10s\t%-20s\t%s' % (

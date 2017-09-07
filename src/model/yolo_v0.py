@@ -17,8 +17,8 @@ from src.layer.pool_layer import PoolLayer
 class TinyYolo():
     
     def __init__(self, n_channel=3, n_classes=1, image_size=288, max_objects_per_image=20,
-                 cell_size=5, box_per_cell=5, object_scala=1, noobject_scala=1,
-                 coord_scala=1, class_scala=1, batch_size=2, noobject_thresh=0.6,
+                 cell_size=7, box_per_cell=5, object_scala=1, nobject_scala=1,
+                 coord_scala=1, class_scala=1, batch_size=2, nobject_thresh=0.6,
                  recall_thresh=0.5):
         # 设置参数
         self.n_classes = n_classes
@@ -29,10 +29,10 @@ class TinyYolo():
         self.n_boxes = box_per_cell
         self.class_scala = float(class_scala)
         self.object_scala = float(object_scala)
-        self.noobject_scala = float(noobject_scala)
+        self.nobject_scala = float(nobject_scala)
         self.coord_scala = float(coord_scala)
         self.batch_size = batch_size
-        self.noobject_thresh = noobject_thresh
+        self.nobject_thresh = nobject_thresh
         self.recall_thresh = recall_thresh
         
         # 输入变量
@@ -55,9 +55,10 @@ class TinyYolo():
         self.object_nums = tf.placeholder(
             dtype=tf.int32, shape=[self.batch_size, ],
             name='object_nums')
-        self.keep_prob = tf.placeholder(dtype=tf.float32, name='keep_prob')
-        
-        self.global_step = tf.Variable(0, dtype=tf.int32, name='global_step')
+        self.keep_prob = tf.placeholder(
+            dtype=tf.float32, name='keep_prob')
+        self.global_step = tf.Variable(
+            0, dtype=tf.int32, name='global_step')
         
         # 待输出的中间变量
         self.logits = self.inference(self.images)
@@ -75,7 +76,7 @@ class TinyYolo():
         # 设置学习率
         lr = tf.cond(tf.less(self.global_step, 100), 
                      lambda: tf.constant(0.001),
-                     lambda: tf.cond(tf.less(self.global_step, 80000),
+                     lambda: tf.cond(tf.less(self.global_step, 8000),
                                      lambda: tf.constant(0.01),
                                      lambda: tf.cond(tf.less(self.global_step, 100000),
                                                      lambda: tf.constant(0.001),
@@ -88,64 +89,86 @@ class TinyYolo():
         # 网络结构
         conv_layer1 = ConvLayer(
             input_shape=(self.batch_size, self.image_size, self.image_size, self.n_channel), 
-            n_size=3, n_filter=16, stride=1, activation='leaky_relu', 
+            n_size=7, n_filter=64, stride=2, activation='leaky_relu', 
             batch_normal=True, weight_decay=5e-4, name='conv1')
         pool_layer1 = PoolLayer(
-            input_shape=(self.batch_size, self.image_size, self.image_size, 16),
-            n_size=2, stride=2, mode='max', resp_normal=False, name='pool1')
+            input_shape=(self.batch_size, int(self.image_size/2), 
+                         int(self.image_size/2), 64),
+            n_size=2, stride=2, mode='max', resp_normal=True, name='pool1')
         
         conv_layer2 = ConvLayer(
-            input_shape=(self.batch_size, int(self.image_size/2), int(self.image_size/2), 16), 
-            n_size=3, n_filter=32, stride=1, activation='leaky_relu',
+            input_shape=(self.batch_size, int(self.image_size/4), int(self.image_size/4), 64), 
+            n_size=3, n_filter=192, stride=1, activation='leaky_relu',
             batch_normal=True, weight_decay=5e-4, name='conv2')
         pool_layer2 = PoolLayer(
-            input_shape=(self.batch_size, int(self.image_size/2), int(self.image_size/2), 32),
-            n_size=2, stride=2, mode='max', resp_normal=False, name='pool2')
+            input_shape=(self.batch_size, int(self.image_size/4), int(self.image_size/4), 192),
+            n_size=2, stride=2, mode='max', resp_normal=True, name='pool2')
         
         conv_layer3 = ConvLayer(
-            input_shape=(self.batch_size, int(self.image_size/4), int(self.image_size/4), 32), 
-            n_size=3, n_filter=64, stride=1, activation='leaky_relu',
+            input_shape=(self.batch_size, int(self.image_size/8), int(self.image_size/8), 192),
+            n_size=1, n_filter=128, stride=1, activation='leaky_relu', 
             batch_normal=True, weight_decay=5e-4, name='conv3')
-        pool_layer3 = PoolLayer(
-            input_shape=(self.batch_size, int(self.image_size/4), int(self.image_size/4), 64),
-            n_size=2, stride=2, mode='max', resp_normal=False, name='pool3')
-        
         conv_layer4 = ConvLayer(
-            input_shape=(self.batch_size, int(self.image_size/8), int(self.image_size/8), 64), 
-            n_size=3, n_filter=128, stride=1, activation='leaky_relu',
-            batch_normal=True, weight_decay=5e-4, name='conv4')
-        pool_layer4 = PoolLayer(
             input_shape=(self.batch_size, int(self.image_size/8), int(self.image_size/8), 128),
-            n_size=2, stride=2, mode='max', resp_normal=False, name='pool4')
-        
+            n_size=3, n_filter=256, stride=1, activation='leaky_relu', 
+            batch_normal=True, weight_decay=5e-4, name='conv4')
         conv_layer5 = ConvLayer(
-            input_shape=(self.batch_size, int(self.image_size/16), int(self.image_size/16), 128), 
-            n_size=3, n_filter=256, stride=1, activation='leaky_relu',
+            input_shape=(self.batch_size, int(self.image_size/8), int(self.image_size/8), 256),
+            n_size=1, n_filter=128, stride=1, activation='leaky_relu', 
             batch_normal=True, weight_decay=5e-4, name='conv5')
-        pool_layer5 = PoolLayer(
-            input_shape=(self.batch_size, int(self.image_size/16), int(self.image_size/16), 256),
-            n_size=2, stride=2, mode='max', resp_normal=False, name='pool5')
-        
         conv_layer6 = ConvLayer(
-            input_shape=(self.batch_size, int(self.image_size/32), int(self.image_size/32), 256), 
-            n_size=3, n_filter=512, stride=1, activation='leaky_relu',
+            input_shape=(self.batch_size, int(self.image_size/8), int(self.image_size/8), 128),
+            n_size=3, n_filter=256, stride=1, activation='leaky_relu', 
             batch_normal=True, weight_decay=5e-4, name='conv6')
-        pool_layer6 = PoolLayer(
-            input_shape=(self.batch_size, int(self.image_size/32), int(self.image_size/32), 512),
-            n_size=2, stride=2, mode='max', resp_normal=False, name='pool6')
+        pool_layer3 = PoolLayer(
+            input_shape=(self.batch_size, int(self.image_size/8), int(self.image_size/8), 256),
+            n_size=2, stride=2, mode='max', resp_normal=True, name='pool3')
         
         conv_layer7 = ConvLayer(
-            input_shape=(self.batch_size, int(self.image_size/64), int(self.image_size/64), 512), 
-            n_size=3, n_filter=1024, stride=1, activation='leaky_relu',
+            input_shape=(self.batch_size, int(self.image_size/16), int(self.image_size/16), 256),
+            n_size=1, n_filter=256, stride=1, activation='leaky_relu', 
             batch_normal=True, weight_decay=5e-4, name='conv7')
         conv_layer8 = ConvLayer(
-            input_shape=(self.batch_size, int(self.image_size/64), int(self.image_size/64), 1024), 
-            n_size=3, n_filter=1024, stride=1, activation='leaky_relu',
+            input_shape=(self.batch_size, int(self.image_size/16), int(self.image_size/16), 256),
+            n_size=3, n_filter=512, stride=1, activation='leaky_relu', 
             batch_normal=True, weight_decay=5e-4, name='conv8')
         conv_layer9 = ConvLayer(
-            input_shape=(self.batch_size, int(self.image_size/64), int(self.image_size/64), 1024), 
-            n_size=1, n_filter=self.n_boxes*5, stride=1, activation='none',
-            batch_normal=False, weight_decay=5e-4, name='conv9')
+            input_shape=(self.batch_size, int(self.image_size/16), int(self.image_size/16), 512),
+            n_size=1, n_filter=512, stride=1, activation='leaky_relu', 
+            batch_normal=True, weight_decay=5e-4, name='conv9')
+        conv_layer10 = ConvLayer(
+            input_shape=(self.batch_size, int(self.image_size/16), int(self.image_size/16), 512),
+            n_size=3, n_filter=1024, stride=1, activation='leaky_relu', 
+            batch_normal=True, weight_decay=5e-4, name='conv10')
+        pool_layer4 = PoolLayer(
+            input_shape=(self.batch_size, int(self.image_size/16), int(self.image_size/16), 1024),
+            n_size=2, stride=2, mode='max', resp_normal=True, name='pool4')
+        
+        conv_layer11 = ConvLayer(
+            input_shape=(self.batch_size, int(self.image_size/32), int(self.image_size/32), 1024),
+            n_size=1, n_filter=512, stride=1, activation='leaky_relu', 
+            batch_normal=True, weight_decay=5e-4, name='conv11')
+        conv_layer12 = ConvLayer(
+            input_shape=(self.batch_size, int(self.image_size/32), int(self.image_size/32), 512),
+            n_size=3, n_filter=1024, stride=1, activation='leaky_relu', 
+            batch_normal=True, weight_decay=5e-4, name='conv12')
+        conv_layer13 = ConvLayer(
+            input_shape=(self.batch_size, int(self.image_size/32), int(self.image_size/32), 1024),
+            n_size=3, n_filter=1024, stride=1, activation='leaky_relu', 
+            batch_normal=True, weight_decay=5e-4, name='conv13')
+        
+        dense_layer1 = DenseLayer(
+            input_shape=(self.batch_size, 
+                         int(self.image_size/32) * int(self.image_size/32) * 1024), 
+            hidden_dim=4096, 
+            activation='leaky_relu', dropout=True, keep_prob=self.keep_prob,
+            batch_normal=True, weight_decay=5e-4, name='dense1')
+        
+        dense_layer2 = DenseLayer(
+            input_shape=(self.batch_size, 4096), 
+            hidden_dim=self.cell_size * self.cell_size * (self.n_classes + self.n_boxes * 5), 
+            activation='sigmoid', dropout=False, keep_prob=None,
+            batch_normal=False, weight_decay=5e-4, name='dense2')
         
         # 数据流
         print('\n%-10s\t%-20s\t%-20s\t%s' % (
@@ -157,143 +180,41 @@ class TinyYolo():
         hidden_pool2 = pool_layer2.get_output(input=hidden_conv2)
         
         hidden_conv3 = conv_layer3.get_output(input=hidden_pool2)
-        hidden_pool3 = pool_layer3.get_output(input=hidden_conv3)
+        hidden_conv4 = conv_layer4.get_output(input=hidden_conv3)
+        hidden_conv5 = conv_layer5.get_output(input=hidden_conv4)
+        hidden_conv6 = conv_layer6.get_output(input=hidden_conv5)
+        hidden_pool3 = pool_layer3.get_output(input=hidden_conv6)
         
-        hidden_conv4 = conv_layer4.get_output(input=hidden_pool3)
-        hidden_pool4 = pool_layer4.get_output(input=hidden_conv4)
-        
-        hidden_conv5 = conv_layer5.get_output(input=hidden_pool4)
-        hidden_pool5 = pool_layer5.get_output(input=hidden_conv5)
-        
-        hidden_conv6 = conv_layer6.get_output(input=hidden_pool5)
-        hidden_pool6 = pool_layer6.get_output(input=hidden_conv6)
-        
-        hidden_conv7 = conv_layer7.get_output(input=hidden_pool6)
+        hidden_conv7 = conv_layer7.get_output(input=hidden_pool3)
         hidden_conv8 = conv_layer8.get_output(input=hidden_conv7)
         hidden_conv9 = conv_layer9.get_output(input=hidden_conv8)
+        hidden_conv10 = conv_layer10.get_output(input=hidden_conv9)
+        hidden_pool4 = pool_layer4.get_output(input=hidden_conv10)
         
-        logits = hidden_conv9
+        hidden_conv11 = conv_layer11.get_output(input=hidden_pool4)
+        hidden_conv12 = conv_layer12.get_output(input=hidden_conv11)
+        hidden_conv13 = conv_layer13.get_output(input=hidden_conv12)
+        
+        input_dense1 = tf.reshape(hidden_conv13, shape=[
+            -1, int(self.image_size/32) * int(self.image_size/32) * 1024])
+        hidden_dense1 = dense_layer1.get_output(input=input_dense1)
+        logits = dense_layer2.get_output(input=hidden_dense1)
         
         print()
         sys.stdout.flush()
         # 网络输出
         return logits
     
-    def loss(self, logits):
-        logits = tf.reshape(
-            logits, shape=[self.batch_size, self.cell_size, self.cell_size, 
-                           self.n_boxes, 5])
-        # 将x, y, confidence对应的位加上sigmoid
-        logits = tf.concat([tf.sigmoid(logits[:,:,:,:,0:2]),
-                            logits[:,:,:,:,2:4],
-                            tf.sigmoid(logits[:,:,:,:,4:5])], axis=4)
-        
-        # 获取box_pred
-        self.box_preds = tf.reshape(
-            logits[:,:,:,0:5], 
-            shape=[self.batch_size, self.cell_size, self.cell_size, self.n_boxes, 5])
-        
-        class_loss = 0.0
-        coord_loss = 0.0
-        object_loss = 0.0
-        noobject_loss = 0.0
-        iou_value = 0.0
-        object_value = 0.0
-        anyobject_value = 0.0
-        recall_value = 0.0
-        
-        for example in range(self.batch_size):
-            
-            # 循环每一个object，计算每个box对每个object的iou
-            results = tf.while_loop(
-                cond=self._one_object_iou_cond, 
-                body=self._one_object_iou_body, 
-                loop_vars=[example, tf.constant(0), self.object_nums[example],
-                           tf.zeros(shape=(self.cell_size, self.cell_size, 
-                                           self.n_boxes, self.max_objects))])
-            iou_tensor_whole = results[3]
-            iou_tensor_max = tf.reduce_max(iou_tensor_whole, 2, keep_dims=True)
-            noobject_mask = tf.cast(
-                (iou_tensor_max <= self.noobject_thresh), dtype=tf.float32)
-            
-            # 计算noobject_loss
-            noobject_label = tf.zeros(
-                shape=(self.cell_size, self.cell_size, self.n_boxes, 1),
-                dtype=tf.float32)
-            noobject_pred = self.box_preds[batch,:,:,:,4:]
-            noobject_loss += tf.nn.l2_loss(
-                (noobject_label - noobject_pred) * noobject_mask)
-            
-            # 计算anyobject_value
-            anyobject_value += tf.reduce_sum(noobject_pred)
-                
-            # 循环每一个object，计算coord_loss, object_loss和class_loss
-            results = tf.while_loop(
-                cond=self._one_object_loss_cond, 
-                body=self._one_object_loss_body, 
-                loop_vars=[example, tf.constant(0), self.object_nums[example],
-                           tf.constant(0.0), tf.constant(0.0), tf.constant(0.0),
-                           tf.constant(0.0), tf.constant(0.0), tf.constant(0.0)])
-            coord_loss += results[3]
-            object_loss += results[4]
-            nobject_loss += results[5]
-            iou_value += results[6]
-            object_value += results[7]
-            recall_value += results[8]
-            
-            # 计算noobject_loss
-            confidence_pred = tf.sigmoid(self.box_preds[example,:,:,:,4:])
-            nobject_value += tf.reduce_sum(confidence_pred, axis=[0,1,2,3])
-            
-            
-        # 目标函数值
-        class_loss = class_loss * self.class_scala / self.batch_size
-        coord_loss = coord_loss * self.coord_scala / self.batch_size
-        object_loss = object_loss * self.object_scala / self.batch_size
-        nobject_loss = nobject_loss * self.noobject_scala / self.batch_size
-        # 观察值
-        iou_value /= tf.reduce_sum(tf.cast(self.object_nums, tf.float32), axis=[0])
-        object_value /= tf.reduce_sum(tf.cast(self.object_nums, tf.float32), axis=[0])
-        nobject_value /= (self.cell_size * self.cell_size * self.n_boxes * self.batch_size)
-        recall_value /= tf.reduce_sum(tf.cast(self.object_nums, tf.float32), axis=[0])
-        
-        return class_loss, coord_loss, object_loss, nobject_loss, \
-            iou_value, object_value, nobject_value, recall_value
-    
-    def _one_object_iou_cond(self, batch, num, object_num, iou_tensor_whole):
-        
-        return num < object_num
-    
-    def _one_object_iou_body(self, batch, num, object_num, iou_tensor_whole):
-        # 构造box_label
-        # 如果cell中有物体，box_label的每一个box为四个坐标，如果cell中没有物体，则均为0
-        box_label = tf.cast(self.box_labels[batch,num,2:6], dtype=tf.float32)
-        box_label = tf.reshape(box_label, shape=(1, 1, 1, 4))
-        box_label = tf.tile(box_label, [1, 1, self.n_boxes, 4])
-        padding = tf.cast([[cell_y, self.cell_size-cell_y-1], 
-                           [cell_x, self.cell_size-cell_x-1],
-                           [0, 0], [0, 0]], dtype=tf.int32)
-        box_label = tf.pad(box_label, paddings=padding, mode='CONSTANT')
-        
-        # 构造box_pred
-        # 尺寸为(cell_size, cell_size, n_boxes, 4)
-        box_pred = self.get_box_pred(self.box_preds[batch,:,:,:,0:4])
-        
-        iou_tensor = self.calculate_iou(box_pred, box_label)
-        
-        iou_tensor_whole[:,:,:,num] = iou_tensor
-        
-        return batch, num, object_num, iou_tensor_whole
-    
-    def _one_object_loss_cond(self, batch, num, object_num, coord_loss, object_loss, 
+    def _loss_one_example_cond(self, num, object_num, batch, coord_loss, object_loss, 
                               nobject_loss, iou_value, object_value, recall_value):
         
         return num < object_num
     
-    def _one_object_loss_body(self, batch, num, object_num, coord_loss, object_loss, 
+    def _loss_one_example_body(self, num, object_num, batch, coord_loss, object_loss, 
                               nobject_loss, iou_value, object_value, recall_value):
-        # 构造object_mask
+        # 构造box_label和object_mask
         # 如果cell中有物体，object_mask则为1，如果cell中没有物体，则为0
+        # 如果cell中有物体，box_label的第一个box则为四个坐标，其他box为0，如果cell中没有物体，则为0
         cell_x = self.box_labels[batch, num, 0]
         cell_y = self.box_labels[batch, num, 1]
         object_mask = tf.ones(
@@ -304,128 +225,50 @@ class TinyYolo():
             tf.pad(object_mask, paddings=padding, mode='CONSTANT'),
             shape=(self.cell_size, self.cell_size, 1, 1))
         
-        # 构造box_label
-        # 如果cell中有物体，box_label的每一个box则为四个坐标，如果cell中没有物体，则为0
         box_label = tf.cast(self.box_labels[batch,num,2:6], dtype=tf.float32)
         box_label = tf.reshape(box_label, shape=(1, 1, 1, 4))
-        box_label = tf.tile(box_label, [1, 1, self.n_boxes, 4])
         padding = tf.cast([[cell_y, self.cell_size-cell_y-1], 
                            [cell_x, self.cell_size-cell_x-1],
-                           [0, 0], [0, 0]], dtype=tf.int32)
+                           [0, self.n_boxes-1], [0, 0]], dtype=tf.int32)
         box_label = tf.pad(box_label, paddings=padding, mode='CONSTANT')
         
-        # 构造shift_box_label
-        # 如果cell中有物体，shift_box_label的每一个box则为0, 0, w, h，如果cell中没有物体，则为0
-        shift_box_label = box_label
-        shift_box_label[:,:,:,:,0:2] *= 0.0
-        
-        # 构造pred_label
-        # x和y的pred
-        pred_x = tf.zeros(shape=(self.cell_size, self.cell_size, self.n_boxes, 1))
-        pred_y = tf.zeros(shape=(self.cell_size, self.cell_size, self.n_boxes, 1))
-        # w的pred
-        pred_w = tf.cast([0.73, 0.73, 0.71, 0.76, 0.73], dtype=tf.float32)
-        pred_w = tf.reshape(pred_w, shape=(1, 1, self.n_boxes, 1))
-        pred_w = tf.tile(pred_w, (self.cell_size, self.cell_size, 1, 1))
-        # h的pred
-        pred_h = tf.cast([0.12, 0.23, 0.17, 0.65, 0.11], dtype=tf.float32)
-        pred_h = tf.reshape(pred_h, shape=(1, 1, self.n_boxes, 1))
-        pred_h = tf.tile(pred_h, (self.cell_size, self.cell_size, 1, 1))
-        new_box_pred = tf.concat([pred_x, pred_y, pred_w, pred_h], axis=3)
-        
-        # 计算shift_box_label和new_box_pred的iou，选出最大的iou来计算
-        iou_tensor = self.calculate_iou(new_box_pred, shift_box_label)
-        iou_tensor_max = tf.reduce_max(iou_tensor, 2, keep_dims=True)
-        iou_tensor_mask = tf.cast(
-            (iou_tensor >= iou_tensor_max), dtype=tf.float32) * object_mask
-        
-        iou_matrix = self.iou(box_pred, box_label)
-        
-        # 构造box_pred
-        box_pred = self.get_box_pred(self.box_preds[batch,:,:,:,0:4])
-            
-        # 计算nobject_loss
-        # nobject_pred为box_pred的值，尺寸为(cell_size, cell_size, n_box, 1)
-        # 每一个cell中，有object，并且iou > nobject_thresh，则不计算，否则为1
-        iou_matrix = self.iou(box_label, box_pred)
+        # 计算iou_matrix，表示每个cell中，每个box与这个cell中真实物体的iou值
+        iou_matrix = self.iou(self.box_preds[batch,:,:,:,0:4], box_label)
         iou_matrix_max = tf.reduce_max(iou_matrix, 2, keep_dims=True)
         iou_matrix_mask = tf.cast(
             (iou_matrix >= iou_matrix_max), dtype=tf.float32) * object_mask
-        
-        # 计算coord_loss
-        # coord_pred为box_pred的值，尺寸为(cell_size, cell_size, n_box, 1)
-        # 每一个cell中，有object，并且iou最大的那个box的coord_label为真实的label，其余为0，
-        # coord_label尺寸为(cell_size, cell_size, n_box, 1)
-        coord_label = box_label
-        coord_pred = box_pred
-        # 只有object的coord
-        object_coord_loss = tf.nn.l2_loss(
-            (coord_pred[:,:,:,0:2] - coord_label[:,:,:,0:2]) * iou_matrix_mask)
-        object_coord_loss += tf.nn.l2_loss(
-            (tf.sqrt(coord_pred[:,:,:,2:4]) - tf.sqrt(coord_label[:,:,:,2:4])) * \
-            iou_matrix_mask)
-        coord_loss += tf.cond(tf.less(self.global_step, -1),
-                              lambda: object_coord_loss,
-                              lambda: object_coord_loss)
-        
-        nobject_mask = iou_matrix
+            
+        # 计算nobject_loss
+        # nobject_pred为box_pred的值，尺寸为(cell_size, cell_size, n_box, 1)
+        # 每一个cell中，有object，并且iou > nobject_thresh，则不计算，否则为0
         nobject_mask = tf.ones_like(iou_matrix_mask) - iou_matrix_mask
         nobject_label = tf.zeros(
             shape=(self.cell_size, self.cell_size, self.n_boxes, 1),
             dtype=tf.float32)
-        nobject_pred = confidence_pred
+        nobject_pred = self.box_preds[batch,:,:,:,4:]
         nobject_loss += tf.nn.l2_loss(
             (nobject_pred - nobject_label) * nobject_mask)
-        
-        # 对于没有物体的box，也设置[0.5, 0.5, w, h]的label
-        # x的label
-        offset_x = tf.reshape(tf.range(0, self.cell_size), shape=(1, self.cell_size, 1, 1))
-        offset_x = tf.tile(offset_x, (self.cell_size, 1, self.n_boxes, 1))
-        offset_x = (tf.cast(offset_x, dtype=tf.float32) + 0.5) / self.cell_size
-        # y的label
-        offset_y = tf.reshape(tf.range(0, self.cell_size), shape=(self.cell_size, 1, 1, 1))
-        offset_y = tf.tile(offset_y, (1, self.cell_size, self.n_boxes, 1))
-        offset_y = (tf.cast(offset_y, dtype=tf.float32) + 0.5) / self.cell_size
-        # w的label
-        prior_w = tf.cast([0.73, 0.73, 0.71, 0.76, 0.73], dtype=tf.float32)
-        prior_w = tf.reshape(prior_w, shape=(1, 1, self.n_boxes, 1))
-        prior_w = tf.tile(prior_w, (self.cell_size, self.cell_size, 1, 1))
-        # h的label
-        prior_h = tf.cast([0.12, 0.23, 0.17, 0.65, 0.11], dtype=tf.float32)
-        prior_h = tf.reshape(prior_h, shape=(1, 1, self.n_boxes, 1))
-        prior_h = tf.tile(prior_h, (self.cell_size, self.cell_size, 1, 1))
-        box_nobject_label = tf.concat([offset_x, offset_y, prior_w, prior_h], axis=3)
-        
-        box_pred = self.get_box_pred(self.box_preds[batch,:,:,:,0:4])
-        confidence_pred = tf.sigmoid(self.box_preds[batch,:,:,:,4:])
-        
-        # 计算iou_matrix，表示每个cell中，每个box与这个cell中真实物体的iou值
-        # x和y的pred
-        pred_x = tf.zeros(shape=(self.cell_size, self.cell_size, self.n_boxes, 1))
-        pred_y = tf.zeros(shape=(self.cell_size, self.cell_size, self.n_boxes, 1))
-        # w的pred
-        pred_w = tf.cast([0.73, 0.73, 0.71, 0.76, 0.73], dtype=tf.float32)
-        pred_w = tf.reshape(pred_w, shape=(1, 1, self.n_boxes, 1))
-        pred_w = tf.tile(pred_w, (self.cell_size, self.cell_size, 1, 1))
-        # h的pred
-        pred_h = tf.cast([0.12, 0.23, 0.17, 0.65, 0.11], dtype=tf.float32)
-        pred_h = tf.reshape(pred_h, shape=(1, 1, self.n_boxes, 1))
-        pred_h = tf.tile(pred_h, (self.cell_size, self.cell_size, 1, 1))
-        new_box_pred = tf.concat([pred_x, pred_y, pred_w, pred_h], axis=3)
-        
-        # x和y的label
-        label_x = tf.zeros(shape=(self.cell_size, self.cell_size, self.n_boxes, 1))
-        label_y = tf.zeros(shape=(self.cell_size, self.cell_size, self.n_boxes, 1))
-        new_box_label = tf.concat([label_x, label_y, box_label[:,:,:,2:4]], axis=3)
         
         # 计算object_loss
         # object_pred为box_pred的值，尺寸为(cell_size, cell_size, n_box, 1)
         # 每一个cell中，有object，并且iou最大的那个box的object_label为iou，其余为0，
         # object_label尺寸为(cell_size, cell_size, n_box, 1)
         object_label = iou_matrix
-        object_pred = confidence_pred
+        object_pred = self.box_preds[batch,:,:,:,4:]
         object_loss += tf.nn.l2_loss(
             (object_pred - object_label) * iou_matrix_mask)
+        
+        # 计算coord_loss
+        # coord_pred为box_pred的值，尺寸为(cell_size, cell_size, n_box, 1)
+        # 每一个cell中，有object，并且iou最大的那个box的coord_label为真实的label，其余为0，
+        # coord_label尺寸为(cell_size, cell_size, n_box, 1)
+        coord_label = box_label
+        coord_pred = self.box_preds[batch,:,:,:,0:4]
+        coord_loss += tf.nn.l2_loss(
+            (coord_pred[:,:,:,0:2] - coord_label[:,:,:,0:2]) * iou_matrix_mask)
+        coord_loss += tf.nn.l2_loss(
+            (tf.sqrt(coord_pred[:,:,:,2:4]) - tf.sqrt(coord_label[:,:,:,2:4])) * \
+            iou_matrix_mask)
         
         # 计算iou_value
         # 每一个cell中，有object，并且iou最大的那个对应的iou
@@ -435,59 +278,96 @@ class TinyYolo():
         # 计算object_value
         # 每一个cell中，有object，并且iou最大的那个对应的box_pred中的confidence
         object_value += tf.reduce_sum(
-            confidence_pred * iou_matrix_mask, axis=[0,1,2,3])
+            self.box_preds[batch,:,:,:,4:] * iou_matrix_mask, axis=[0,1,2,3])
             
         # 计算recall_value
         # 每一个cell中，有object，并且iou最大的哪个对应的iou如果大于recall_thresh，则加1
         recall_mask = tf.cast(
             (iou_matrix * iou_matrix_mask > self.recall_thresh), dtype=tf.float32)
-        recall_value += tf.reduce_sum(recall_mask, axis=[0,1,2,3])
+        recall_value += tf.reduce_sum(
+                recall_mask, axis=[0,1,2,3])
         num += 1
         
         return num, object_num, batch, coord_loss, object_loss, \
             nobject_loss, iou_value, object_value, recall_value
     
-    def get_box_pred(self, box_pred):
-        # 计算bx
-        offset_x = tf.reshape(tf.range(0, self.cell_size), shape=(1, self.cell_size, 1, 1))
-        offset_x = tf.tile(offset_x, (self.cell_size, 1, self.n_boxes, 1))
-        offset_x = tf.cast(offset_x, dtype=tf.float32)
-        x_pred = (box_pred[:,:,:,0:1] + offset_x) / self.cell_size
+    def loss(self, logits):
+        logits = tf.reshape(
+            logits, shape=[self.batch_size, self.cell_size, self.cell_size, 
+                           self.n_classes + self.n_boxes * 5])
         
-        # 计算by
-        offset_y = tf.reshape(tf.range(0, self.cell_size), shape=(self.cell_size, 1, 1, 1))
-        offset_y = tf.tile(offset_y, (1, self.cell_size, self.n_boxes, 1))
-        offset_y = tf.cast(offset_y, dtype=tf.float32)
-        y_pred = (box_pred[:,:,:,1:2] + offset_y) / self.cell_size
+        # 获取class_pred和box_pred
+        class_preds = logits[:,:,:,0:self.n_classes]
+        self.box_preds = tf.reshape(
+            logits[:,:,:,self.n_classes:], 
+            shape=[self.batch_size, self.cell_size, self.cell_size, self.n_boxes, 5])
         
-        # 计算pw
-        prior_w = tf.constant([0.73, 0.73, 0.71, 0.76, 0.73], dtype=tf.float32)
-        prior_w = tf.reshape(prior_w, shape=(1, 1, self.n_boxes, 1))
-        prior_w = tf.tile(prior_w, (self.cell_size, self.cell_size, 1, 1))
-        w_pred = prior_w * tf.exp(box_pred[:,:,:,2:3]) / self.cell_size
+        class_loss = 0.0
+        coord_loss = 0.0
+        object_loss = 0.0
+        nobject_loss = 0.0
+        iou_value = 0.0
+        object_value = 0.0
+        nobject_value = 0.0
+        recall_value = 0.0
         
-        # 计算ph
-        prior_h = tf.constant([0.12, 0.23, 0.17, 0.65, 0.11], dtype=tf.float32)
-        prior_h = tf.reshape(prior_h, shape=(1, 1, self.n_boxes, 1))
-        prior_h = tf.tile(prior_h, (self.cell_size, self.cell_size, 1, 1))
-        h_pred = prior_h * tf.exp(box_pred[:,:,:,3:4]) / self.cell_size
+        for i in range(self.batch_size):
+            
+            # 计算class_loss
+            class_pred = class_preds[i,:,:,:]
+            class_label = self.class_labels[i,:,:,:]
+            class_mask = tf.reshape(
+                self.class_masks[i,:,:], 
+                shape=[self.cell_size, self.cell_size, 1])
+            class_loss += tf.nn.l2_loss(
+                (class_pred - class_label) * class_mask) / \
+                (self.cell_size * self.cell_size * 1.0)
+                
+            # 循环计算每一个example
+            results = tf.while_loop(
+                cond=self._loss_one_example_cond, 
+                body=self._loss_one_example_body, 
+                loop_vars=[tf.constant(0), self.object_nums[i], i,
+                           tf.constant(0.0), tf.constant(0.0), tf.constant(0.0),
+                           tf.constant(0.0), tf.constant(0.0), tf.constant(0.0)])
+            coord_loss += results[3]
+            object_loss += results[4]
+            nobject_loss += results[5]
+            iou_value += results[6]
+            object_value += results[7]
+            recall_value += results[8]
+            
+            # 计算nobject_value
+            # 所有的box_pred中的confidence
+            nobject_value += tf.reduce_sum(
+                self.box_preds[i,:,:,:,4:], axis=[0,1,2,3])
+            
+        # 目标函数值
+        class_loss = class_loss * self.class_scala / self.batch_size
+        coord_loss = coord_loss * self.coord_scala / self.batch_size
+        object_loss = object_loss * self.object_scala / self.batch_size
+        nobject_loss = nobject_loss * self.nobject_scala / self.batch_size
+        # 观察值
+        iou_value /= tf.reduce_sum(tf.cast(self.object_nums, tf.float32), axis=[0])
+        object_value /= tf.reduce_sum(tf.cast(self.object_nums, tf.float32), axis=[0])
+        nobject_value /= (self.cell_size * self.cell_size * self.n_boxes * self.batch_size)
+        recall_value /= tf.reduce_sum(tf.cast(self.object_nums, tf.float32), axis=[0])
         
-        box_pred = tf.concat([x_pred, y_pred, w_pred, h_pred], axis=3)
-        
-        return box_pred
+        return class_loss, coord_loss, object_loss, nobject_loss, \
+            iou_value, object_value, nobject_value, recall_value
               
-    def calculate_iou(self, box_pred, box_label):
+    def iou(self, box_pred, box_label):
         box1 = tf.stack([
-            box_pred[:,:,:,0] - box_pred[:,:,:,2] / 2.0,
-            box_pred[:,:,:,1] - box_pred[:,:,:,3] / 2.0,
-            box_pred[:,:,:,0] + box_pred[:,:,:,2] / 2.0,
-            box_pred[:,:,:,1] + box_pred[:,:,:,3] / 2.0])
+            box_pred[:,:,:,0] - box_pred[:,:,:,2] / 2,
+            box_pred[:,:,:,1] - box_pred[:,:,:,3] / 2,
+            box_pred[:,:,:,0] + box_pred[:,:,:,2] / 2,
+            box_pred[:,:,:,1] + box_pred[:,:,:,3] / 2])
         box1 = tf.transpose(box1, perm=[1, 2, 3, 0])
         box2 = tf.stack([
-            box_label[:,:,:,0] - box_label[:,:,:,2] / 2.0,
-            box_label[:,:,:,1] - box_label[:,:,:,3] / 2.0,
-            box_label[:,:,:,0] + box_label[:,:,:,2] / 2.0,
-            box_label[:,:,:,1] + box_label[:,:,:,3] / 2.0])
+            box_label[:,:,:,0] - box_label[:,:,:,2] / 2,
+            box_label[:,:,:,1] - box_label[:,:,:,3] / 2,
+            box_label[:,:,:,0] + box_label[:,:,:,2] / 2,
+            box_label[:,:,:,1] + box_label[:,:,:,3] / 2])
         box2 = tf.transpose(box2, perm=[1, 2, 3, 0])
         
         left_top = tf.maximum(box1[:,:,:,0:2], box2[:,:,:,0:2])
@@ -500,7 +380,7 @@ class TinyYolo():
         box1_area = (box1[:,:,:,2] - box1[:,:,:,0]) * (box1[:,:,:,3] - box1[:,:,:,1])
         box2_area = (box2[:,:,:,2] - box2[:,:,:,0]) * (box2[:,:,:,3] - box2[:,:,:,1])
         iou = inter_area / (box1_area + box2_area - inter_area + 1e-6)
-        return tf.reshape(iou, shape=[self.cell_size, self.cell_size, self.n_boxes])
+        return tf.reshape(iou, shape=[self.cell_size, self.cell_size, self.n_boxes, 1])
         
     def train(self, processor, backup_path, n_iters=500000, batch_size=128):
         # 构建会话
