@@ -253,11 +253,7 @@ class TinyYolo():
         cell_y = self.box_labels[example, num, 1]
         box_label = tf.cast(self.box_labels[example,num,2:6], dtype=tf.float32)
         box_label = tf.reshape(box_label, shape=(1, 1, 1, 4))
-        box_label = tf.tile(box_label, [1, 1, self.n_boxes, 4])
-        padding = tf.cast([[cell_y, self.cell_size-cell_y-1], 
-                           [cell_x, self.cell_size-cell_x-1],
-                           [0, 0], [0, 0]], dtype=tf.int32)
-        box_label = tf.pad(box_label, paddings=padding, mode='CONSTANT')
+        box_label = tf.tile(box_label, [self.cell_size, self.cell_size, self.n_boxes, 4])
         
         # 构造box_pred
         # 尺寸为(cell_size, cell_size, n_boxes, 4)
