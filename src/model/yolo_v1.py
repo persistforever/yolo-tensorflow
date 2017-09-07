@@ -201,7 +201,7 @@ class TinyYolo():
                            tf.zeros(shape=(self.cell_size, self.cell_size, 
                                            self.n_boxes, self.max_objects))])
             iou_tensor_whole = results[3]
-            iou_tensor_max = tf.reduce_max(iou_tensor_whole, 2, keep_dims=True)
+            iou_tensor_max = tf.reduce_max(iou_tensor_whole, 3, keep_dims=True)
             noobject_mask = tf.cast(
                 (iou_tensor_max <= self.noobject_thresh), dtype=tf.float32)
             
@@ -214,7 +214,7 @@ class TinyYolo():
                 (noobject_label - noobject_pred) * noobject_mask)
             
             # 计算anyobject_value
-            anyobject_value += tf.reduce_sum(noobject_pred)
+            anyobject_value += tf.reduce_sum(noobject_pred, axis=[0,1,2,3])
                 
             # 循环每一个object，计算coord_loss, object_loss和class_loss
             results = tf.while_loop(
