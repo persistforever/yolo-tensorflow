@@ -52,14 +52,14 @@ class TinyYolo():
         
         # 待输出的中间变量
         self.logits = self.inference(self.images)
-        self.coord_loss, self.object_loss, self.nobject_loss, \
+        self.coord_loss, self.object_loss, self.noobject_loss, \
             self.iou_value, self.object_value, self.nobject_value, self.recall_value = \
             self.loss(self.logits)
             
         # 目标函数和优化器
         tf.add_to_collection('losses', self.coord_loss)
         tf.add_to_collection('losses', self.object_loss)
-        tf.add_to_collection('losses', self.nobject_loss)
+        tf.add_to_collection('losses', self.noobject_loss)
         self.avg_loss = tf.add_n(tf.get_collection('losses'))
         
         # 设置学习率
@@ -173,14 +173,10 @@ class TinyYolo():
         logits = tf.reshape(
             logits, shape=[self.batch_size, self.cell_size, self.cell_size, 
                            self.n_boxes, 5])
-        # 将x, y, confidence对应的位加上sigmoid
-        logits = tf.concat([tf.sigmoid(logits[:,:,:,:,0:2]),
-                            logits[:,:,:,:,2:4],
-                            tf.sigmoid(logits[:,:,:,:,4:5])], axis=4)
         
         # 获取class_pred和box_pred
         self.box_preds = tf.reshape(
-            logits[:,:,:,0:5], 
+            logits[:,:,:,:,0:5], 
             shape=[self.batch_size, self.cell_size, self.cell_size, self.n_boxes, 5])
         
         coord_loss = 0.0
@@ -236,7 +232,7 @@ class TinyYolo():
         # 观察值
         iou_value /= tf.reduce_sum(tf.cast(self.object_nums, tf.float32), axis=[0])
         object_value /= tf.reduce_sum(tf.cast(self.object_nums, tf.float32), axis=[0])
-        anyobject_value /= (self.cell_size * self.cell_size * self.n_boxes * self.batch_size)
+        anyobject_value /= (self.batch_size * self.cell_size * self.cell_size * self.n_boxes)
         recall_value /= tf.reduce_sum(tf.cast(self.object_nums, tf.float32), axis=[0])
         
         return coord_loss, object_loss, noobject_loss, \
@@ -401,9 +397,9 @@ class TinyYolo():
         # 模型训练
         process_images = 0
         train_avg_loss, train_coord_loss, \
-            train_object_loss, train_nobject_loss = 0.0, 0.0, 0.0, 0.0
+            train_object_loss, train_noobject_loss = 0.0, 0.0, 0.0, 0.0
         train_iou_value, train_object_value, \
-            train_nobject_value, train_recall_value = 0.0, 0.0, 0.0, 0.0 
+            train_anyobject_value, train_recall_value = 0.0, 0.0, 0.0, 0.0 
         
         for n_iter in range(1, n_iters+1):
             # 训练一个batch，计算从准备数据到训练结束的时间
@@ -418,11 +414,11 @@ class TinyYolo():
             batch_class_labels, batch_class_masks, batch_box_labels, batch_object_nums = \
                 processor.process_batch_labels(batch_labels)
             
-            [_, avg_loss, coord_loss, object_loss, nobject_loss,
-             iou_value, object_value, nobject_value, recall_value] = self.sess.run(
+            [_, avg_loss, coord_loss, object_loss, noobject_loss,
+             iou_value, object_value, anyobject_value, recall_value] = self.sess.run(
                 fetches=[self.optimizer, self.avg_loss,
                          self.coord_loss,
-                         self.object_loss, self.nobject_loss,
+                         self.object_loss, self.noobject_loss,
                          self.iou_value, self.object_value,
                          self.nobject_value, self.recall_value], 
                 feed_dict={self.images: batch_images,
@@ -435,10 +431,10 @@ class TinyYolo():
             train_avg_loss += avg_loss
             train_coord_loss += coord_loss
             train_object_loss += object_loss
-            train_nobject_loss += nobject_loss
+            train_noobject_loss += noobject_loss
             train_iou_value += iou_value
             train_object_value += object_value
-            train_nobject_value += nobject_value
+            train_anyobject_value += anyobject_value
             train_recall_value += recall_value
             
             process_images += batch_size
@@ -449,21 +445,21 @@ class TinyYolo():
                   'object_loss: %.6f, nobject_loss: %.6f, image_nums: %d, '
                   'speed: %.2f images/s' % (
                 n_iter, train_avg_loss, train_coord_loss, 
-                train_object_loss, train_nobject_loss, process_images, speed))
+                train_object_loss, train_noobject_loss, process_images, speed))
             sys.stdout.flush()
             
             train_avg_loss, train_coord_loss, \
-                train_object_loss, train_nobject_loss = 0.0, 0.0, 0.0, 0.0
+                train_object_loss, train_noobject_loss = 0.0, 0.0, 0.0, 0.0
             
             # 每1轮观测一次训练集evaluation
             print('{TRAIN} iter[%d], iou: %.6f, object: %.6f, '
-                  'nobject: %.6f, recall: %.6f' % (
+                  'anyobject: %.6f, recall: %.6f' % (
                 n_iter, train_iou_value, train_object_value, 
-                train_nobject_value, train_recall_value))
+                train_anyobject_value, train_recall_value))
             sys.stdout.flush()
             
             train_iou_value, train_object_value, \
-                train_nobject_value, train_recall_value = 0.0, 0.0, 0.0, 0.0 
+                train_anyobject_value, train_recall_value = 0.0, 0.0, 0.0, 0.0 
             
             # 每100轮观测一次验证集evaluation
             if n_iter % 100 == 0:
