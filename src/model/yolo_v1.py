@@ -312,14 +312,13 @@ class TinyYolo():
         pred_h = tf.cast([0.12, 0.23, 0.17, 0.65, 0.11], dtype=tf.float32)
         pred_h = tf.reshape(pred_h, shape=(1, 1, self.n_boxes, 1))
         pred_h = tf.tile(pred_h, (self.cell_size, self.cell_size, 1, 1))
-        new_box_pred = tf.concat([pred_x, pred_y, pred_w, pred_h], axis=3)
+        pseudo_box_pred = tf.concat([pred_x, pred_y, pred_w, pred_h], axis=3)
         
         # 计算shift_box_label和new_box_pred的iou，选出最大的iou来计算
-        iou_tensor = self.calculate_iou(new_box_pred, shift_box_label)
-        iou_tensor_max = tf.reduce_max(iou_tensor, 2, keep_dims=True)
+        pseudo_iou_tensor = self.calculate_iou(pseudo_box_pred, shift_box_label)
+        iou_tensor_max = tf.reduce_max(pseudo_iou_tensor, 2, keep_dims=True)
         iou_tensor_mask = tf.cast(
-            (iou_tensor >= iou_tensor_max), dtype=tf.float32) * object_mask
-        # iou_tensor_mask = tf.Print(iou_tensor_mask, [iou_tensor_mask], 'iou_tensor_mask: ', summarize=1000)
+            (pseudo_iou_tensor >= iou_tensor_max), dtype=tf.float32) * object_mask
         
         # 计算coord_loss
         # coord_pred为box_pred的值，尺寸为(cell_size, cell_size, n_box, 1)
@@ -327,13 +326,12 @@ class TinyYolo():
         # coord_label尺寸为(cell_size, cell_size, n_box, 1)
         coord_label = box_label[:,:,:,0:4] * iou_tensor_mask
         coord_pred = self.box_preds[example,:,:,:,0:4] * iou_tensor_mask
-        # coord_pred = tf.Print(coord_pred, [coord_pred], 'coord_pred: ', summarize=1000)
         coord_loss += tf.nn.l2_loss(coord_label[:,:,:,0:4] - coord_pred[:,:,:,0:4])
         
         # 计算iou_value
         # 每一个cell中，有object，并且iou最大的那个对应的iou
-        coord_pred = self.box_preds[example,:,:,:,0:4]
         true_iou_tensor = self.calculate_iou(coord_pred, box_label)
+        coord_pred = self.box_preds[example,:,:,:,0:4]
         iou_value += tf.reduce_sum(
             true_iou_tensor * iou_tensor_mask, axis=[0,1,2,3])
             
@@ -475,7 +473,7 @@ class TinyYolo():
                     
                     # 获取数据并进行数据增强
                     batch_image_paths, batch_labels = processor.get_index_batch(
-                        processor.trainsets, i, batch_size)
+                        processor.validsets, i, batch_size)
                     batch_images, batch_labels = processor.data_augmentation(
                         batch_image_paths, batch_labels, mode='test',
                         flip=False, whiten=True, resize=True, jitter=0.2)
