@@ -71,7 +71,7 @@ class TinyYolo():
                                                      lambda: tf.constant(0.001),
                                                      lambda: tf.constant(0.0001))))
         self.optimizer = tf.train.MomentumOptimizer(
-            learning_rate=lr, momentum=0.9).minimize(
+            learning_rate=0.001, momentum=0.9).minimize(
                 self.avg_loss, global_step=self.global_step)
         
     def inference(self, images):
@@ -304,7 +304,15 @@ class TinyYolo():
         # x和y的pred
         pred_x = tf.zeros(shape=(self.cell_size, self.cell_size, self.n_boxes, 1))
         pred_y = tf.zeros(shape=(self.cell_size, self.cell_size, self.n_boxes, 1))
-        new_box_pred = tf.concat([pred_x, pred_y, self.box_preds[example,:,:,:,2:4]], axis=3)
+        # w的pred
+        pred_w = tf.cast([0.73, 0.73, 0.71, 0.76, 0.73], dtype=tf.float32)
+        pred_w = tf.reshape(pred_w, shape=(1, 1, self.n_boxes, 1))
+        pred_w = tf.tile(pred_w, (self.cell_size, self.cell_size, 1, 1))
+        # h的pred
+        pred_h = tf.cast([0.12, 0.23, 0.17, 0.65, 0.11], dtype=tf.float32)
+        pred_h = tf.reshape(pred_h, shape=(1, 1, self.n_boxes, 1))
+        pred_h = tf.tile(pred_h, (self.cell_size, self.cell_size, 1, 1))
+        new_box_pred = tf.concat([pred_x, pred_y, pred_w, pred_h], axis=3)
         
         # 计算shift_box_label和new_box_pred的iou，选出最大的iou来计算
         iou_tensor = self.calculate_iou(new_box_pred, shift_box_label)
@@ -316,13 +324,11 @@ class TinyYolo():
         # coord_pred为box_pred的值，尺寸为(cell_size, cell_size, n_box, 1)
         # 每一个cell中，有object，并且iou最大的那个box的coord_label为真实的label，其余为0，
         # coord_label尺寸为(cell_size, cell_size, n_box, 1)
-        coord_label = box_label
         box_pred = self.box_preds[example,:,:,:,0:4]
-        # 只有object的coord
         coord_loss = tf.nn.l2_loss(
-            (coord_label[:,:,:,0:2] - box_pred[:,:,:,0:2]) * iou_tensor_mask)
+            (box_label[:,:,:,0:2] - box_pred[:,:,:,0:2]) * iou_tensor_mask)
         coord_loss += tf.nn.l2_loss(
-            (tf.sqrt(coord_label[:,:,:,2:4]) - tf.sqrt(box_pred[:,:,:,2:4])) * \
+            (tf.sqrt(box_label[:,:,:,2:4]) - tf.sqrt(box_pred[:,:,:,2:4])) * \
             iou_tensor_mask)
         
         # 计算iou_value
