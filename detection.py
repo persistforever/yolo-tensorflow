@@ -29,7 +29,7 @@ def train():
         recall_thresh=0.5)
     
     tiny_yolo.train(
-        processor=image_processor, backup_path=os.path.join(maindir, 'backup', 'table-v1'),
+        processor=image_processor, backup_path=os.path.join(maindir, 'backup', 'table-v3'),
         n_iters=500000, batch_size=64)
     
     
