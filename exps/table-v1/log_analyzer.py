@@ -20,7 +20,7 @@ def load_log(path):
 			line = line.strip()
 			
 			# pattern1用于识别训练loss
-			pattern1 = re.compile(r'\{TRAIN\} iter\[([\d]+)\], train loss: ([\d\.]+), '
+			pattern1 = re.compile(r'\{TRAIN\} iter\[([\d]+)\], train_loss: ([\d\.]+), '
 				r'class_loss: ([\d\.]+), coord_loss: ([\d\.]+), object_loss: ([\d\.]+), '
 				r'nobject_loss: ([\d\.]+), image_nums: ([\d\.]+), speed: ([\d\.]+) images/s')
 			res1 = pattern1.findall(line)

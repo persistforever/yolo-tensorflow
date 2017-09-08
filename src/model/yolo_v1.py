@@ -332,23 +332,25 @@ class TinyYolo():
         
         # 计算iou_value
         # 每一个cell中，有object，并且iou最大的那个对应的iou
+        coord_pred = self.box_preds[example,:,:,:,0:4]
+        true_iou_tensor = self.calculate_iou(coord_pred, box_label)
         iou_value += tf.reduce_sum(
-            iou_tensor * iou_tensor_mask, axis=[0,1,2,3])
+            true_iou_tensor * iou_tensor_mask, axis=[0,1,2,3])
             
         # 计算recall_value
         # 每一个cell中，有object，并且iou最大的哪个对应的iou如果大于recall_thresh，则加1
         recall_mask = tf.cast(
-            (iou_tensor * iou_tensor_mask > self.recall_thresh), dtype=tf.float32)
+            (true_iou_tensor * iou_tensor_mask > self.recall_thresh), dtype=tf.float32)
         recall_value += tf.reduce_sum(recall_mask, axis=[0,1,2,3])
         
         # 计算object_loss
         # object_pred为box_pred的值，尺寸为(cell_size, cell_size, n_box, 1)
         # 每一个cell中，有object，并且iou最大的那个box的object_label为iou，其余为0，
         # object_label尺寸为(cell_size, cell_size, n_box, 1)
-        object_label = tf.ones(shape=(self.cell_size, self.cell_size, self.n_boxes, 1))
-        object_pred = self.box_preds[example,:,:,:,4:5]
-        object_loss += tf.nn.l2_loss(
-            (object_label - object_pred) * iou_tensor_mask)
+        object_label = tf.ones(
+            shape=(self.cell_size, self.cell_size, self.n_boxes, 1)) * iou_tensor_mask
+        object_pred = self.box_preds[example,:,:,:,4:5] * iou_tensor_mask
+        object_loss += tf.nn.l2_loss(object_label - object_pred)
         
         # 计算object_value
         # 每一个cell中，有object，并且iou最大的那个对应的box_pred中的confidence
@@ -444,7 +446,7 @@ class TinyYolo():
             speed = 1.0 * batch_size / (end_time - start_time)
                 
             # 每1轮训练观测一次train_loss    
-            print('{TRAIN} iter[%d], train calculate_loss: %.6f, coord_loss: %.6f, '
+            print('{TRAIN} iter[%d], train_loss: %.6f, coord_loss: %.6f, '
                   'object_loss: %.6f, nobject_loss: %.6f, image_nums: %d, '
                   'speed: %.2f images/s' % (
                 n_iter, train_avg_loss, train_coord_loss, 
@@ -465,7 +467,7 @@ class TinyYolo():
                 train_anyobject_value, train_recall_value = 0.0, 0.0, 0.0, 0.0 
             
             # 每100轮观测一次验证集evaluation
-            if n_iter % 10000 == 0:
+            if n_iter % 1000 == 0:
                 valid_iou_value, valid_object_value, \
                     valid_nobject_value, valid_recall_value = 0.0, 0.0, 0.0, 0.0 
                 
