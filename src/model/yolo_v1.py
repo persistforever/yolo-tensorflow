@@ -179,51 +179,20 @@ class TinyYolo():
             logits[:,:,:,:,0:5], 
             shape=[self.batch_size, self.cell_size, self.cell_size, self.n_boxes, 5])
         
-        coord_loss = 0.0
-        object_loss = 0.0
-        noobject_loss = 0.0
-        iou_value = 0.0
-        object_value = 0.0
-        anyobject_value = 0.0
-        recall_value = 0.0
-        
-        for example in range(self.batch_size):
-            
-            # 循环每一个object，计算每个box对每个object的iou
-            results = tf.while_loop(
-                cond=self._one_object_iou_cond, 
-                body=self._one_object_iou_body, 
-                loop_vars=[example, tf.constant(0), self.object_nums[example],
-                           tf.zeros(shape=(self.cell_size, self.cell_size, 
-                                           self.n_boxes, self.max_objects))])
-            iou_tensor_whole = results[3]
-            iou_tensor_max = tf.reduce_max(iou_tensor_whole, 3, keep_dims=True)
-            noobject_mask = tf.cast(
-                (iou_tensor_max <= self.noobject_thresh), dtype=tf.float32)
-            
-            # 计算noobject_loss
-            noobject_label = tf.zeros(
-                shape=(self.cell_size, self.cell_size, self.n_boxes, 1),
-                dtype=tf.float32)
-            noobject_pred = self.box_preds[example,:,:,:,4:]
-            noobject_loss += tf.nn.l2_loss(
-                (noobject_label - noobject_pred) * noobject_mask)
-            
-            # 计算anyobject_value
-            anyobject_value += tf.reduce_sum(noobject_pred, axis=[0,1,2,3])
-                
-            # 循环每一个object，计算coord_loss, object_loss和class_loss
-            results = tf.while_loop(
-                cond=self._one_object_loss_cond, 
-                body=self._one_object_loss_body, 
-                loop_vars=[example, tf.constant(0), self.object_nums[example],
-                           tf.constant(0.0), tf.constant(0.0), tf.constant(0.0),
-                           tf.constant(0.0), tf.constant(0.0)])
-            coord_loss += results[3]
-            object_loss += results[4]
-            iou_value += results[5]
-            object_value += results[6]
-            recall_value += results[7]
+        # 循环每一个example
+        results = tf.while_loop(
+            cond=self._one_example_cond, 
+            body=self._one_example_body, 
+            loop_vars=[tf.constant(0), self.batch_size,
+                       tf.constant(0), tf.constant(0), tf.constant(0),
+                       tf.constant(0), tf.constant(0), tf.constant(0), tf.constant(0)])
+        coord_loss = results[2]
+        object_loss = results[3]
+        noobject_loss = results[4]
+        iou_value = results[5]
+        object_value = results[6]
+        anyobject_value = results[7]
+        recall_value = results[8]
             
         # 目标函数值
         coord_loss = coord_loss * self.coord_scale / self.batch_size
@@ -236,6 +205,53 @@ class TinyYolo():
         recall_value /= tf.reduce_sum(tf.cast(self.object_nums, tf.float32), axis=[0])
         
         return coord_loss, object_loss, noobject_loss, \
+            iou_value, object_value, anyobject_value, recall_value
+            
+    def _one_example_cond(self, example, batch_size):
+        
+        return example < batch_size
+    
+    def _one_example_body(self, example, batch_size, coord_loss, object_loss, noobject_loss,
+                          iou_value, object_value, anyobject_value, recall_value):
+        # 循环每一个object，计算每个box对每个object的iou
+        results = tf.while_loop(
+            cond=self._one_object_iou_cond, 
+            body=self._one_object_iou_body, 
+            loop_vars=[example, tf.constant(0), self.object_nums[example],
+                       tf.zeros(shape=(self.cell_size, self.cell_size, 
+                                       self.n_boxes, self.max_objects))])
+        iou_tensor_whole = results[3]
+        iou_tensor_max = tf.reduce_max(iou_tensor_whole, 3, keep_dims=True)
+        noobject_mask = tf.cast(
+            (iou_tensor_max <= self.noobject_thresh), dtype=tf.float32)
+        
+        # 计算noobject_loss
+        noobject_label = tf.zeros(
+            shape=(self.cell_size, self.cell_size, self.n_boxes, 1),
+            dtype=tf.float32)
+        noobject_pred = self.box_preds[example,:,:,:,4:]
+        noobject_loss += tf.nn.l2_loss(
+            (noobject_label - noobject_pred) * noobject_mask)
+        
+        # 计算anyobject_value
+        anyobject_value += tf.reduce_sum(noobject_pred, axis=[0,1,2,3])
+            
+        # 循环每一个object，计算coord_loss, object_loss和class_loss
+        results = tf.while_loop(
+            cond=self._one_object_loss_cond, 
+            body=self._one_object_loss_body, 
+            loop_vars=[example, tf.constant(0), self.object_nums[example],
+                       tf.constant(0.0), tf.constant(0.0), tf.constant(0.0),
+                       tf.constant(0.0), tf.constant(0.0)])
+        coord_loss += results[3]
+        object_loss += results[4]
+        iou_value += results[5]
+        object_value += results[6]
+        recall_value += results[7]
+        
+        example += 1
+        
+        return example, batch_size, coord_loss, object_loss, noobject_loss, \
             iou_value, object_value, anyobject_value, recall_value
     
     def _one_object_iou_cond(self, example, num, object_num, iou_tensor_whole):
