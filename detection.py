@@ -16,7 +16,7 @@ elif 'Linux' in platform.platform():
 
 def train():
     from src.data.image import ImageProcessor
-    from src.model.yolo_v1 import TinyYolo
+    from src.model.yolo_v2 import TinyYolo
     
     image_processor = ImageProcessor(
         os.path.join(maindir, 'data', 'table-v1'),
