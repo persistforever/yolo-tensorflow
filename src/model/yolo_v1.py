@@ -347,8 +347,8 @@ class TinyYolo():
         
         # 计算iou_value
         # 每一个cell中，有object，并且iou最大的那个对应的iou
-        true_iou_tensor = self.calculate_iou(coord_pred, box_label)
         coord_pred = self.box_preds[example,:,:,:,0:4]
+        true_iou_tensor = self.calculate_iou(coord_pred, box_label)
         iou_value += tf.reduce_sum(
             true_iou_tensor * iou_tensor_mask, axis=[0,1,2,3])
             
