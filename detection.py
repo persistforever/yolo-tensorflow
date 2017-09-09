@@ -6,7 +6,7 @@ import os
 import platform
 
 os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
 if 'Windows' in platform.platform():
     maindir = 'E:\Github\\table-detection\\'
@@ -29,7 +29,7 @@ def train():
         recall_thresh=0.5)
     
     tiny_yolo.train(
-        processor=image_processor, backup_path=os.path.join(maindir, 'backup', 'table-v3'),
+        processor=image_processor, backup_path=os.path.join(maindir, 'backup', 'table-v4'),
         n_iters=500000, batch_size=64)
     
     

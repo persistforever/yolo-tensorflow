@@ -184,8 +184,8 @@ class TinyYolo():
             cond=self._one_example_cond, 
             body=self._one_example_body, 
             loop_vars=[tf.constant(0), self.batch_size,
-                       tf.constant(0), tf.constant(0), tf.constant(0),
-                       tf.constant(0), tf.constant(0), tf.constant(0), tf.constant(0)])
+                       tf.constant(0.0), tf.constant(0.0), tf.constant(0.0),
+                       tf.constant(0.0), tf.constant(0.0), tf.constant(0.0), tf.constant(0.0)])
         coord_loss = results[2]
         object_loss = results[3]
         noobject_loss = results[4]
@@ -207,7 +207,8 @@ class TinyYolo():
         return coord_loss, object_loss, noobject_loss, \
             iou_value, object_value, anyobject_value, recall_value
             
-    def _one_example_cond(self, example, batch_size):
+    def _one_example_cond(self, example, batch_size, coord_loss, object_loss, noobject_loss,
+                          iou_value, object_value, anyobject_value, recall_value):
         
         return example < batch_size
     
