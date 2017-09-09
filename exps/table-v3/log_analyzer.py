@@ -120,7 +120,7 @@ def plot_curve(infos_dict1):
 
 infos_dict1 = load_log('E:\\Github\\table-detection\\exps\\table-v3\\table-v3.txt')
 
-batch_size = 10
+batch_size = 25
 infos_dict1 = curve_smooth(infos_dict1, batch_size=batch_size)
 
 plot_curve(infos_dict1)
