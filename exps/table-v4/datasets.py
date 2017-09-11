@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from scipy import misc
 import platform
+import sys
 
 colors = {
 	'word': [150, 150, 150], # 灰色
@@ -27,6 +28,7 @@ def draw_image(contents_dict, maindir):
 	n_processed = 1
 	for docid in contents_dict:
 		print('Draw Images: docid: %s, rate: %.2f%%' % (docid, 100.0 * n_processed / len(contents_dict)))
+		sys.stdout.flush()
 		if not os.path.exists(maindir):
 			os.mkdir(maindir)
 		if not os.path.exists(os.path.join(maindir, docid)):
@@ -148,91 +150,62 @@ def draw_image(contents_dict, maindir):
 		n_processed += 1
 		
 def create_labels(contents_dict, maindir):
+	dataset = []
+
 	n_processed = 1
 	for docid in contents_dict:
 		print('Write Labels: docid: %s, rate: %.2f%%' % (docid, 100.0 * n_processed / len(contents_dict)))
+		sys.stdout.flush()
 		if not os.path.exists(maindir):
 			os.mkdir(maindir)
-		if not os.path.exists(os.path.join(maindir, docid)):
-			os.mkdir(os.path.join(maindir, docid))
-		if not os.path.exists(os.path.join(maindir, docid, 'png_notable')):
-			os.mkdir(os.path.join(maindir, docid, 'png_notable'))
-		if not os.path.exists(os.path.join(maindir, docid, 'png_line_notable')):
-			os.mkdir(os.path.join(maindir, docid, 'png_line_notable'))
-		if not os.path.exists(os.path.join(maindir, docid, 'png_noline_notable')):
-			os.mkdir(os.path.join(maindir, docid, 'png_noline_notable'))
+		if not os.path.exists(os.path.join(maindir, 'JPEGImages', docid)):
+			os.mkdir(os.path.join(maindir, 'JPEGImages', docid))
+		if not os.path.exists(os.path.join(maindir, 'JPEGImages', docid, 'png_notable')):
+			os.mkdir(os.path.join(maindir, 'JPEGImages', docid, 'png_notable'))
+		if not os.path.exists(os.path.join(maindir, 'JPEGImages', docid, 'png_line_notable')):
+			os.mkdir(os.path.join(maindir, 'JPEGImages', docid, 'png_line_notable'))
+		if not os.path.exists(os.path.join(maindir, 'JPEGImages', docid, 'png_noline_notable')):
+			os.mkdir(os.path.join(maindir, 'JPEGImages', docid, 'png_noline_notable'))
 		for pageid in contents_dict[docid]:
 			shape = contents_dict[docid][pageid]['size']
 			if len(contents_dict[docid][pageid]['tables']) == 0:
-				label_path = os.path.join(
-					maindir, docid, 'png_notable', 
-					'%s_%s_notable.txt' % (docid, pageid))
-				with open(label_path, 'w') as fw:
-					pass
+				picpath = os.path.exists(maindir, 'JPEGImages', docid, 'png_notable',
+					'%d_%d_notable.png' % (docid, pageid))
 			else:
-				label_path = os.path.join(
-					maindir, docid, 'png_noline_notable', 
-					'%s_%s_nolinenotable.txt' % (docid, pageid))
-				with open(label_path, 'w') as fw:
-					for table in contents_dict[docid][pageid]['tables']:
-						x = 1.0 * (table['position'][0] + table['position'][1]) / (2.0 * shape[0])
-						y = 1.0 * (table['position'][2] + table['position'][3]) / (2.0 * shape[1])
-						w = 1.0 * (table['position'][1] - table['position'][0]) / shape[0]
-						h = 1.0 * (table['position'][3] - table['position'][2]) / shape[1]
-						fw.writelines('0 %.8f %.8f %.8f %.8f\n' % (x, y, w, h))
-				label_path = os.path.join(
-					maindir, docid, 'png_line_notable', 
-					'%s_%s_linenotable.txt' % (docid, pageid))
-				with open(label_path, 'w') as fw:
-					for table in contents_dict[docid][pageid]['tables']:
-						x = 1.0 * (table['position'][0] + table['position'][1]) / (2.0 * shape[0])
-						y = 1.0 * (table['position'][2] + table['position'][3]) / (2.0 * shape[1])
-						w = 1.0 * (table['position'][1] - table['position'][0]) / shape[0]
-						h = 1.0 * (table['position'][3] - table['position'][2]) / shape[1]
-						fw.writelines('0 %.8f %.8f %.8f %.8f\n' % (x, y, w, h))
-				
-def create_datasets(contents_dict, maindir):
-	positives, negatives = [], []
-	train_list, valid_list, test_list = [], [], []
-	n_processed = 1
-	for docid in contents_dict:
-		print('Create Dataset: docid: %s, rate: %.2f%%' % (docid, 100.0 * n_processed / len(contents_dict)))
-		for pageid in contents_dict[docid]:
-			if len(contents_dict[docid][pageid]['tables']) == 0:
-				negatives.append('%s_%s_0' % (docid, pageid))
-			else:
-				positives.append('%s_%s_1' % (docid, pageid))
-		n_processed += 1
-	random.shuffle(positives)
-	random.shuffle(negatives)
-	train_list.extend(positives[0: int(len(positives) * 0.0)])
-	train_list.extend(negatives[0: int(len(negatives) * 0.0)])
-	valid_list.extend(positives[int(len(positives) * 0.0): int(len(positives) * 0.0)])
-	valid_list.extend(negatives[int(len(negatives) * 0.0): int(len(negatives) * 0.0)])
-	test_list.extend(positives[int(len(positives) * 0.0):])
-	test_list.extend(negatives[int(len(negatives) * 0.0):])
-	random.shuffle(train_list)
-	random.shuffle(valid_list)
-	random.shuffle(test_list)
+				# noline
+				picpath = os.path.exists(maindir, 'JPEGImages', docid, 'png_noline_notable',
+					'%d_%d_nolinenotable.png' % (docid, pageid))
+				label = [picpath]
+				for table in contents_dict[docid][pageid]['tables']:
+					left = int(table['position'][0])
+					right = int(table['position'][1])
+					top = int(table['position'][2])
+					bottom = int(table['position'][3])
+					label.extend([left, right, top, bottom, 1])
+				dataset.append(label)
+
+				# line
+				picpath = os.path.exists(maindir, 'JPEGImages', docid, 'png_line_notable',
+					'%d_%d_linenotable.png' % (docid, pageid))
+				label = [picpath]
+				for table in contents_dict[docid][pageid]['tables']:
+					left = str(int(table['position'][0]))
+					right = str(int(table['position'][1]))
+					top = str(int(table['position'][2]))
+					bottom = str(int(table['position'][3]))
+					label.extend([left, right, top, bottom, '1'])
+				dataset.append(' '.join(label))
+
+	random.shuffle(dataset)
+
+	train_list.extend(dataset[0: int(len(dataset) * 0.9)])
+	valid_list.extend(dataset[int(len(dataset) * 0.9): int(len(dataset) * 0.95)])
+	test_list.extend(dataset[int(len(dataset) * 0.95):])
 	
 	def _writes(data_list, fname):
 		with open(os.path.join(maindir, fname), 'w') as fw:
-			for filename in data_list:
-				[docid, pageid, tag] = filename.split('_')
-				if tag == '0':
-					filename = os.path.join(
-						maindir, 'JPEGImages', docid, 'png_notable', 
-						'%s_%s_%s.png' % (docid, pageid, 'notable'))
-					fw.writelines('%s\n' % (filename))
-				else:
-					filename = os.path.join(
-						maindir, 'JPEGImages', docid, 'png_noline_notable', 
-						'%s_%s_%s.png' % (docid, pageid, 'nolinenotable'))
-					fw.writelines('%s\n' % (filename))
-					filename = os.path.join(
-						maindir, 'JPEGImages', docid, 'png_line_notable', 
-						'%s_%s_%s.png' % (docid, pageid, 'linenotable'))
-					fw.writelines('%s\n' % (filename))
+			for label in data_list:
+				fw.writelines('%s\n' % (label))
 					
 	_writes(train_list, 'train.txt')
 	_writes(valid_list, 'valid.txt')
@@ -247,87 +220,6 @@ def write_json(contents_dict, path):
 	with open(path, 'w') as fw:
 		fw.write(json.dumps(contents_dict, indent=4))
 
-def uint_test1(maindir):
-	train_dict, valid_dict, test_dict = {}, {}, {}
-	with open(os.path.join(maindir, 'train.txt'), 'r') as fo:
-		for line in fo.readlines():
-			filename = line.strip()
-			if filename not in train_dict:
-				train_dict[filename] = None
-	with open(os.path.join(maindir, 'valid.txt'), 'r') as fo:
-		for line in fo.readlines():
-			filename = line.strip()
-			if filename not in train_dict:
-				valid_dict[filename] = None
-	with open(os.path.join(maindir, 'test.txt'), 'r') as fo:
-		for line in fo.readlines():
-			filename = line.strip()
-			if filename not in train_dict:
-				test_dict[filename] = None
-	for filename in train_dict:
-		if filename in valid_dict:
-			print('训练集中的数据出现在验证集中！')
-			return
-		if filename in valid_dict:
-			print('训练集中的数据出现在测试集中！')
-			return
-	for filename in valid_dict:
-		if filename in test_dict:
-			print('验证集中的数据出现在测试集中！')
-			return
-	print('单元测试：训练集、验证集、测试集是否有重合？\t无重合， 单元测试通过！')
-	
-def uint_test2(maindir):
-	with open(os.path.join(maindir, 'train.txt'), 'r') as fo:
-		for line in fo.readlines():
-			filename = line.strip()
-			if not os.path.exists(filename):
-				print('不存在此图片：%s' % (filename))
-				return
-	with open(os.path.join(maindir, 'valid.txt'), 'r') as fo:
-		for line in fo.readlines():
-			filename = line.strip()
-			if not os.path.exists(filename):
-				print('不存在此图片：%s' % (filename))
-				return
-	with open(os.path.join(maindir, 'test.txt'), 'r') as fo:
-		for line in fo.readlines():
-			filename = line.strip()
-			if not os.path.exists(filename):
-				print('不存在此图片：%s' % (filename))
-				return
-	print('单元测试：训练集、验证集、测试集中的图片是否都存在？\t均存在， 单元测试通过！')
-	
-def uint_test3(maindir):
-	with open(os.path.join(maindir, 'train.txt'), 'r') as fo:
-		for line in fo.readlines():
-			filename = line.strip()
-			labelname = filename
-			labelname.replace('JPEGImages', 'labels')
-			labelname.replace('png', 'txt')
-			if not os.path.exists(labelname):
-				print('不存在此标签：%s' % (labelname))
-				return
-	with open(os.path.join(maindir, 'valid.txt'), 'r') as fo:
-		for line in fo.readlines():
-			filename = line.strip()
-			labelname = filename
-			labelname.replace('JPEGImages', 'labels')
-			labelname.replace('png', 'txt')
-			if not os.path.exists(labelname):
-				print('不存在此标签：%s' % (labelname))
-				return
-	with open(os.path.join(maindir, 'test.txt'), 'r') as fo:
-		for line in fo.readlines():
-			filename = line.strip()
-			labelname = filename
-			labelname.replace('JPEGImages', 'labels')
-			labelname.replace('png', 'txt')
-			if not os.path.exists(labelname):
-				print('不存在此标签：%s' % (labelname))
-				return
-	print('单元测试：图片对应的标签是否都存在？\t均存在， 单元测试通过！')
-
 
 if 'Windows' in platform.platform():
 	contents_dict = load_table_json('E:\\Temporal\Python\darknet-master\datasets\\table-png\JPEGImages')
@@ -341,9 +233,5 @@ if 'Windows' in platform.platform():
 	uint_test3('E:\\Temporal\Python\darknet-master\datasets\\table-png')
 elif 'Linux' in platform.platform():
 	contents_dict = read_json('/home/caory/github/table-detection/data/table-v2/texts.json')
-	draw_image(contents_dict, '/home/caory/github/table-detection/data/table-v2/JPEGImages')
-	# create_labels(contents_dict, '/home/ronniecao/yolo/darknet/datasets/table-test/labels')
-	# create_datasets(contents_dict, '/home/ronniecao/yolo/darknet/datasets/table-test')
-	# uint_test1('/home/ronniecao/yolo/darknet/datasets/table-test')
-	# uint_test2('/home/ronniecao/yolo/darknet/datasets/table-test')
-	# uint_test3('/home/ronniecao/yolo/darknet/datasets/table-test')
+	# draw_image(contents_dict, '/home/caory/github/table-detection/data/table-v2/JPEGImages')
+	create_labels(contents_dict, '/home/caory/github/table-detection/data/table-v2/')
