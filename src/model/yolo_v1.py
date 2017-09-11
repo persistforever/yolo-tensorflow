@@ -71,7 +71,7 @@ class TinyYolo():
                                                      lambda: tf.constant(0.001),
                                                      lambda: tf.constant(0.0001))))
         self.optimizer = tf.train.MomentumOptimizer(
-            learning_rate=0.001, momentum=0.9).minimize(
+            learning_rate=lr, momentum=0.9).minimize(
                 self.avg_loss, global_step=self.global_step)
         
     def inference(self, images):

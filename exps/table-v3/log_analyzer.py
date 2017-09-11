@@ -86,15 +86,15 @@ def curve_smooth(infos_dict, batch_size=1):
 
 	return new_infos_dict
 
-def plot_curve(infos_dict1):
+def plot_curve(infos_dict1, infos_dict2):
 	fig = plt.figure(figsize=(10, 5))
 
 	plt.subplot(121)
 	p1 = plt.plot(infos_dict1['train_loss']['iter'], infos_dict1['train_loss']['loss'], '.--', color='#66CDAA')
-	# p2 = plt.plot(infos_dict2['train_loss']['iter'], infos_dict2['train_loss']['loss'], '.--', color='#1E90FF')
+	p2 = plt.plot(infos_dict2['train_loss']['iter'], infos_dict2['train_loss']['loss'], '.--', color='#1E90FF')
 	# p3 = plt.plot(infos_dict3['train_loss']['iter'], infos_dict3['train_loss']['loss'], '.--', color='#FF6347')
 	# p1 = plt.plot(infos_dict4['train_loss']['iter'], infos_dict4['train_loss']['loss'], '.--', color='#FFD700')
-	# plt.legend((p1[0], p2[0], p3[0]), ('yolo-v1', 'data augmentation', 'change learning rate'))
+	plt.legend((p1[0], p2[0]), ('yolo-v1', 'yolo-v2'))
 	plt.grid(True)
 	plt.title('train loss curve')
 	plt.xlabel('# of iterations')
@@ -104,10 +104,10 @@ def plot_curve(infos_dict1):
 
 	plt.subplot(122)
 	p1 = plt.plot(infos_dict1['train_eval']['iter'], infos_dict1['train_eval']['iou'], '.--', color='#66CDAA')
-	# p2 = plt.plot(infos_dict2['valid']['iter'], infos_dict2['valid']['iou'], '.--', color='#1E90FF')
+	p2 = plt.plot(infos_dict2['train_eval']['iter'], infos_dict2['train_eval']['iou'], '.--', color='#1E90FF')
 	# p3 = plt.plot(infos_dict3['valid']['iter'], infos_dict3['valid']['iou'], '.--', color='#FF6347')
 	# p1 = plt.plot(infos_dict4['train_eval']['iter'], infos_dict4['train_eval']['iou'], '.--', color='#FFD700')
-	# plt.legend((p1[0], p2[0], p3[0]), ('yolo-v1', 'data augmentation', 'change learning rate'))
+	plt.legend((p1[0], p2[0]), ('yolo-v1', 'yolo-v2'))
 	plt.grid(True)
 	plt.title('train iou curve')
 	plt.xlabel('# of iterations')
@@ -119,8 +119,9 @@ def plot_curve(infos_dict1):
 
 
 infos_dict1 = load_log('E:\\Github\\table-detection\\exps\\table-v3\\table-v3.txt')
+infos_dict2 = load_log('E:\\Github\\table-detection\\exps\\table-v3\\table-v4.txt')
 
-batch_size = 25
-infos_dict1 = curve_smooth(infos_dict1, batch_size=batch_size)
+infos_dict1 = curve_smooth(infos_dict1, batch_size=50)
+infos_dict2 = curve_smooth(infos_dict2, batch_size=50)
 
-plot_curve(infos_dict1)
+plot_curve(infos_dict1, infos_dict2)
