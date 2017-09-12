@@ -138,8 +138,8 @@ def plot_curve(infos_dict1, infos_dict2, infos_dict3):
 	plt.xlim(xmin=0)
 	plt.ylim(ymin=0.6, ymax=1.0)
 
-	# plt.show()
-	plt.savefig('E:\\Github\\table-detection\\exps\\table-v3\\table-v3.png', dpi=72, format='png')
+	plt.show()
+	# plt.savefig('E:\\Github\\table-detection\\exps\\table-v3\\table-v3.png', dpi=120, format='png')
 
 
 infos_dict1 = load_log('E:\\Github\\table-detection\\exps\\table-v3\\table-v3.txt')

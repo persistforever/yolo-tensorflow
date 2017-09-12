@@ -1,0 +1,1279 @@
+nohup: ignoring input
+I tensorflow/stream_executor/dso_loader.cc:135] successfully opened CUDA library libcublas.so.8.0 locally
+I tensorflow/stream_executor/dso_loader.cc:135] successfully opened CUDA library libcudnn.so.5 locally
+I tensorflow/stream_executor/dso_loader.cc:135] successfully opened CUDA library libcufft.so.8.0 locally
+I tensorflow/stream_executor/dso_loader.cc:135] successfully opened CUDA library libcuda.so.1 locally
+I tensorflow/stream_executor/dso_loader.cc:135] successfully opened CUDA library libcurand.so.8.0 locally
+number of train sets: 174208
+number of valid sets: 9678
+number of test sets: 9679
+
+Name      	Filter              	Input               	Output
+conv1     	(3 * 3 * 16 / 1)	(256 * 256 * 3)     	(256 * 256 * 16)
+pool1     	(2 * 2 / 2)         	(256 * 256 * 16)    	(128 * 128 * 16)
+conv2     	(3 * 3 * 32 / 1)	(128 * 128 * 16)    	(128 * 128 * 32)
+pool2     	(2 * 2 / 2)         	(128 * 128 * 32)    	(64 * 64 * 32)
+conv3     	(3 * 3 * 64 / 1)	(64 * 64 * 32)      	(64 * 64 * 64)
+pool3     	(2 * 2 / 2)         	(64 * 64 * 64)      	(32 * 32 * 64)
+conv4     	(3 * 3 * 128 / 1)	(32 * 32 * 64)      	(32 * 32 * 128)
+pool4     	(2 * 2 / 2)         	(32 * 32 * 128)     	(16 * 16 * 128)
+conv5     	(3 * 3 * 256 / 1)	(16 * 16 * 128)     	(16 * 16 * 256)
+pool5     	(2 * 2 / 2)         	(16 * 16 * 256)     	(8 * 8 * 256)
+conv6     	(3 * 3 * 512 / 1)	(8 * 8 * 256)       	(8 * 8 * 512)
+pool6     	(2 * 2 / 2)         	(8 * 8 * 512)       	(4 * 4 * 512)
+conv7     	(3 * 3 * 1024 / 1)	(4 * 4 * 512)       	(4 * 4 * 1024)
+conv8     	(3 * 3 * 1024 / 1)	(4 * 4 * 1024)      	(4 * 4 * 1024)
+conv9     	(1 * 1 * 25 / 1)	(4 * 4 * 1024)      	(4 * 4 * 25)
+
+W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use SSE3 instructions, but these are available on your machine and could speed up CPU computations.
+W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use SSE4.1 instructions, but these are available on your machine and could speed up CPU computations.
+W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use SSE4.2 instructions, but these are available on your machine and could speed up CPU computations.
+W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use AVX instructions, but these are available on your machine and could speed up CPU computations.
+W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use AVX2 instructions, but these are available on your machine and could speed up CPU computations.
+W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use FMA instructions, but these are available on your machine and could speed up CPU computations.
+I tensorflow/core/common_runtime/gpu/gpu_device.cc:885] Found device 0 with properties: 
+name: TITAN X (Pascal)
+major: 6 minor: 1 memoryClockRate (GHz) 1.531
+pciBusID 0000:03:00.0
+Total memory: 11.90GiB
+Free memory: 11.76GiB
+I tensorflow/core/common_runtime/gpu/gpu_device.cc:906] DMA: 0 
+I tensorflow/core/common_runtime/gpu/gpu_device.cc:916] 0:   Y 
+I tensorflow/core/common_runtime/gpu/gpu_device.cc:975] Creating TensorFlow device (/gpu:0) -> (device: 0, name: TITAN X (Pascal), pci bus id: 0000:03:00.0)
+I tensorflow/core/common_runtime/gpu/pool_allocator.cc:247] PoolAllocator: After 10004 get requests, put_count=9776 evicted_count=1000 eviction_rate=0.102291 and unsatisfied allocation rate=0.132747
+I tensorflow/core/common_runtime/gpu/pool_allocator.cc:259] Raising pool_size_limit_ from 100 to 110
+{TRAIN} iter[1], train_loss: 32.680058, coord_loss: 0.744085, object_loss: 0.527394, nobject_loss: 30.790907, image_nums: 128, speed: 28.12 images/s
+{TRAIN} iter[1], iou: 0.084606, object: 0.528088, anyobject: 0.503958, recall: 0.000000
+{TRAIN} iter[2], train_loss: 15.061846, coord_loss: 0.558813, object_loss: 0.937146, nobject_loss: 12.948210, image_nums: 256, speed: 61.30 images/s
+{TRAIN} iter[2], iou: 0.090288, object: 0.303055, anyobject: 0.324180, recall: 0.000000
+{TRAIN} iter[3], train_loss: 5.305232, coord_loss: 0.547534, object_loss: 1.624507, nobject_loss: 2.515484, image_nums: 384, speed: 61.98 images/s
+{TRAIN} iter[3], iou: 0.132372, object: 0.131089, anyobject: 0.139756, recall: 0.000000
+/home/caory/github/table-detection/src/data/image.py:235: RuntimeWarning: invalid value encountered in divide
+  new_image = (old_image - numpy.mean(old_image)) / numpy.std(old_image)
+{TRAIN} iter[4], train_loss: 2.902883, coord_loss: 0.448113, object_loss: 1.449893, nobject_loss: 0.387117, image_nums: 512, speed: 70.23 images/s
+{TRAIN} iter[4], iou: 0.095428, object: 0.060082, anyobject: 0.053371, recall: 0.000000
+{TRAIN} iter[5], train_loss: 3.094394, coord_loss: 0.471921, object_loss: 1.935808, nobject_loss: 0.068834, image_nums: 640, speed: 65.86 images/s
+{TRAIN} iter[5], iou: 0.144663, object: 0.023823, anyobject: 0.021606, recall: 0.057692
+{TRAIN} iter[6], train_loss: 2.777613, coord_loss: 0.389269, object_loss: 1.758530, nobject_loss: 0.011902, image_nums: 768, speed: 66.38 images/s
+{TRAIN} iter[6], iou: 0.146385, object: 0.010737, anyobject: 0.008915, recall: 0.000000
+{TRAIN} iter[7], train_loss: 3.112100, coord_loss: 0.446149, object_loss: 2.045124, nobject_loss: 0.002828, image_nums: 896, speed: 63.34 images/s
+{TRAIN} iter[7], iou: 0.178007, object: 0.006109, anyobject: 0.004194, recall: 0.037736
+{TRAIN} iter[8], train_loss: 3.177837, coord_loss: 0.426959, object_loss: 2.132063, nobject_loss: 0.000725, image_nums: 1024, speed: 60.87 images/s
+{TRAIN} iter[8], iou: 0.155596, object: 0.003821, anyobject: 0.002069, recall: 0.018182
+{TRAIN} iter[9], train_loss: 2.872050, coord_loss: 0.270951, object_loss: 1.982702, nobject_loss: 0.000216, image_nums: 1152, speed: 61.27 images/s
+{TRAIN} iter[9], iou: 0.270272, object: 0.002385, anyobject: 0.001101, recall: 0.117647
+{TRAIN} iter[10], train_loss: 3.002331, coord_loss: 0.396456, object_loss: 1.987529, nobject_loss: 0.000076, image_nums: 1280, speed: 58.26 images/s
+{TRAIN} iter[10], iou: 0.185043, object: 0.001170, anyobject: 0.000631, recall: 0.058824
+I tensorflow/core/common_runtime/gpu/pool_allocator.cc:247] PoolAllocator: After 11132 get requests, put_count=10934 evicted_count=1000 eviction_rate=0.0914578 and unsatisfied allocation rate=0.109684
+I tensorflow/core/common_runtime/gpu/pool_allocator.cc:259] Raising pool_size_limit_ from 256 to 281
+{TRAIN} iter[11], train_loss: 3.918087, coord_loss: 0.492509, object_loss: 2.807191, nobject_loss: 0.000032, image_nums: 1408, speed: 59.42 images/s
+{TRAIN} iter[11], iou: 0.230367, object: 0.000945, anyobject: 0.000391, recall: 0.138889
+{TRAIN} iter[12], train_loss: 3.116528, coord_loss: 0.313572, object_loss: 2.184505, nobject_loss: 0.000014, image_nums: 1536, speed: 60.26 images/s
+{TRAIN} iter[12], iou: 0.278000, object: 0.000685, anyobject: 0.000248, recall: 0.267857
+{TRAIN} iter[13], train_loss: 2.594667, coord_loss: 0.219608, object_loss: 1.756537, nobject_loss: 0.000007, image_nums: 1664, speed: 57.66 images/s
+{TRAIN} iter[13], iou: 0.252825, object: 0.000363, anyobject: 0.000168, recall: 0.222222
+{TRAIN} iter[14], train_loss: 2.782395, coord_loss: 0.211999, object_loss: 1.951804, nobject_loss: 0.000004, image_nums: 1792, speed: 57.44 images/s
+{TRAIN} iter[14], iou: 0.292773, object: 0.000338, anyobject: 0.000122, recall: 0.220000
+{TRAIN} iter[15], train_loss: 3.135911, coord_loss: 0.291703, object_loss: 2.225549, nobject_loss: 0.000002, image_nums: 1920, speed: 63.75 images/s
+{TRAIN} iter[15], iou: 0.225324, object: 0.000228, anyobject: 0.000088, recall: 0.175439
+{TRAIN} iter[16], train_loss: 3.680883, coord_loss: 0.290080, object_loss: 2.772081, nobject_loss: 0.000001, image_nums: 2048, speed: 65.43 images/s
+{TRAIN} iter[16], iou: 0.296294, object: 0.000245, anyobject: 0.000068, recall: 0.253521
+{TRAIN} iter[17], train_loss: 3.269003, coord_loss: 0.229101, object_loss: 2.421122, nobject_loss: 0.000001, image_nums: 2176, speed: 66.74 images/s
+{TRAIN} iter[17], iou: 0.306024, object: 0.000156, anyobject: 0.000053, recall: 0.274194
+{TRAIN} iter[18], train_loss: 3.053965, coord_loss: 0.248193, object_loss: 2.186939, nobject_loss: 0.000001, image_nums: 2304, speed: 67.81 images/s
+{TRAIN} iter[18], iou: 0.246195, object: 0.000128, anyobject: 0.000043, recall: 0.160714
+{TRAIN} iter[19], train_loss: 3.128929, coord_loss: 0.244723, object_loss: 2.265325, nobject_loss: 0.000000, image_nums: 2432, speed: 67.00 images/s
+{TRAIN} iter[19], iou: 0.262027, object: 0.000066, anyobject: 0.000035, recall: 0.224138
+{TRAIN} iter[20], train_loss: 2.488209, coord_loss: 0.189867, object_loss: 1.679417, nobject_loss: 0.000000, image_nums: 2560, speed: 67.86 images/s
+{TRAIN} iter[20], iou: 0.202069, object: 0.000080, anyobject: 0.000028, recall: 0.093023
+{TRAIN} iter[21], train_loss: 2.580844, coord_loss: 0.165438, object_loss: 1.796440, nobject_loss: 0.000000, image_nums: 2688, speed: 68.57 images/s
+{TRAIN} iter[21], iou: 0.316668, object: 0.000121, anyobject: 0.000026, recall: 0.217391
+{TRAIN} iter[22], train_loss: 3.055440, coord_loss: 0.210213, object_loss: 2.226225, nobject_loss: 0.000000, image_nums: 2816, speed: 67.71 images/s
+{TRAIN} iter[22], iou: 0.230995, object: 0.000076, anyobject: 0.000023, recall: 0.210526
+I tensorflow/core/common_runtime/gpu/pool_allocator.cc:247] PoolAllocator: After 19864 get requests, put_count=19549 evicted_count=1000 eviction_rate=0.0511535 and unsatisfied allocation rate=0.0691704
+I tensorflow/core/common_runtime/gpu/pool_allocator.cc:259] Raising pool_size_limit_ from 655 to 720
+{TRAIN} iter[23], train_loss: 3.002658, coord_loss: 0.157345, object_loss: 2.226277, nobject_loss: 0.000000, image_nums: 2944, speed: 60.02 images/s
+{TRAIN} iter[23], iou: 0.283977, object: 0.000064, anyobject: 0.000020, recall: 0.245614
+{TRAIN} iter[24], train_loss: 3.331834, coord_loss: 0.174003, object_loss: 2.538767, nobject_loss: 0.000000, image_nums: 3072, speed: 62.56 images/s
+{TRAIN} iter[24], iou: 0.284526, object: 0.000058, anyobject: 0.000019, recall: 0.184615
+{TRAIN} iter[25], train_loss: 2.484570, coord_loss: 0.107919, object_loss: 1.757560, nobject_loss: 0.000000, image_nums: 3200, speed: 63.66 images/s
+{TRAIN} iter[25], iou: 0.273365, object: 0.000072, anyobject: 0.000017, recall: 0.200000
+{TRAIN} iter[26], train_loss: 2.871441, coord_loss: 0.143208, object_loss: 2.109119, nobject_loss: 0.000000, image_nums: 3328, speed: 70.14 images/s
+{TRAIN} iter[26], iou: 0.318688, object: 0.000061, anyobject: 0.000015, recall: 0.314815
+{TRAIN} iter[27], train_loss: 2.976513, coord_loss: 0.170107, object_loss: 2.187272, nobject_loss: 0.000000, image_nums: 3456, speed: 65.21 images/s
+{TRAIN} iter[27], iou: 0.303067, object: 0.000052, anyobject: 0.000014, recall: 0.267857
+{TRAIN} iter[28], train_loss: 2.972902, coord_loss: 0.166474, object_loss: 2.187275, nobject_loss: 0.000000, image_nums: 3584, speed: 65.94 images/s
+{TRAIN} iter[28], iou: 0.237470, object: 0.000051, anyobject: 0.000013, recall: 0.178571
+{TRAIN} iter[29], train_loss: 3.449894, coord_loss: 0.174790, object_loss: 2.655935, nobject_loss: 0.000000, image_nums: 3712, speed: 63.47 images/s
+{TRAIN} iter[29], iou: 0.310301, object: 0.000059, anyobject: 0.000012, recall: 0.264706
+{TRAIN} iter[30], train_loss: 2.850268, coord_loss: 0.121881, object_loss: 2.109204, nobject_loss: 0.000000, image_nums: 3840, speed: 67.35 images/s
+{TRAIN} iter[30], iou: 0.309016, object: 0.000041, anyobject: 0.000011, recall: 0.277778
+{TRAIN} iter[31], train_loss: 2.609011, coord_loss: 0.114949, object_loss: 1.874867, nobject_loss: 0.000000, image_nums: 3968, speed: 69.33 images/s
+{TRAIN} iter[31], iou: 0.277473, object: 0.000036, anyobject: 0.000011, recall: 0.250000
+{TRAIN} iter[32], train_loss: 2.624607, coord_loss: 0.130478, object_loss: 1.874923, nobject_loss: 0.000000, image_nums: 4096, speed: 58.61 images/s
+{TRAIN} iter[32], iou: 0.291340, object: 0.000020, anyobject: 0.000010, recall: 0.229167
+{TRAIN} iter[33], train_loss: 2.860124, coord_loss: 0.131684, object_loss: 2.109225, nobject_loss: 0.000000, image_nums: 4224, speed: 62.86 images/s
+{TRAIN} iter[33], iou: 0.266487, object: 0.000036, anyobject: 0.000010, recall: 0.203704
+{TRAIN} iter[34], train_loss: 2.964792, coord_loss: 0.119142, object_loss: 2.226428, nobject_loss: 0.000000, image_nums: 4352, speed: 67.88 images/s
+{TRAIN} iter[34], iou: 0.348330, object: 0.000030, anyobject: 0.000009, recall: 0.350877
+{TRAIN} iter[35], train_loss: 2.915010, coord_loss: 0.108452, object_loss: 2.187329, nobject_loss: 0.000000, image_nums: 4480, speed: 68.39 images/s
+{TRAIN} iter[35], iou: 0.385803, object: 0.000039, anyobject: 0.000009, recall: 0.357143
+{TRAIN} iter[36], train_loss: 3.066814, coord_loss: 0.142992, object_loss: 2.304588, nobject_loss: 0.000000, image_nums: 4608, speed: 62.25 images/s
+{TRAIN} iter[36], iou: 0.283414, object: 0.000022, anyobject: 0.000009, recall: 0.237288
+{TRAIN} iter[37], train_loss: 3.183191, coord_loss: 0.103231, object_loss: 2.460721, nobject_loss: 0.000000, image_nums: 4736, speed: 61.41 images/s
+{TRAIN} iter[37], iou: 0.318739, object: 0.000044, anyobject: 0.000010, recall: 0.365079
+{TRAIN} iter[38], train_loss: 2.630435, coord_loss: 0.097217, object_loss: 1.913977, nobject_loss: 0.000000, image_nums: 4864, speed: 66.75 images/s
+{TRAIN} iter[38], iou: 0.307171, object: 0.000022, anyobject: 0.000009, recall: 0.285714
+{TRAIN} iter[39], train_loss: 2.849186, coord_loss: 0.120687, object_loss: 2.109255, nobject_loss: 0.000000, image_nums: 4992, speed: 57.99 images/s
+{TRAIN} iter[39], iou: 0.318391, object: 0.000028, anyobject: 0.000008, recall: 0.296296
+{TRAIN} iter[40], train_loss: 2.724492, coord_loss: 0.113269, object_loss: 1.991978, nobject_loss: 0.000000, image_nums: 5120, speed: 59.10 images/s
+{TRAIN} iter[40], iou: 0.338997, object: 0.000053, anyobject: 0.000009, recall: 0.372549
+{TRAIN} iter[41], train_loss: 2.756500, coord_loss: 0.106167, object_loss: 2.031087, nobject_loss: 0.000000, image_nums: 5248, speed: 58.45 images/s
+{TRAIN} iter[41], iou: 0.366205, object: 0.000040, anyobject: 0.000009, recall: 0.423077
+{TRAIN} iter[42], train_loss: 3.036075, coord_loss: 0.112374, object_loss: 2.304455, nobject_loss: 0.000000, image_nums: 5376, speed: 60.55 images/s
+{TRAIN} iter[42], iou: 0.388754, object: 0.000050, anyobject: 0.000009, recall: 0.440678
+{TRAIN} iter[43], train_loss: 2.873963, coord_loss: 0.106370, object_loss: 2.148348, nobject_loss: 0.000000, image_nums: 5504, speed: 58.84 images/s
+{TRAIN} iter[43], iou: 0.335488, object: 0.000021, anyobject: 0.000008, recall: 0.363636
+{TRAIN} iter[44], train_loss: 2.893900, coord_loss: 0.126309, object_loss: 2.148347, nobject_loss: 0.000000, image_nums: 5632, speed: 70.12 images/s
+{TRAIN} iter[44], iou: 0.300446, object: 0.000021, anyobject: 0.000008, recall: 0.200000
+{TRAIN} iter[45], train_loss: 2.917577, coord_loss: 0.111040, object_loss: 2.187294, nobject_loss: 0.000000, image_nums: 5760, speed: 57.57 images/s
+{TRAIN} iter[45], iou: 0.330335, object: 0.000047, anyobject: 0.000008, recall: 0.357143
+{TRAIN} iter[46], train_loss: 3.123270, coord_loss: 0.121358, object_loss: 2.382670, nobject_loss: 0.000000, image_nums: 5888, speed: 64.75 images/s
+{TRAIN} iter[46], iou: 0.268156, object: 0.000030, anyobject: 0.000009, recall: 0.163934
+{TRAIN} iter[47], train_loss: 2.620332, coord_loss: 0.087120, object_loss: 1.913973, nobject_loss: 0.000000, image_nums: 6016, speed: 65.19 images/s
+{TRAIN} iter[47], iou: 0.337599, object: 0.000023, anyobject: 0.000008, recall: 0.306122
+{TRAIN} iter[48], train_loss: 2.514825, coord_loss: 0.098817, object_loss: 1.796772, nobject_loss: 0.000000, image_nums: 6144, speed: 58.50 images/s
+{TRAIN} iter[48], iou: 0.352615, object: 0.000029, anyobject: 0.000008, recall: 0.413043
+{TRAIN} iter[49], train_loss: 2.647768, coord_loss: 0.075542, object_loss: 1.952993, nobject_loss: 0.000000, image_nums: 6272, speed: 59.17 images/s
+{TRAIN} iter[49], iou: 0.293336, object: 0.000034, anyobject: 0.000008, recall: 0.240000
+{TRAIN} iter[50], train_loss: 3.629846, coord_loss: 0.159226, object_loss: 2.851391, nobject_loss: 0.000000, image_nums: 6400, speed: 65.74 images/s
+{TRAIN} iter[50], iou: 0.313478, object: 0.000030, anyobject: 0.000008, recall: 0.342466
+{TRAIN} iter[51], train_loss: 2.729816, coord_loss: 0.079446, object_loss: 2.031144, nobject_loss: 0.000000, image_nums: 6528, speed: 71.47 images/s
+{TRAIN} iter[51], iou: 0.329840, object: 0.000026, anyobject: 0.000008, recall: 0.384615
+{TRAIN} iter[52], train_loss: 2.528410, coord_loss: 0.073373, object_loss: 1.835814, nobject_loss: 0.000000, image_nums: 6656, speed: 65.63 images/s
+{TRAIN} iter[52], iou: 0.429778, object: 0.000034, anyobject: 0.000008, recall: 0.425532
+{TRAIN} iter[53], train_loss: 2.216469, coord_loss: 0.073879, object_loss: 1.523371, nobject_loss: 0.000000, image_nums: 6784, speed: 67.43 images/s
+{TRAIN} iter[53], iou: 0.408819, object: 0.000022, anyobject: 0.000008, recall: 0.410256
+{TRAIN} iter[54], train_loss: 3.231722, coord_loss: 0.112588, object_loss: 2.499919, nobject_loss: 0.000000, image_nums: 6912, speed: 68.09 images/s
+{TRAIN} iter[54], iou: 0.385572, object: 0.000016, anyobject: 0.000007, recall: 0.406250
+{TRAIN} iter[55], train_loss: 3.346857, coord_loss: 0.110619, object_loss: 2.617029, nobject_loss: 0.000000, image_nums: 7040, speed: 63.52 images/s
+{TRAIN} iter[55], iou: 0.386016, object: 0.000030, anyobject: 0.000008, recall: 0.417910
+{TRAIN} iter[56], train_loss: 2.930563, coord_loss: 0.084940, object_loss: 2.226418, nobject_loss: 0.000000, image_nums: 7168, speed: 65.89 images/s
+{TRAIN} iter[56], iou: 0.363798, object: 0.000033, anyobject: 0.000008, recall: 0.385965
+{TRAIN} iter[57], train_loss: 3.374000, coord_loss: 0.098699, object_loss: 2.656101, nobject_loss: 0.000000, image_nums: 7296, speed: 62.34 images/s
+{TRAIN} iter[57], iou: 0.286705, object: 0.000028, anyobject: 0.000008, recall: 0.279412
+{TRAIN} iter[58], train_loss: 3.262061, coord_loss: 0.103981, object_loss: 2.538884, nobject_loss: 0.000000, image_nums: 7424, speed: 68.94 images/s
+{TRAIN} iter[58], iou: 0.355013, object: 0.000035, anyobject: 0.000008, recall: 0.400000
+{TRAIN} iter[59], train_loss: 3.105099, coord_loss: 0.103198, object_loss: 2.382710, nobject_loss: 0.000000, image_nums: 7552, speed: 63.89 images/s
+{TRAIN} iter[59], iou: 0.344557, object: 0.000021, anyobject: 0.000008, recall: 0.344262
+{TRAIN} iter[60], train_loss: 2.554542, coord_loss: 0.060527, object_loss: 1.874829, nobject_loss: 0.000000, image_nums: 7680, speed: 68.66 images/s
+{TRAIN} iter[60], iou: 0.457395, object: 0.000046, anyobject: 0.000009, recall: 0.479167
+{TRAIN} iter[61], train_loss: 2.922793, coord_loss: 0.077130, object_loss: 2.226482, nobject_loss: 0.000000, image_nums: 7808, speed: 65.15 images/s
+{TRAIN} iter[61], iou: 0.320177, object: 0.000018, anyobject: 0.000007, recall: 0.298246
+{TRAIN} iter[62], train_loss: 2.758381, coord_loss: 0.068981, object_loss: 2.070225, nobject_loss: 0.000000, image_nums: 7936, speed: 61.20 images/s
+{TRAIN} iter[62], iou: 0.350940, object: 0.000021, anyobject: 0.000008, recall: 0.339623
+{TRAIN} iter[63], train_loss: 2.672733, coord_loss: 0.061495, object_loss: 1.992067, nobject_loss: 0.000000, image_nums: 8064, speed: 58.15 images/s
+{TRAIN} iter[63], iou: 0.419444, object: 0.000030, anyobject: 0.000007, recall: 0.470588
+{TRAIN} iter[64], train_loss: 2.740056, coord_loss: 0.089760, object_loss: 2.031130, nobject_loss: 0.000000, image_nums: 8192, speed: 61.82 images/s
+{TRAIN} iter[64], iou: 0.386303, object: 0.000029, anyobject: 0.000008, recall: 0.346154
+{TRAIN} iter[65], train_loss: 2.441925, coord_loss: 0.065000, object_loss: 1.757765, nobject_loss: 0.000000, image_nums: 8320, speed: 62.73 images/s
+{TRAIN} iter[65], iou: 0.335278, object: 0.000014, anyobject: 0.000008, recall: 0.400000
+{TRAIN} iter[66], train_loss: 2.869781, coord_loss: 0.063227, object_loss: 2.187400, nobject_loss: 0.000000, image_nums: 8448, speed: 58.13 images/s
+{TRAIN} iter[66], iou: 0.424576, object: 0.000023, anyobject: 0.000008, recall: 0.446429
+{TRAIN} iter[67], train_loss: 2.811132, coord_loss: 0.082722, object_loss: 2.109261, nobject_loss: 0.000000, image_nums: 8576, speed: 62.72 images/s
+{TRAIN} iter[67], iou: 0.311791, object: 0.000027, anyobject: 0.000007, recall: 0.277778
+{TRAIN} iter[68], train_loss: 3.238879, coord_loss: 0.119821, object_loss: 2.499915, nobject_loss: 0.000000, image_nums: 8704, speed: 58.52 images/s
+{TRAIN} iter[68], iou: 0.329485, object: 0.000017, anyobject: 0.000007, recall: 0.312500
+{TRAIN} iter[69], train_loss: 3.075808, coord_loss: 0.113036, object_loss: 2.343634, nobject_loss: 0.000000, image_nums: 8832, speed: 57.28 images/s
+{TRAIN} iter[69], iou: 0.397866, object: 0.000025, anyobject: 0.000008, recall: 0.366667
+{TRAIN} iter[70], train_loss: 2.803737, coord_loss: 0.075350, object_loss: 2.109255, nobject_loss: 0.000000, image_nums: 8960, speed: 59.59 images/s
+{TRAIN} iter[70], iou: 0.394583, object: 0.000028, anyobject: 0.000007, recall: 0.425926
+{TRAIN} iter[71], train_loss: 2.543717, coord_loss: 0.049674, object_loss: 1.874917, nobject_loss: 0.000000, image_nums: 9088, speed: 60.11 images/s
+{TRAIN} iter[71], iou: 0.330502, object: 0.000022, anyobject: 0.000008, recall: 0.354167
+{TRAIN} iter[72], train_loss: 2.719693, coord_loss: 0.069376, object_loss: 2.031195, nobject_loss: 0.000000, image_nums: 9216, speed: 62.44 images/s
+{TRAIN} iter[72], iou: 0.363493, object: 0.000013, anyobject: 0.000007, recall: 0.384615
+{TRAIN} iter[73], train_loss: 3.006376, coord_loss: 0.082700, object_loss: 2.304561, nobject_loss: 0.000000, image_nums: 9344, speed: 61.58 images/s
+{TRAIN} iter[73], iou: 0.346032, object: 0.000027, anyobject: 0.000008, recall: 0.355932
+{TRAIN} iter[74], train_loss: 2.765713, coord_loss: 0.076392, object_loss: 2.070212, nobject_loss: 0.000000, image_nums: 9472, speed: 58.10 images/s
+{TRAIN} iter[74], iou: 0.397949, object: 0.000024, anyobject: 0.000007, recall: 0.339623
+{TRAIN} iter[75], train_loss: 3.304452, coord_loss: 0.107322, object_loss: 2.578027, nobject_loss: 0.000000, image_nums: 9600, speed: 57.74 images/s
+{TRAIN} iter[75], iou: 0.384959, object: 0.000019, anyobject: 0.000007, recall: 0.424242
+{TRAIN} iter[76], train_loss: 3.047354, coord_loss: 0.084591, object_loss: 2.343666, nobject_loss: 0.000000, image_nums: 9728, speed: 57.11 images/s
+{TRAIN} iter[76], iou: 0.278081, object: 0.000018, anyobject: 0.000008, recall: 0.250000
+{TRAIN} iter[77], train_loss: 2.539987, coord_loss: 0.085040, object_loss: 1.835855, nobject_loss: 0.000000, image_nums: 9856, speed: 62.23 images/s
+{TRAIN} iter[77], iou: 0.386459, object: 0.000023, anyobject: 0.000008, recall: 0.425532
+{TRAIN} iter[78], train_loss: 2.660643, coord_loss: 0.088513, object_loss: 1.953045, nobject_loss: 0.000000, image_nums: 9984, speed: 69.72 images/s
+{TRAIN} iter[78], iou: 0.334878, object: 0.000021, anyobject: 0.000007, recall: 0.360000
+{TRAIN} iter[79], train_loss: 3.363093, coord_loss: 0.087894, object_loss: 2.656119, nobject_loss: 0.000000, image_nums: 10112, speed: 62.09 images/s
+{TRAIN} iter[79], iou: 0.386532, object: 0.000025, anyobject: 0.000008, recall: 0.382353
+{TRAIN} iter[80], train_loss: 3.255312, coord_loss: 0.097300, object_loss: 2.538939, nobject_loss: 0.000000, image_nums: 10240, speed: 63.69 images/s
+{TRAIN} iter[80], iou: 0.401569, object: 0.000024, anyobject: 0.000007, recall: 0.461538
+{TRAIN} iter[81], train_loss: 2.723667, coord_loss: 0.073431, object_loss: 2.031168, nobject_loss: 0.000000, image_nums: 10368, speed: 65.31 images/s
+{TRAIN} iter[81], iou: 0.373498, object: 0.000020, anyobject: 0.000007, recall: 0.384615
+{TRAIN} iter[82], train_loss: 2.582440, coord_loss: 0.088448, object_loss: 1.874930, nobject_loss: 0.000000, image_nums: 10496, speed: 62.71 images/s
+{TRAIN} iter[82], iou: 0.337553, object: 0.000019, anyobject: 0.000007, recall: 0.333333
+{TRAIN} iter[83], train_loss: 2.767765, coord_loss: 0.078496, object_loss: 2.070214, nobject_loss: 0.000000, image_nums: 10624, speed: 58.25 images/s
+{TRAIN} iter[83], iou: 0.305956, object: 0.000024, anyobject: 0.000007, recall: 0.283019
+{TRAIN} iter[84], train_loss: 2.837722, coord_loss: 0.070317, object_loss: 2.148355, nobject_loss: 0.000000, image_nums: 10752, speed: 60.14 images/s
+{TRAIN} iter[84], iou: 0.383137, object: 0.000019, anyobject: 0.000007, recall: 0.400000
+{TRAIN} iter[85], train_loss: 3.047977, coord_loss: 0.085299, object_loss: 2.343634, nobject_loss: 0.000000, image_nums: 10880, speed: 64.59 images/s
+{TRAIN} iter[85], iou: 0.428494, object: 0.000025, anyobject: 0.000007, recall: 0.483333
+{TRAIN} iter[86], train_loss: 2.671589, coord_loss: 0.060476, object_loss: 1.992074, nobject_loss: 0.000000, image_nums: 11008, speed: 60.57 images/s
+{TRAIN} iter[86], iou: 0.465285, object: 0.000028, anyobject: 0.000007, recall: 0.549020
+{TRAIN} iter[87], train_loss: 2.815812, coord_loss: 0.087497, object_loss: 2.109282, nobject_loss: 0.000000, image_nums: 11136, speed: 61.31 images/s
+{TRAIN} iter[87], iou: 0.361271, object: 0.000022, anyobject: 0.000007, recall: 0.277778
+{TRAIN} iter[88], train_loss: 2.434177, coord_loss: 0.057417, object_loss: 1.757733, nobject_loss: 0.000000, image_nums: 11264, speed: 60.34 images/s
+{TRAIN} iter[88], iou: 0.442851, object: 0.000023, anyobject: 0.000007, recall: 0.466667
+{TRAIN} iter[89], train_loss: 3.173218, coord_loss: 0.093353, object_loss: 2.460843, nobject_loss: 0.000000, image_nums: 11392, speed: 57.77 images/s
+{TRAIN} iter[89], iou: 0.410730, object: 0.000019, anyobject: 0.000007, recall: 0.365079
+{TRAIN} iter[90], train_loss: 2.792792, coord_loss: 0.064507, object_loss: 2.109270, nobject_loss: 0.000000, image_nums: 11520, speed: 58.94 images/s
+{TRAIN} iter[90], iou: 0.407573, object: 0.000025, anyobject: 0.000008, recall: 0.481481
+{TRAIN} iter[91], train_loss: 3.247200, coord_loss: 0.089252, object_loss: 2.538940, nobject_loss: 0.000000, image_nums: 11648, speed: 63.62 images/s
+{TRAIN} iter[91], iou: 0.337707, object: 0.000024, anyobject: 0.000007, recall: 0.338462
+{TRAIN} iter[92], train_loss: 2.813025, coord_loss: 0.084746, object_loss: 2.109275, nobject_loss: 0.000000, image_nums: 11776, speed: 59.07 images/s
+{TRAIN} iter[92], iou: 0.383183, object: 0.000024, anyobject: 0.000007, recall: 0.370370
+{TRAIN} iter[93], train_loss: 2.774690, coord_loss: 0.085502, object_loss: 2.070190, nobject_loss: 0.000000, image_nums: 11904, speed: 61.04 images/s
+{TRAIN} iter[93], iou: 0.411702, object: 0.000030, anyobject: 0.000007, recall: 0.471698
+{TRAIN} iter[94], train_loss: 3.077535, coord_loss: 0.075863, object_loss: 2.382682, nobject_loss: 0.000000, image_nums: 12032, speed: 57.81 images/s
+{TRAIN} iter[94], iou: 0.395510, object: 0.000027, anyobject: 0.000007, recall: 0.426230
+{TRAIN} iter[95], train_loss: 2.481636, coord_loss: 0.065869, object_loss: 1.796782, nobject_loss: 0.000000, image_nums: 12160, speed: 58.75 images/s
+{TRAIN} iter[95], iou: 0.364498, object: 0.000026, anyobject: 0.000008, recall: 0.456522
+{TRAIN} iter[96], train_loss: 2.687281, coord_loss: 0.076172, object_loss: 1.992130, nobject_loss: 0.000000, image_nums: 12288, speed: 57.27 images/s
+{TRAIN} iter[96], iou: 0.263381, object: 0.000014, anyobject: 0.000007, recall: 0.235294
+{TRAIN} iter[97], train_loss: 3.141700, coord_loss: 0.061899, object_loss: 2.460828, nobject_loss: 0.000000, image_nums: 12416, speed: 58.10 images/s
+{TRAIN} iter[97], iou: 0.418927, object: 0.000022, anyobject: 0.000007, recall: 0.428571
+{TRAIN} iter[98], train_loss: 2.906997, coord_loss: 0.061574, object_loss: 2.226456, nobject_loss: 0.000000, image_nums: 12544, speed: 57.66 images/s
+{TRAIN} iter[98], iou: 0.410213, object: 0.000024, anyobject: 0.000007, recall: 0.473684
+{TRAIN} iter[99], train_loss: 3.085257, coord_loss: 0.083575, object_loss: 2.382721, nobject_loss: 0.000000, image_nums: 12672, speed: 58.94 images/s
+{TRAIN} iter[99], iou: 0.349140, object: 0.000019, anyobject: 0.000007, recall: 0.377049
+{TRAIN} iter[100], train_loss: 2.924416, coord_loss: 0.079017, object_loss: 2.226444, nobject_loss: 0.000000, image_nums: 12800, speed: 58.57 images/s
+{TRAIN} iter[100], iou: 0.433439, object: 0.000027, anyobject: 0.000007, recall: 0.421053
+{TRAIN} iter[101], train_loss: 3.207380, coord_loss: 0.088512, object_loss: 2.499920, nobject_loss: 0.000000, image_nums: 12928, speed: 58.44 images/s
+{TRAIN} iter[101], iou: 0.330278, object: 0.000016, anyobject: 0.000007, recall: 0.296875
+{TRAIN} iter[102], train_loss: 2.691352, coord_loss: 0.080282, object_loss: 1.992127, nobject_loss: 0.000000, image_nums: 13056, speed: 69.30 images/s
+{TRAIN} iter[102], iou: 0.305114, object: 0.000015, anyobject: 0.000007, recall: 0.313726
+{TRAIN} iter[103], train_loss: 3.097541, coord_loss: 0.095904, object_loss: 2.382700, nobject_loss: 0.000000, image_nums: 13184, speed: 69.36 images/s
+{TRAIN} iter[103], iou: 0.420004, object: 0.000024, anyobject: 0.000008, recall: 0.475410
+{TRAIN} iter[104], train_loss: 2.626983, coord_loss: 0.055028, object_loss: 1.953024, nobject_loss: 0.000000, image_nums: 13312, speed: 65.03 images/s
+{TRAIN} iter[104], iou: 0.436853, object: 0.000026, anyobject: 0.000008, recall: 0.460000
+{TRAIN} iter[105], train_loss: 3.135367, coord_loss: 0.094696, object_loss: 2.421746, nobject_loss: 0.000000, image_nums: 13440, speed: 69.79 images/s
+{TRAIN} iter[105], iou: 0.343958, object: 0.000027, anyobject: 0.000008, recall: 0.290323
+{TRAIN} iter[106], train_loss: 3.201000, coord_loss: 0.082254, object_loss: 2.499828, nobject_loss: 0.000000, image_nums: 13568, speed: 63.47 images/s
+{TRAIN} iter[106], iou: 0.306228, object: 0.000035, anyobject: 0.000008, recall: 0.312500
+{TRAIN} iter[107], train_loss: 3.011858, coord_loss: 0.088391, object_loss: 2.304555, nobject_loss: 0.000000, image_nums: 13696, speed: 64.85 images/s
+{TRAIN} iter[107], iou: 0.367226, object: 0.000029, anyobject: 0.000008, recall: 0.355932
+{TRAIN} iter[108], train_loss: 2.676122, coord_loss: 0.065120, object_loss: 1.992095, nobject_loss: 0.000000, image_nums: 13824, speed: 63.22 images/s
+{TRAIN} iter[108], iou: 0.367451, object: 0.000023, anyobject: 0.000008, recall: 0.372549
+{TRAIN} iter[109], train_loss: 2.406831, coord_loss: 0.069273, object_loss: 1.718656, nobject_loss: 0.000000, image_nums: 13952, speed: 72.17 images/s
+{TRAIN} iter[109], iou: 0.354656, object: 0.000027, anyobject: 0.000008, recall: 0.386364
+{TRAIN} iter[110], train_loss: 2.869567, coord_loss: 0.063313, object_loss: 2.187360, nobject_loss: 0.000000, image_nums: 14080, speed: 66.25 images/s
+{TRAIN} iter[110], iou: 0.382866, object: 0.000032, anyobject: 0.000009, recall: 0.446429
+{TRAIN} iter[111], train_loss: 2.909445, coord_loss: 0.064091, object_loss: 2.226466, nobject_loss: 0.000000, image_nums: 14208, speed: 65.25 images/s
+{TRAIN} iter[111], iou: 0.450342, object: 0.000022, anyobject: 0.000008, recall: 0.561404
+{TRAIN} iter[112], train_loss: 2.592222, coord_loss: 0.059387, object_loss: 1.913953, nobject_loss: 0.000000, image_nums: 14336, speed: 68.46 images/s
+{TRAIN} iter[112], iou: 0.418991, object: 0.000029, anyobject: 0.000008, recall: 0.448980
+{TRAIN} iter[113], train_loss: 3.018566, coord_loss: 0.095148, object_loss: 2.304541, nobject_loss: 0.000000, image_nums: 14464, speed: 63.75 images/s
+{TRAIN} iter[113], iou: 0.407954, object: 0.000032, anyobject: 0.000009, recall: 0.457627
+{TRAIN} iter[114], train_loss: 2.584580, coord_loss: 0.051748, object_loss: 1.913962, nobject_loss: 0.000000, image_nums: 14592, speed: 66.21 images/s
+{TRAIN} iter[114], iou: 0.421386, object: 0.000026, anyobject: 0.000009, recall: 0.428571
+{TRAIN} iter[115], train_loss: 2.577506, coord_loss: 0.044673, object_loss: 1.913968, nobject_loss: 0.000000, image_nums: 14720, speed: 63.89 images/s
+{TRAIN} iter[115], iou: 0.432567, object: 0.000025, anyobject: 0.000008, recall: 0.448980
+{TRAIN} iter[116], train_loss: 2.843398, coord_loss: 0.076247, object_loss: 2.148293, nobject_loss: 0.000000, image_nums: 14848, speed: 64.84 images/s
+{TRAIN} iter[116], iou: 0.410224, object: 0.000034, anyobject: 0.000008, recall: 0.472727
+{TRAIN} iter[117], train_loss: 2.842200, coord_loss: 0.074999, object_loss: 2.148348, nobject_loss: 0.000000, image_nums: 14976, speed: 64.28 images/s
+{TRAIN} iter[117], iou: 0.407648, object: 0.000021, anyobject: 0.000008, recall: 0.418182
+{TRAIN} iter[118], train_loss: 3.039767, coord_loss: 0.077278, object_loss: 2.343643, nobject_loss: 0.000000, image_nums: 15104, speed: 70.77 images/s
+{TRAIN} iter[118], iou: 0.374191, object: 0.000023, anyobject: 0.000008, recall: 0.366667
+{TRAIN} iter[119], train_loss: 3.025642, coord_loss: 0.102213, object_loss: 2.304589, nobject_loss: 0.000000, image_nums: 15232, speed: 70.48 images/s
+{TRAIN} iter[119], iou: 0.384526, object: 0.000021, anyobject: 0.000008, recall: 0.355932
+{TRAIN} iter[120], train_loss: 2.662950, coord_loss: 0.052028, object_loss: 1.992087, nobject_loss: 0.000000, image_nums: 15360, speed: 66.91 images/s
+{TRAIN} iter[120], iou: 0.439341, object: 0.000025, anyobject: 0.000008, recall: 0.490196
+{TRAIN} iter[121], train_loss: 2.477941, coord_loss: 0.062328, object_loss: 1.796785, nobject_loss: 0.000000, image_nums: 15488, speed: 62.85 images/s
+{TRAIN} iter[121], iou: 0.359120, object: 0.000025, anyobject: 0.000008, recall: 0.369565
+{TRAIN} iter[122], train_loss: 2.933535, coord_loss: 0.049220, object_loss: 2.265493, nobject_loss: 0.000000, image_nums: 15616, speed: 64.60 images/s
+{TRAIN} iter[122], iou: 0.431542, object: 0.000029, anyobject: 0.000008, recall: 0.534483
+{TRAIN} iter[123], train_loss: 2.757511, coord_loss: 0.068490, object_loss: 2.070205, nobject_loss: 0.000000, image_nums: 15744, speed: 64.32 images/s
+{TRAIN} iter[123], iou: 0.413772, object: 0.000026, anyobject: 0.000008, recall: 0.452830
+{TRAIN} iter[124], train_loss: 3.078847, coord_loss: 0.077394, object_loss: 2.382643, nobject_loss: 0.000000, image_nums: 15872, speed: 65.29 images/s
+{TRAIN} iter[124], iou: 0.404495, object: 0.000035, anyobject: 0.000008, recall: 0.426230
+{TRAIN} iter[125], train_loss: 2.936310, coord_loss: 0.051963, object_loss: 2.265544, nobject_loss: 0.000000, image_nums: 16000, speed: 68.85 images/s
+{TRAIN} iter[125], iou: 0.400265, object: 0.000018, anyobject: 0.000008, recall: 0.431034
+{TRAIN} iter[126], train_loss: 2.754654, coord_loss: 0.065614, object_loss: 2.070242, nobject_loss: 0.000000, image_nums: 16128, speed: 66.32 images/s
+{TRAIN} iter[126], iou: 0.458933, object: 0.000017, anyobject: 0.000008, recall: 0.547170
+{TRAIN} iter[127], train_loss: 2.691999, coord_loss: 0.081083, object_loss: 1.992125, nobject_loss: 0.000000, image_nums: 16256, speed: 68.50 images/s
+{TRAIN} iter[127], iou: 0.370277, object: 0.000016, anyobject: 0.000008, recall: 0.411765
+{TRAIN} iter[128], train_loss: 2.531379, coord_loss: 0.076763, object_loss: 1.835830, nobject_loss: 0.000000, image_nums: 16384, speed: 70.72 images/s
+{TRAIN} iter[128], iou: 0.400876, object: 0.000029, anyobject: 0.000008, recall: 0.404255
+{TRAIN} iter[129], train_loss: 2.752786, coord_loss: 0.063824, object_loss: 2.070182, nobject_loss: 0.000000, image_nums: 16512, speed: 64.53 images/s
+{TRAIN} iter[129], iou: 0.410003, object: 0.000032, anyobject: 0.000008, recall: 0.415094
+{TRAIN} iter[130], train_loss: 2.576123, coord_loss: 0.043415, object_loss: 1.913934, nobject_loss: 0.000000, image_nums: 16640, speed: 70.44 images/s
+{TRAIN} iter[130], iou: 0.482695, object: 0.000034, anyobject: 0.000008, recall: 0.510204
+{TRAIN} iter[131], train_loss: 3.291890, coord_loss: 0.095157, object_loss: 2.577965, nobject_loss: 0.000000, image_nums: 16768, speed: 63.35 images/s
+{TRAIN} iter[131], iou: 0.382670, object: 0.000031, anyobject: 0.000008, recall: 0.348485
+{TRAIN} iter[132], train_loss: 2.997400, coord_loss: 0.074105, object_loss: 2.304533, nobject_loss: 0.000000, image_nums: 16896, speed: 63.04 images/s
+{TRAIN} iter[132], iou: 0.317227, object: 0.000034, anyobject: 0.000008, recall: 0.338983
+{TRAIN} iter[133], train_loss: 2.629391, coord_loss: 0.057612, object_loss: 1.953023, nobject_loss: 0.000000, image_nums: 17024, speed: 70.28 images/s
+{TRAIN} iter[133], iou: 0.431387, object: 0.000026, anyobject: 0.000008, recall: 0.460000
+{TRAIN} iter[134], train_loss: 2.675974, coord_loss: 0.065158, object_loss: 1.992066, nobject_loss: 0.000000, image_nums: 17152, speed: 63.24 images/s
+{TRAIN} iter[134], iou: 0.438473, object: 0.000030, anyobject: 0.000009, recall: 0.411765
+{TRAIN} iter[135], train_loss: 3.147135, coord_loss: 0.067561, object_loss: 2.460830, nobject_loss: 0.000000, image_nums: 17280, speed: 60.73 images/s
+{TRAIN} iter[135], iou: 0.428432, object: 0.000022, anyobject: 0.000008, recall: 0.428571
+{TRAIN} iter[136], train_loss: 2.705912, coord_loss: 0.056022, object_loss: 2.031152, nobject_loss: 0.000000, image_nums: 17408, speed: 65.61 images/s
+{TRAIN} iter[136], iou: 0.456913, object: 0.000024, anyobject: 0.000008, recall: 0.480769
+{TRAIN} iter[137], train_loss: 3.002831, coord_loss: 0.079552, object_loss: 2.304547, nobject_loss: 0.000000, image_nums: 17536, speed: 67.86 images/s
+{TRAIN} iter[137], iou: 0.437055, object: 0.000030, anyobject: 0.000008, recall: 0.457627
+{TRAIN} iter[138], train_loss: 2.765526, coord_loss: 0.076578, object_loss: 2.070222, nobject_loss: 0.000000, image_nums: 17664, speed: 65.46 images/s
+{TRAIN} iter[138], iou: 0.404084, object: 0.000022, anyobject: 0.000008, recall: 0.377358
+{TRAIN} iter[139], train_loss: 2.662904, coord_loss: 0.052090, object_loss: 1.992094, nobject_loss: 0.000000, image_nums: 17792, speed: 66.26 images/s
+{TRAIN} iter[139], iou: 0.432312, object: 0.000024, anyobject: 0.000008, recall: 0.490196
+{TRAIN} iter[140], train_loss: 3.201605, coord_loss: 0.082971, object_loss: 2.499920, nobject_loss: 0.000000, image_nums: 17920, speed: 64.51 images/s
+{TRAIN} iter[140], iou: 0.362061, object: 0.000016, anyobject: 0.000008, recall: 0.406250
+{TRAIN} iter[141], train_loss: 2.603135, coord_loss: 0.070468, object_loss: 1.913960, nobject_loss: 0.000000, image_nums: 18048, speed: 70.29 images/s
+{TRAIN} iter[141], iou: 0.392764, object: 0.000027, anyobject: 0.000008, recall: 0.428571
+{TRAIN} iter[142], train_loss: 2.667421, coord_loss: 0.056601, object_loss: 1.992119, nobject_loss: 0.000000, image_nums: 18176, speed: 68.70 images/s
+{TRAIN} iter[142], iou: 0.368241, object: 0.000017, anyobject: 0.000008, recall: 0.333333
+{TRAIN} iter[143], train_loss: 3.009553, coord_loss: 0.086255, object_loss: 2.304602, nobject_loss: 0.000000, image_nums: 18304, speed: 66.85 images/s
+{TRAIN} iter[143], iou: 0.451721, object: 0.000019, anyobject: 0.000008, recall: 0.457627
+{TRAIN} iter[144], train_loss: 2.779829, coord_loss: 0.051917, object_loss: 2.109223, nobject_loss: 0.000000, image_nums: 18432, speed: 64.92 images/s
+{TRAIN} iter[144], iou: 0.453454, object: 0.000036, anyobject: 0.000009, recall: 0.425926
+{TRAIN} iter[145], train_loss: 2.559323, coord_loss: 0.065716, object_loss: 1.874923, nobject_loss: 0.000000, image_nums: 18560, speed: 62.72 images/s
+{TRAIN} iter[145], iou: 0.416957, object: 0.000020, anyobject: 0.000008, recall: 0.479167
+{TRAIN} iter[146], train_loss: 2.817051, coord_loss: 0.050014, object_loss: 2.148359, nobject_loss: 0.000000, image_nums: 18688, speed: 59.05 images/s
+{TRAIN} iter[146], iou: 0.380493, object: 0.000018, anyobject: 0.000009, recall: 0.436364
+{TRAIN} iter[147], train_loss: 2.505614, coord_loss: 0.051082, object_loss: 1.835861, nobject_loss: 0.000000, image_nums: 18816, speed: 66.06 images/s
+{TRAIN} iter[147], iou: 0.350560, object: 0.000021, anyobject: 0.000008, recall: 0.340426
+{TRAIN} iter[148], train_loss: 2.635887, coord_loss: 0.064182, object_loss: 1.953040, nobject_loss: 0.000000, image_nums: 18944, speed: 59.79 images/s
+{TRAIN} iter[148], iou: 0.372614, object: 0.000022, anyobject: 0.000008, recall: 0.400000
+{TRAIN} iter[149], train_loss: 2.715039, coord_loss: 0.065256, object_loss: 2.031124, nobject_loss: 0.000000, image_nums: 19072, speed: 62.25 images/s
+{TRAIN} iter[149], iou: 0.429683, object: 0.000031, anyobject: 0.000009, recall: 0.403846
+{TRAIN} iter[150], train_loss: 2.788520, coord_loss: 0.060623, object_loss: 2.109243, nobject_loss: 0.000000, image_nums: 19200, speed: 67.02 images/s
+{TRAIN} iter[150], iou: 0.396230, object: 0.000031, anyobject: 0.000008, recall: 0.425926
+{TRAIN} iter[151], train_loss: 2.975103, coord_loss: 0.051954, object_loss: 2.304502, nobject_loss: 0.000000, image_nums: 19328, speed: 63.66 images/s
+{TRAIN} iter[151], iou: 0.470886, object: 0.000040, anyobject: 0.000008, recall: 0.525424
+{TRAIN} iter[152], train_loss: 2.633665, coord_loss: 0.062035, object_loss: 1.952989, nobject_loss: 0.000000, image_nums: 19456, speed: 64.96 images/s
+{TRAIN} iter[152], iou: 0.356823, object: 0.000035, anyobject: 0.000009, recall: 0.440000
+{TRAIN} iter[153], train_loss: 2.805903, coord_loss: 0.038940, object_loss: 2.148329, nobject_loss: 0.000000, image_nums: 19584, speed: 67.50 images/s
+{TRAIN} iter[153], iou: 0.402045, object: 0.000025, anyobject: 0.000009, recall: 0.418182
+{TRAIN} iter[154], train_loss: 2.325065, coord_loss: 0.065859, object_loss: 1.640577, nobject_loss: 0.000000, image_nums: 19712, speed: 72.12 images/s
+{TRAIN} iter[154], iou: 0.380945, object: 0.000015, anyobject: 0.000008, recall: 0.309524
+{TRAIN} iter[155], train_loss: 2.619081, coord_loss: 0.047449, object_loss: 1.953010, nobject_loss: 0.000000, image_nums: 19840, speed: 59.35 images/s
+{TRAIN} iter[155], iou: 0.389492, object: 0.000029, anyobject: 0.000008, recall: 0.380000
+{TRAIN} iter[156], train_loss: 2.430665, coord_loss: 0.054311, object_loss: 1.757737, nobject_loss: 0.000000, image_nums: 19968, speed: 63.40 images/s
+{TRAIN} iter[156], iou: 0.421625, object: 0.000022, anyobject: 0.000008, recall: 0.488889
+{TRAIN} iter[157], train_loss: 2.732454, coord_loss: 0.082717, object_loss: 2.031126, nobject_loss: 0.000000, image_nums: 20096, speed: 64.07 images/s
+{TRAIN} iter[157], iou: 0.432913, object: 0.000030, anyobject: 0.000008, recall: 0.442308
+{TRAIN} iter[158], train_loss: 3.560541, coord_loss: 0.090605, object_loss: 2.851332, nobject_loss: 0.000000, image_nums: 20224, speed: 63.95 images/s
+{TRAIN} iter[158], iou: 0.407079, object: 0.000040, anyobject: 0.000009, recall: 0.424658
+{TRAIN} iter[159], train_loss: 2.894492, coord_loss: 0.049445, object_loss: 2.226449, nobject_loss: 0.000000, image_nums: 20352, speed: 62.88 images/s
+{TRAIN} iter[159], iou: 0.408719, object: 0.000026, anyobject: 0.000009, recall: 0.421053
+{TRAIN} iter[160], train_loss: 3.033277, coord_loss: 0.071160, object_loss: 2.343525, nobject_loss: 0.000000, image_nums: 20480, speed: 64.59 images/s
+{TRAIN} iter[160], iou: 0.355129, object: 0.000048, anyobject: 0.000009, recall: 0.333333
+{TRAIN} iter[161], train_loss: 2.689680, coord_loss: 0.078979, object_loss: 1.992115, nobject_loss: 0.000000, image_nums: 20608, speed: 62.46 images/s
+{TRAIN} iter[161], iou: 0.432437, object: 0.000018, anyobject: 0.000008, recall: 0.372549
+{TRAIN} iter[162], train_loss: 2.750613, coord_loss: 0.061861, object_loss: 2.070172, nobject_loss: 0.000000, image_nums: 20736, speed: 61.81 images/s
+{TRAIN} iter[162], iou: 0.434013, object: 0.000034, anyobject: 0.000009, recall: 0.452830
+{TRAIN} iter[163], train_loss: 3.104420, coord_loss: 0.064149, object_loss: 2.421697, nobject_loss: 0.000000, image_nums: 20864, speed: 63.32 images/s
+{TRAIN} iter[163], iou: 0.472521, object: 0.000037, anyobject: 0.000009, recall: 0.532258
+{TRAIN} iter[164], train_loss: 2.682425, coord_loss: 0.071788, object_loss: 1.992069, nobject_loss: 0.000000, image_nums: 20992, speed: 65.83 images/s
+{TRAIN} iter[164], iou: 0.328049, object: 0.000030, anyobject: 0.000008, recall: 0.313726
+{TRAIN} iter[165], train_loss: 2.811255, coord_loss: 0.083409, object_loss: 2.109283, nobject_loss: 0.000000, image_nums: 21120, speed: 61.85 images/s
+{TRAIN} iter[165], iou: 0.377291, object: 0.000022, anyobject: 0.000008, recall: 0.407407
+{TRAIN} iter[166], train_loss: 2.574806, coord_loss: 0.042264, object_loss: 1.913985, nobject_loss: 0.000000, image_nums: 21248, speed: 57.75 images/s
+{TRAIN} iter[166], iou: 0.395907, object: 0.000020, anyobject: 0.000009, recall: 0.448980
+{TRAIN} iter[167], train_loss: 2.535934, coord_loss: 0.042470, object_loss: 1.874913, nobject_loss: 0.000000, image_nums: 21376, speed: 68.66 images/s
+{TRAIN} iter[167], iou: 0.380942, object: 0.000023, anyobject: 0.000008, recall: 0.437500
+{TRAIN} iter[168], train_loss: 2.865665, coord_loss: 0.059750, object_loss: 2.187371, nobject_loss: 0.000000, image_nums: 21504, speed: 62.38 images/s
+{TRAIN} iter[168], iou: 0.423532, object: 0.000029, anyobject: 0.000008, recall: 0.428571
+{TRAIN} iter[169], train_loss: 2.489363, coord_loss: 0.034967, object_loss: 1.835858, nobject_loss: 0.000000, image_nums: 21632, speed: 62.03 images/s
+{TRAIN} iter[169], iou: 0.379341, object: 0.000022, anyobject: 0.000009, recall: 0.446809
+{TRAIN} iter[170], train_loss: 2.825786, coord_loss: 0.058963, object_loss: 2.148291, nobject_loss: 0.000000, image_nums: 21760, speed: 58.41 images/s
+{TRAIN} iter[170], iou: 0.436465, object: 0.000034, anyobject: 0.000008, recall: 0.454545
+{TRAIN} iter[171], train_loss: 2.193434, coord_loss: 0.051541, object_loss: 1.523367, nobject_loss: 0.000000, image_nums: 21888, speed: 64.40 images/s
+{TRAIN} iter[171], iou: 0.348469, object: 0.000023, anyobject: 0.000008, recall: 0.307692
+{TRAIN} iter[172], train_loss: 2.419224, coord_loss: 0.042978, object_loss: 1.757726, nobject_loss: 0.000000, image_nums: 22016, speed: 65.68 images/s
+{TRAIN} iter[172], iou: 0.432139, object: 0.000025, anyobject: 0.000008, recall: 0.511111
+{TRAIN} iter[173], train_loss: 2.927115, coord_loss: 0.082120, object_loss: 2.226482, nobject_loss: 0.000000, image_nums: 22144, speed: 70.05 images/s
+{TRAIN} iter[173], iou: 0.395629, object: 0.000018, anyobject: 0.000008, recall: 0.421053
+{TRAIN} iter[174], train_loss: 3.143108, coord_loss: 0.063761, object_loss: 2.460840, nobject_loss: 0.000000, image_nums: 22272, speed: 64.23 images/s
+{TRAIN} iter[174], iou: 0.415394, object: 0.000020, anyobject: 0.000008, recall: 0.460317
+{TRAIN} iter[175], train_loss: 2.831752, coord_loss: 0.064921, object_loss: 2.148329, nobject_loss: 0.000000, image_nums: 22400, speed: 63.87 images/s
+{TRAIN} iter[175], iou: 0.421958, object: 0.000025, anyobject: 0.000008, recall: 0.436364
+{TRAIN} iter[176], train_loss: 3.344436, coord_loss: 0.069829, object_loss: 2.656112, nobject_loss: 0.000000, image_nums: 22528, speed: 59.60 images/s
+{TRAIN} iter[176], iou: 0.447630, object: 0.000026, anyobject: 0.000009, recall: 0.514706
+{TRAIN} iter[177], train_loss: 2.913023, coord_loss: 0.068055, object_loss: 2.226478, nobject_loss: 0.000000, image_nums: 22656, speed: 64.72 images/s
+{TRAIN} iter[177], iou: 0.409216, object: 0.000019, anyobject: 0.000008, recall: 0.508772
+{TRAIN} iter[178], train_loss: 2.584488, coord_loss: 0.052060, object_loss: 1.913945, nobject_loss: 0.000000, image_nums: 22784, speed: 62.21 images/s
+{TRAIN} iter[178], iou: 0.370314, object: 0.000031, anyobject: 0.000008, recall: 0.346939
+{TRAIN} iter[179], train_loss: 3.081328, coord_loss: 0.080114, object_loss: 2.382737, nobject_loss: 0.000000, image_nums: 22912, speed: 61.46 images/s
+{TRAIN} iter[179], iou: 0.380484, object: 0.000016, anyobject: 0.000008, recall: 0.442623
+{TRAIN} iter[180], train_loss: 3.224059, coord_loss: 0.066608, object_loss: 2.538980, nobject_loss: 0.000000, image_nums: 23040, speed: 64.26 images/s
+{TRAIN} iter[180], iou: 0.413955, object: 0.000016, anyobject: 0.000009, recall: 0.400000
+{TRAIN} iter[181], train_loss: 2.852697, coord_loss: 0.046883, object_loss: 2.187349, nobject_loss: 0.000000, image_nums: 23168, speed: 58.56 images/s
+{TRAIN} iter[181], iou: 0.486806, object: 0.000035, anyobject: 0.000009, recall: 0.625000
+{TRAIN} iter[182], train_loss: 2.994224, coord_loss: 0.071158, object_loss: 2.304606, nobject_loss: 0.000000, image_nums: 23296, speed: 56.54 images/s
+{TRAIN} iter[182], iou: 0.419665, object: 0.000017, anyobject: 0.000008, recall: 0.491525
+{TRAIN} iter[183], train_loss: 2.744983, coord_loss: 0.056385, object_loss: 2.070144, nobject_loss: 0.000000, image_nums: 23424, speed: 59.33 images/s
+{TRAIN} iter[183], iou: 0.433596, object: 0.000041, anyobject: 0.000009, recall: 0.528302
+{TRAIN} iter[184], train_loss: 2.505159, coord_loss: 0.050883, object_loss: 1.835829, nobject_loss: 0.000000, image_nums: 23552, speed: 56.11 images/s
+{TRAIN} iter[184], iou: 0.437329, object: 0.000030, anyobject: 0.000009, recall: 0.446809
+{TRAIN} iter[185], train_loss: 2.696878, coord_loss: 0.047249, object_loss: 2.031187, nobject_loss: 0.000000, image_nums: 23680, speed: 67.52 images/s
+{TRAIN} iter[185], iou: 0.368593, object: 0.000015, anyobject: 0.000008, recall: 0.346154
+{TRAIN} iter[186], train_loss: 3.406083, coord_loss: 0.092500, object_loss: 2.695148, nobject_loss: 0.000000, image_nums: 23808, speed: 59.49 images/s
+{TRAIN} iter[186], iou: 0.407276, object: 0.000031, anyobject: 0.000008, recall: 0.449275
+{TRAIN} iter[187], train_loss: 2.951240, coord_loss: 0.067350, object_loss: 2.265460, nobject_loss: 0.000000, image_nums: 23936, speed: 57.72 images/s
+{TRAIN} iter[187], iou: 0.396360, object: 0.000036, anyobject: 0.000009, recall: 0.327586
+{TRAIN} iter[188], train_loss: 2.608916, coord_loss: 0.076503, object_loss: 1.913989, nobject_loss: 0.000000, image_nums: 24064, speed: 57.45 images/s
+{TRAIN} iter[188], iou: 0.359213, object: 0.000019, anyobject: 0.000009, recall: 0.387755
+{TRAIN} iter[189], train_loss: 2.541060, coord_loss: 0.047715, object_loss: 1.874928, nobject_loss: 0.000000, image_nums: 24192, speed: 62.07 images/s
+{TRAIN} iter[189], iou: 0.409766, object: 0.000019, anyobject: 0.000008, recall: 0.479167
+{TRAIN} iter[190], train_loss: 2.702726, coord_loss: 0.053195, object_loss: 2.031120, nobject_loss: 0.000000, image_nums: 24320, speed: 58.69 images/s
+{TRAIN} iter[190], iou: 0.418470, object: 0.000032, anyobject: 0.000008, recall: 0.403846
+{TRAIN} iter[191], train_loss: 2.725593, coord_loss: 0.076041, object_loss: 2.031148, nobject_loss: 0.000000, image_nums: 24448, speed: 62.39 images/s
+{TRAIN} iter[191], iou: 0.373095, object: 0.000025, anyobject: 0.000009, recall: 0.423077
+{TRAIN} iter[192], train_loss: 2.500507, coord_loss: 0.046266, object_loss: 1.835843, nobject_loss: 0.000000, image_nums: 24576, speed: 64.39 images/s
+{TRAIN} iter[192], iou: 0.391898, object: 0.000026, anyobject: 0.000008, recall: 0.468085
+{TRAIN} iter[193], train_loss: 3.024448, coord_loss: 0.062456, object_loss: 2.343600, nobject_loss: 0.000000, image_nums: 24704, speed: 62.13 images/s
+{TRAIN} iter[193], iou: 0.430646, object: 0.000032, anyobject: 0.000008, recall: 0.466667
+{TRAIN} iter[194], train_loss: 2.574646, coord_loss: 0.042298, object_loss: 1.913961, nobject_loss: 0.000000, image_nums: 24832, speed: 64.00 images/s
+{TRAIN} iter[194], iou: 0.418165, object: 0.000026, anyobject: 0.000009, recall: 0.530612
+{TRAIN} iter[195], train_loss: 3.037626, coord_loss: 0.075624, object_loss: 2.343621, nobject_loss: 0.000000, image_nums: 24960, speed: 57.97 images/s
+{TRAIN} iter[195], iou: 0.408618, object: 0.000028, anyobject: 0.000008, recall: 0.400000
+{TRAIN} iter[196], train_loss: 2.988754, coord_loss: 0.065827, object_loss: 2.304552, nobject_loss: 0.000000, image_nums: 25088, speed: 58.03 images/s
+{TRAIN} iter[196], iou: 0.406995, object: 0.000030, anyobject: 0.000009, recall: 0.406780
+{TRAIN} iter[197], train_loss: 2.792573, coord_loss: 0.064950, object_loss: 2.109255, nobject_loss: 0.000000, image_nums: 25216, speed: 60.20 images/s
+{TRAIN} iter[197], iou: 0.387488, object: 0.000028, anyobject: 0.000009, recall: 0.425926
+{TRAIN} iter[198], train_loss: 2.781259, coord_loss: 0.053648, object_loss: 2.109249, nobject_loss: 0.000000, image_nums: 25344, speed: 62.33 images/s
+{TRAIN} iter[198], iou: 0.446409, object: 0.000030, anyobject: 0.000009, recall: 0.444444
+{TRAIN} iter[199], train_loss: 3.059858, coord_loss: 0.058812, object_loss: 2.382689, nobject_loss: 0.000000, image_nums: 25472, speed: 57.21 images/s
+{TRAIN} iter[199], iou: 0.416995, object: 0.000026, anyobject: 0.000008, recall: 0.442623
+{TRAIN} iter[200], train_loss: 3.204535, coord_loss: 0.086324, object_loss: 2.499861, nobject_loss: 0.000000, image_nums: 25600, speed: 56.91 images/s
+{TRAIN} iter[200], iou: 0.410439, object: 0.000028, anyobject: 0.000009, recall: 0.406250
+{TRAIN} iter[201], train_loss: 2.343467, coord_loss: 0.045577, object_loss: 1.679547, nobject_loss: 0.000000, image_nums: 25728, speed: 59.19 images/s
+{TRAIN} iter[201], iou: 0.443629, object: 0.000042, anyobject: 0.000008, recall: 0.488372
+{TRAIN} iter[202], train_loss: 2.452296, coord_loss: 0.037168, object_loss: 1.796791, nobject_loss: 0.000000, image_nums: 25856, speed: 64.00 images/s
+{TRAIN} iter[202], iou: 0.371191, object: 0.000023, anyobject: 0.000009, recall: 0.391304
+{TRAIN} iter[203], train_loss: 2.657554, coord_loss: 0.047135, object_loss: 1.992088, nobject_loss: 0.000000, image_nums: 25984, speed: 64.11 images/s
+{TRAIN} iter[203], iou: 0.421383, object: 0.000025, anyobject: 0.000009, recall: 0.490196
+{TRAIN} iter[204], train_loss: 2.945324, coord_loss: 0.061537, object_loss: 2.265462, nobject_loss: 0.000000, image_nums: 26112, speed: 70.76 images/s
+{TRAIN} iter[204], iou: 0.398889, object: 0.000036, anyobject: 0.000009, recall: 0.465517
+{TRAIN} iter[205], train_loss: 2.989933, coord_loss: 0.067092, object_loss: 2.304522, nobject_loss: 0.000000, image_nums: 26240, speed: 67.10 images/s
+{TRAIN} iter[205], iou: 0.359477, object: 0.000036, anyobject: 0.000010, recall: 0.338983
+{TRAIN} iter[206], train_loss: 3.018292, coord_loss: 0.056380, object_loss: 2.343598, nobject_loss: 0.000000, image_nums: 26368, speed: 69.53 images/s
+{TRAIN} iter[206], iou: 0.405609, object: 0.000033, anyobject: 0.000010, recall: 0.466667
+{TRAIN} iter[207], train_loss: 2.653651, coord_loss: 0.043262, object_loss: 1.992082, nobject_loss: 0.000000, image_nums: 26496, speed: 58.18 images/s
+{TRAIN} iter[207], iou: 0.411223, object: 0.000026, anyobject: 0.000008, recall: 0.470588
+{TRAIN} iter[208], train_loss: 2.855389, coord_loss: 0.049723, object_loss: 2.187365, nobject_loss: 0.000000, image_nums: 26624, speed: 63.53 images/s
+{TRAIN} iter[208], iou: 0.462640, object: 0.000031, anyobject: 0.000009, recall: 0.500000
+{TRAIN} iter[209], train_loss: 2.733588, coord_loss: 0.045208, object_loss: 2.070085, nobject_loss: 0.000000, image_nums: 26752, speed: 57.87 images/s
+{TRAIN} iter[209], iou: 0.395335, object: 0.000055, anyobject: 0.000009, recall: 0.377358
+{TRAIN} iter[210], train_loss: 2.899396, coord_loss: 0.054684, object_loss: 2.226423, nobject_loss: 0.000000, image_nums: 26880, speed: 59.40 images/s
+{TRAIN} iter[210], iou: 0.366461, object: 0.000031, anyobject: 0.000008, recall: 0.368421
+{TRAIN} iter[211], train_loss: 2.864516, coord_loss: 0.058836, object_loss: 2.187397, nobject_loss: 0.000000, image_nums: 27008, speed: 57.65 images/s
+{TRAIN} iter[211], iou: 0.429411, object: 0.000023, anyobject: 0.000009, recall: 0.410714
+{TRAIN} iter[212], train_loss: 2.734568, coord_loss: 0.046120, object_loss: 2.070171, nobject_loss: 0.000000, image_nums: 27136, speed: 58.25 images/s
+{TRAIN} iter[212], iou: 0.387702, object: 0.000034, anyobject: 0.000009, recall: 0.377358
+{TRAIN} iter[213], train_loss: 2.983842, coord_loss: 0.060993, object_loss: 2.304579, nobject_loss: 0.000000, image_nums: 27264, speed: 58.72 images/s
+{TRAIN} iter[213], iou: 0.432357, object: 0.000024, anyobject: 0.000009, recall: 0.474576
+{TRAIN} iter[214], train_loss: 2.769670, coord_loss: 0.081219, object_loss: 2.070186, nobject_loss: 0.000000, image_nums: 27392, speed: 62.43 images/s
+{TRAIN} iter[214], iou: 0.412161, object: 0.000031, anyobject: 0.000009, recall: 0.452830
+{TRAIN} iter[215], train_loss: 2.959679, coord_loss: 0.075951, object_loss: 2.265469, nobject_loss: 0.000000, image_nums: 27520, speed: 58.34 images/s
+{TRAIN} iter[215], iou: 0.401219, object: 0.000034, anyobject: 0.000009, recall: 0.396552
+{TRAIN} iter[216], train_loss: 2.770530, coord_loss: 0.043031, object_loss: 2.109246, nobject_loss: 0.000000, image_nums: 27648, speed: 58.68 images/s
+{TRAIN} iter[216], iou: 0.443353, object: 0.000030, anyobject: 0.000009, recall: 0.462963
+{TRAIN} iter[217], train_loss: 2.578488, coord_loss: 0.046306, object_loss: 1.913936, nobject_loss: 0.000000, image_nums: 27776, speed: 59.87 images/s
+{TRAIN} iter[217], iou: 0.381982, object: 0.000033, anyobject: 0.000009, recall: 0.428571
+{TRAIN} iter[218], train_loss: 2.551131, coord_loss: 0.058000, object_loss: 1.874891, nobject_loss: 0.000000, image_nums: 27904, speed: 62.27 images/s
+{TRAIN} iter[218], iou: 0.322017, object: 0.000029, anyobject: 0.000008, recall: 0.333333
+{TRAIN} iter[219], train_loss: 2.953216, coord_loss: 0.069627, object_loss: 2.265354, nobject_loss: 0.000000, image_nums: 28032, speed: 58.50 images/s
+{TRAIN} iter[219], iou: 0.446783, object: 0.000060, anyobject: 0.000009, recall: 0.534483
+{TRAIN} iter[220], train_loss: 2.653465, coord_loss: 0.043148, object_loss: 1.992088, nobject_loss: 0.000000, image_nums: 28160, speed: 63.13 images/s
+{TRAIN} iter[220], iou: 0.400490, object: 0.000025, anyobject: 0.000009, recall: 0.470588
+{TRAIN} iter[221], train_loss: 2.652098, coord_loss: 0.041794, object_loss: 1.992084, nobject_loss: 0.000000, image_nums: 28288, speed: 72.25 images/s
+{TRAIN} iter[221], iou: 0.445937, object: 0.000026, anyobject: 0.000009, recall: 0.549020
+{TRAIN} iter[222], train_loss: 2.815107, coord_loss: 0.048563, object_loss: 2.148329, nobject_loss: 0.000000, image_nums: 28416, speed: 59.78 images/s
+{TRAIN} iter[222], iou: 0.408873, object: 0.000025, anyobject: 0.000009, recall: 0.363636
+{TRAIN} iter[223], train_loss: 2.892340, coord_loss: 0.047721, object_loss: 2.226410, nobject_loss: 0.000000, image_nums: 28544, speed: 63.61 images/s
+{TRAIN} iter[223], iou: 0.420584, object: 0.000034, anyobject: 0.000010, recall: 0.456140
+{TRAIN} iter[224], train_loss: 3.181806, coord_loss: 0.063763, object_loss: 2.499839, nobject_loss: 0.000000, image_nums: 28672, speed: 58.34 images/s
+{TRAIN} iter[224], iou: 0.449733, object: 0.000032, anyobject: 0.000009, recall: 0.500000
+{TRAIN} iter[225], train_loss: 3.082859, coord_loss: 0.081989, object_loss: 2.382672, nobject_loss: 0.000000, image_nums: 28800, speed: 66.94 images/s
+{TRAIN} iter[225], iou: 0.375910, object: 0.000030, anyobject: 0.000009, recall: 0.409836
+{TRAIN} iter[226], train_loss: 2.707421, coord_loss: 0.058098, object_loss: 2.031131, nobject_loss: 0.000000, image_nums: 28928, speed: 59.17 images/s
+{TRAIN} iter[226], iou: 0.372982, object: 0.000029, anyobject: 0.000009, recall: 0.442308
+{TRAIN} iter[227], train_loss: 2.961773, coord_loss: 0.039124, object_loss: 2.304464, nobject_loss: 0.000000, image_nums: 29056, speed: 71.97 images/s
+{TRAIN} iter[227], iou: 0.441623, object: 0.000049, anyobject: 0.000009, recall: 0.508475
+{TRAIN} iter[228], train_loss: 2.979748, coord_loss: 0.057027, object_loss: 2.304542, nobject_loss: 0.000000, image_nums: 29184, speed: 71.51 images/s
+{TRAIN} iter[228], iou: 0.392074, object: 0.000032, anyobject: 0.000009, recall: 0.406780
+{TRAIN} iter[229], train_loss: 2.904324, coord_loss: 0.059755, object_loss: 2.226395, nobject_loss: 0.000000, image_nums: 29312, speed: 70.90 images/s
+{TRAIN} iter[229], iou: 0.421542, object: 0.000038, anyobject: 0.000009, recall: 0.456140
+{TRAIN} iter[230], train_loss: 2.967714, coord_loss: 0.045059, object_loss: 2.304488, nobject_loss: 0.000000, image_nums: 29440, speed: 68.27 images/s
+{TRAIN} iter[230], iou: 0.454773, object: 0.000043, anyobject: 0.000009, recall: 0.559322
+{TRAIN} iter[231], train_loss: 2.735374, coord_loss: 0.046988, object_loss: 2.070225, nobject_loss: 0.000000, image_nums: 29568, speed: 59.48 images/s
+{TRAIN} iter[231], iou: 0.440213, object: 0.000021, anyobject: 0.000008, recall: 0.433962
+{TRAIN} iter[232], train_loss: 2.523460, coord_loss: 0.069568, object_loss: 1.835737, nobject_loss: 0.000000, image_nums: 29696, speed: 60.58 images/s
+{TRAIN} iter[232], iou: 0.429717, object: 0.000055, anyobject: 0.000009, recall: 0.382979
+{TRAIN} iter[233], train_loss: 2.694302, coord_loss: 0.045031, object_loss: 2.031122, nobject_loss: 0.000000, image_nums: 29824, speed: 59.73 images/s
+{TRAIN} iter[233], iou: 0.390737, object: 0.000031, anyobject: 0.000009, recall: 0.423077
+{TRAIN} iter[234], train_loss: 2.478244, coord_loss: 0.063311, object_loss: 1.796790, nobject_loss: 0.000000, image_nums: 29952, speed: 60.96 images/s
+{TRAIN} iter[234], iou: 0.390378, object: 0.000024, anyobject: 0.000009, recall: 0.391304
+{TRAIN} iter[235], train_loss: 2.617551, coord_loss: 0.046405, object_loss: 1.953009, nobject_loss: 0.000000, image_nums: 30080, speed: 62.45 images/s
+{TRAIN} iter[235], iou: 0.486779, object: 0.000030, anyobject: 0.000009, recall: 0.520000
+{TRAIN} iter[236], train_loss: 2.833688, coord_loss: 0.067253, object_loss: 2.148305, nobject_loss: 0.000000, image_nums: 30208, speed: 62.56 images/s
+{TRAIN} iter[236], iou: 0.430489, object: 0.000031, anyobject: 0.000009, recall: 0.490909
+{TRAIN} iter[237], train_loss: 3.029467, coord_loss: 0.067713, object_loss: 2.343630, nobject_loss: 0.000000, image_nums: 30336, speed: 63.07 images/s
+{TRAIN} iter[237], iou: 0.426977, object: 0.000026, anyobject: 0.000009, recall: 0.450000
+{TRAIN} iter[238], train_loss: 2.476405, coord_loss: 0.061557, object_loss: 1.796730, nobject_loss: 0.000000, image_nums: 30464, speed: 59.26 images/s
+{TRAIN} iter[238], iou: 0.379568, object: 0.000041, anyobject: 0.000010, recall: 0.413043
+{TRAIN} iter[239], train_loss: 3.116533, coord_loss: 0.076661, object_loss: 2.421760, nobject_loss: 0.000000, image_nums: 30592, speed: 61.80 images/s
+{TRAIN} iter[239], iou: 0.356741, object: 0.000024, anyobject: 0.000010, recall: 0.387097
+{TRAIN} iter[240], train_loss: 2.613559, coord_loss: 0.042397, object_loss: 1.953056, nobject_loss: 0.000000, image_nums: 30720, speed: 62.32 images/s
+{TRAIN} iter[240], iou: 0.358344, object: 0.000018, anyobject: 0.000009, recall: 0.400000
+{TRAIN} iter[241], train_loss: 3.012310, coord_loss: 0.050591, object_loss: 2.343619, nobject_loss: 0.000000, image_nums: 30848, speed: 55.88 images/s
+{TRAIN} iter[241], iou: 0.451210, object: 0.000028, anyobject: 0.000009, recall: 0.416667
+{TRAIN} iter[242], train_loss: 2.755419, coord_loss: 0.067171, object_loss: 2.070155, nobject_loss: 0.000000, image_nums: 30976, speed: 60.98 images/s
+{TRAIN} iter[242], iou: 0.418283, object: 0.000038, anyobject: 0.000009, recall: 0.452830
+{TRAIN} iter[243], train_loss: 2.918295, coord_loss: 0.073824, object_loss: 2.226384, nobject_loss: 0.000000, image_nums: 31104, speed: 58.53 images/s
+{TRAIN} iter[243], iou: 0.448072, object: 0.000040, anyobject: 0.000009, recall: 0.491228
+{TRAIN} iter[244], train_loss: 2.580391, coord_loss: 0.048402, object_loss: 1.913908, nobject_loss: 0.000000, image_nums: 31232, speed: 65.60 images/s
+{TRAIN} iter[244], iou: 0.468510, object: 0.000041, anyobject: 0.000009, recall: 0.551020
+{TRAIN} iter[245], train_loss: 2.728841, coord_loss: 0.040663, object_loss: 2.070102, nobject_loss: 0.000000, image_nums: 31360, speed: 71.12 images/s
+{TRAIN} iter[245], iou: 0.445595, object: 0.000051, anyobject: 0.000009, recall: 0.471698
+{TRAIN} iter[246], train_loss: 3.096589, coord_loss: 0.056863, object_loss: 2.421657, nobject_loss: 0.000000, image_nums: 31488, speed: 68.05 images/s
+{TRAIN} iter[246], iou: 0.455922, object: 0.000045, anyobject: 0.000009, recall: 0.516129
+{TRAIN} iter[247], train_loss: 2.859729, coord_loss: 0.054297, object_loss: 2.187369, nobject_loss: 0.000000, image_nums: 31616, speed: 58.75 images/s
+{TRAIN} iter[247], iou: 0.406065, object: 0.000030, anyobject: 0.000009, recall: 0.428571
+{TRAIN} iter[248], train_loss: 2.893131, coord_loss: 0.048670, object_loss: 2.226405, nobject_loss: 0.000000, image_nums: 31744, speed: 58.81 images/s
+{TRAIN} iter[248], iou: 0.448829, object: 0.000035, anyobject: 0.000010, recall: 0.561404
+{TRAIN} iter[249], train_loss: 2.776824, coord_loss: 0.049580, object_loss: 2.109194, nobject_loss: 0.000000, image_nums: 31872, speed: 59.51 images/s
+{TRAIN} iter[249], iou: 0.438831, object: 0.000043, anyobject: 0.000009, recall: 0.462963
+{TRAIN} iter[250], train_loss: 3.017932, coord_loss: 0.056287, object_loss: 2.343600, nobject_loss: 0.000000, image_nums: 32000, speed: 70.10 images/s
+{TRAIN} iter[250], iou: 0.444991, object: 0.000032, anyobject: 0.000010, recall: 0.533333
+{TRAIN} iter[251], train_loss: 3.018022, coord_loss: 0.056473, object_loss: 2.343510, nobject_loss: 0.000000, image_nums: 32128, speed: 67.31 images/s
+{TRAIN} iter[251], iou: 0.469685, object: 0.000051, anyobject: 0.000010, recall: 0.550000
+{TRAIN} iter[252], train_loss: 2.694614, coord_loss: 0.045494, object_loss: 2.031088, nobject_loss: 0.000000, image_nums: 32256, speed: 62.67 images/s
+{TRAIN} iter[252], iou: 0.453808, object: 0.000040, anyobject: 0.000010, recall: 0.538462
+{TRAIN} iter[253], train_loss: 2.182133, coord_loss: 0.040760, object_loss: 1.523347, nobject_loss: 0.000000, image_nums: 32384, speed: 65.86 images/s
+{TRAIN} iter[253], iou: 0.431413, object: 0.000030, anyobject: 0.000009, recall: 0.512821
+{TRAIN} iter[254], train_loss: 3.101862, coord_loss: 0.062141, object_loss: 2.421701, nobject_loss: 0.000000, image_nums: 32512, speed: 57.55 images/s
+{TRAIN} iter[254], iou: 0.478101, object: 0.000036, anyobject: 0.000009, recall: 0.580645
+{TRAIN} iter[255], train_loss: 2.851628, coord_loss: 0.046270, object_loss: 2.187343, nobject_loss: 0.000000, image_nums: 32640, speed: 58.70 images/s
+{TRAIN} iter[255], iou: 0.433338, object: 0.000036, anyobject: 0.000009, recall: 0.517857
+{TRAIN} iter[256], train_loss: 2.552473, coord_loss: 0.059582, object_loss: 1.874883, nobject_loss: 0.000000, image_nums: 32768, speed: 70.73 images/s
+{TRAIN} iter[256], iou: 0.465150, object: 0.000031, anyobject: 0.000010, recall: 0.541667
+{TRAIN} iter[257], train_loss: 2.618808, coord_loss: 0.047849, object_loss: 1.952957, nobject_loss: 0.000000, image_nums: 32896, speed: 70.31 images/s
+{TRAIN} iter[257], iou: 0.436167, object: 0.000043, anyobject: 0.000009, recall: 0.500000
+{TRAIN} iter[258], train_loss: 2.866338, coord_loss: 0.060982, object_loss: 2.187359, nobject_loss: 0.000000, image_nums: 33024, speed: 64.18 images/s
+{TRAIN} iter[258], iou: 0.412269, object: 0.000032, anyobject: 0.000010, recall: 0.446429
+{TRAIN} iter[259], train_loss: 3.061716, coord_loss: 0.061030, object_loss: 2.382696, nobject_loss: 0.000000, image_nums: 33152, speed: 58.61 images/s
+{TRAIN} iter[259], iou: 0.436390, object: 0.000024, anyobject: 0.000010, recall: 0.491803
+{TRAIN} iter[260], train_loss: 3.107019, coord_loss: 0.067398, object_loss: 2.421638, nobject_loss: 0.000000, image_nums: 33280, speed: 63.91 images/s
+{TRAIN} iter[260], iou: 0.436334, object: 0.000049, anyobject: 0.000010, recall: 0.483871
+{TRAIN} iter[261], train_loss: 2.925964, coord_loss: 0.042670, object_loss: 2.265316, nobject_loss: 0.000000, image_nums: 33408, speed: 58.54 images/s
+{TRAIN} iter[261], iou: 0.496527, object: 0.000068, anyobject: 0.000010, recall: 0.603448
+{TRAIN} iter[262], train_loss: 2.820513, coord_loss: 0.054404, object_loss: 2.148139, nobject_loss: 0.000000, image_nums: 33536, speed: 70.17 images/s
+{TRAIN} iter[262], iou: 0.450358, object: 0.000070, anyobject: 0.000011, recall: 0.509091
+{TRAIN} iter[263], train_loss: 2.866933, coord_loss: 0.061580, object_loss: 2.187388, nobject_loss: 0.000000, image_nums: 33664, speed: 62.34 images/s
+{TRAIN} iter[263], iou: 0.418792, object: 0.000026, anyobject: 0.000009, recall: 0.482143
+{TRAIN} iter[264], train_loss: 3.212942, coord_loss: 0.056022, object_loss: 2.538961, nobject_loss: 0.000000, image_nums: 33792, speed: 58.11 images/s
+{TRAIN} iter[264], iou: 0.420339, object: 0.000020, anyobject: 0.000010, recall: 0.461538
+{TRAIN} iter[265], train_loss: 2.622820, coord_loss: 0.051970, object_loss: 1.952897, nobject_loss: 0.000000, image_nums: 33920, speed: 64.57 images/s
+{TRAIN} iter[265], iou: 0.428508, object: 0.000058, anyobject: 0.000011, recall: 0.460000
+{TRAIN} iter[266], train_loss: 2.536875, coord_loss: 0.044092, object_loss: 1.874837, nobject_loss: 0.000000, image_nums: 34048, speed: 64.78 images/s
+{TRAIN} iter[266], iou: 0.452346, object: 0.000044, anyobject: 0.000010, recall: 0.541667
+{TRAIN} iter[267], train_loss: 3.014331, coord_loss: 0.052742, object_loss: 2.343648, nobject_loss: 0.000000, image_nums: 34176, speed: 59.44 images/s
+{TRAIN} iter[267], iou: 0.452749, object: 0.000022, anyobject: 0.000010, recall: 0.516667
+{TRAIN} iter[268], train_loss: 3.111814, coord_loss: 0.072236, object_loss: 2.421644, nobject_loss: 0.000000, image_nums: 34304, speed: 59.36 images/s
+{TRAIN} iter[268], iou: 0.407518, object: 0.000048, anyobject: 0.000010, recall: 0.419355
+{TRAIN} iter[269], train_loss: 2.535607, coord_loss: 0.042829, object_loss: 1.874850, nobject_loss: 0.000000, image_nums: 34432, speed: 63.40 images/s
+{TRAIN} iter[269], iou: 0.407177, object: 0.000040, anyobject: 0.000010, recall: 0.479167
+{TRAIN} iter[270], train_loss: 2.816225, coord_loss: 0.050019, object_loss: 2.148284, nobject_loss: 0.000000, image_nums: 34560, speed: 63.44 images/s
+{TRAIN} iter[270], iou: 0.430680, object: 0.000036, anyobject: 0.000010, recall: 0.509091
+{TRAIN} iter[271], train_loss: 2.729242, coord_loss: 0.041199, object_loss: 2.070126, nobject_loss: 0.000000, image_nums: 34688, speed: 63.03 images/s
+{TRAIN} iter[271], iou: 0.478308, object: 0.000045, anyobject: 0.000011, recall: 0.528302
+{TRAIN} iter[272], train_loss: 3.005767, coord_loss: 0.083366, object_loss: 2.304491, nobject_loss: 0.000000, image_nums: 34816, speed: 59.83 images/s
+{TRAIN} iter[272], iou: 0.420286, object: 0.000043, anyobject: 0.000010, recall: 0.474576
+{TRAIN} iter[273], train_loss: 3.191371, coord_loss: 0.073646, object_loss: 2.499821, nobject_loss: 0.000000, image_nums: 34944, speed: 69.52 images/s
+{TRAIN} iter[273], iou: 0.432087, object: 0.000036, anyobject: 0.000010, recall: 0.484375
+{TRAIN} iter[274], train_loss: 3.063621, coord_loss: 0.063059, object_loss: 2.382664, nobject_loss: 0.000000, image_nums: 35072, speed: 62.52 images/s
+{TRAIN} iter[274], iou: 0.418534, object: 0.000031, anyobject: 0.000010, recall: 0.426230
+{TRAIN} iter[275], train_loss: 2.498126, coord_loss: 0.044450, object_loss: 1.835786, nobject_loss: 0.000000, image_nums: 35200, speed: 69.71 images/s
+{TRAIN} iter[275], iou: 0.424491, object: 0.000041, anyobject: 0.000010, recall: 0.489362
+{TRAIN} iter[276], train_loss: 2.724485, coord_loss: 0.036476, object_loss: 2.070124, nobject_loss: 0.000000, image_nums: 35328, speed: 66.50 images/s
+{TRAIN} iter[276], iou: 0.467821, object: 0.000046, anyobject: 0.000010, recall: 0.547170
+{TRAIN} iter[277], train_loss: 2.578686, coord_loss: 0.046890, object_loss: 1.913916, nobject_loss: 0.000000, image_nums: 35456, speed: 64.30 images/s
+{TRAIN} iter[277], iou: 0.473636, object: 0.000038, anyobject: 0.000010, recall: 0.571429
+{TRAIN} iter[278], train_loss: 2.814629, coord_loss: 0.048461, object_loss: 2.148295, nobject_loss: 0.000000, image_nums: 35584, speed: 63.43 images/s
+{TRAIN} iter[278], iou: 0.464371, object: 0.000033, anyobject: 0.000010, recall: 0.563636
+{TRAIN} iter[279], train_loss: 2.571653, coord_loss: 0.039906, object_loss: 1.913881, nobject_loss: 0.000000, image_nums: 35712, speed: 60.00 images/s
+{TRAIN} iter[279], iou: 0.496532, object: 0.000048, anyobject: 0.000011, recall: 0.612245
+{TRAIN} iter[280], train_loss: 2.829815, coord_loss: 0.063636, object_loss: 2.148318, nobject_loss: 0.000000, image_nums: 35840, speed: 57.92 images/s
+{TRAIN} iter[280], iou: 0.417730, object: 0.000028, anyobject: 0.000010, recall: 0.436364
+{TRAIN} iter[281], train_loss: 3.058869, coord_loss: 0.058315, object_loss: 2.382698, nobject_loss: 0.000000, image_nums: 35968, speed: 55.03 images/s
+{TRAIN} iter[281], iou: 0.386788, object: 0.000024, anyobject: 0.000010, recall: 0.393443
+{TRAIN} iter[282], train_loss: 2.450376, coord_loss: 0.035792, object_loss: 1.796736, nobject_loss: 0.000000, image_nums: 36096, speed: 59.80 images/s
+{TRAIN} iter[282], iou: 0.467656, object: 0.000039, anyobject: 0.000011, recall: 0.478261
+{TRAIN} iter[283], train_loss: 2.817031, coord_loss: 0.050868, object_loss: 2.148320, nobject_loss: 0.000000, image_nums: 36224, speed: 67.38 images/s
+{TRAIN} iter[283], iou: 0.423817, object: 0.000028, anyobject: 0.000010, recall: 0.454545
+{TRAIN} iter[284], train_loss: 2.453656, coord_loss: 0.039055, object_loss: 1.796764, nobject_loss: 0.000000, image_nums: 36352, speed: 69.26 images/s
+{TRAIN} iter[284], iou: 0.435297, object: 0.000031, anyobject: 0.000010, recall: 0.543478
+{TRAIN} iter[285], train_loss: 2.970403, coord_loss: 0.048007, object_loss: 2.304566, nobject_loss: 0.000000, image_nums: 36480, speed: 67.17 images/s
+{TRAIN} iter[285], iou: 0.431225, object: 0.000026, anyobject: 0.000010, recall: 0.542373
+{TRAIN} iter[286], train_loss: 2.754967, coord_loss: 0.066990, object_loss: 2.070152, nobject_loss: 0.000000, image_nums: 36608, speed: 68.96 images/s
+{TRAIN} iter[286], iou: 0.363621, object: 0.000039, anyobject: 0.000010, recall: 0.320755
+{TRAIN} iter[287], train_loss: 3.137431, coord_loss: 0.058892, object_loss: 2.460721, nobject_loss: 0.000000, image_nums: 36736, speed: 68.24 images/s
+{TRAIN} iter[287], iou: 0.469113, object: 0.000044, anyobject: 0.000010, recall: 0.603175
+{TRAIN} iter[288], train_loss: 2.911276, coord_loss: 0.067008, object_loss: 2.226457, nobject_loss: 0.000000, image_nums: 36864, speed: 64.59 images/s
+{TRAIN} iter[288], iou: 0.394681, object: 0.000024, anyobject: 0.000010, recall: 0.438596
+{TRAIN} iter[289], train_loss: 3.329571, coord_loss: 0.055752, object_loss: 2.656014, nobject_loss: 0.000000, image_nums: 36992, speed: 66.12 images/s
+{TRAIN} iter[289], iou: 0.517503, object: 0.000044, anyobject: 0.000010, recall: 0.602941
+{TRAIN} iter[290], train_loss: 2.657679, coord_loss: 0.047845, object_loss: 1.992034, nobject_loss: 0.000000, image_nums: 37120, speed: 70.10 images/s
+{TRAIN} iter[290], iou: 0.454763, object: 0.000039, anyobject: 0.000010, recall: 0.490196
+{TRAIN} iter[291], train_loss: 2.872356, coord_loss: 0.067270, object_loss: 2.187292, nobject_loss: 0.000000, image_nums: 37248, speed: 67.78 images/s
+{TRAIN} iter[291], iou: 0.486784, object: 0.000048, anyobject: 0.000011, recall: 0.553571
+{TRAIN} iter[292], train_loss: 2.762860, coord_loss: 0.035926, object_loss: 2.109146, nobject_loss: 0.000000, image_nums: 37376, speed: 69.26 images/s
+{TRAIN} iter[292], iou: 0.501091, object: 0.000054, anyobject: 0.000011, recall: 0.592593
+{TRAIN} iter[293], train_loss: 3.047745, coord_loss: 0.047249, object_loss: 2.382714, nobject_loss: 0.000000, image_nums: 37504, speed: 69.14 images/s
+{TRAIN} iter[293], iou: 0.429240, object: 0.000021, anyobject: 0.000010, recall: 0.459016
+{TRAIN} iter[294], train_loss: 2.610801, coord_loss: 0.040048, object_loss: 1.952978, nobject_loss: 0.000000, image_nums: 37632, speed: 68.39 images/s
+{TRAIN} iter[294], iou: 0.443044, object: 0.000038, anyobject: 0.000010, recall: 0.480000
+{TRAIN} iter[295], train_loss: 2.407514, coord_loss: 0.032036, object_loss: 1.757709, nobject_loss: 0.000000, image_nums: 37760, speed: 60.30 images/s
+{TRAIN} iter[295], iou: 0.437537, object: 0.000030, anyobject: 0.000010, recall: 0.488889
+{TRAIN} iter[296], train_loss: 2.585490, coord_loss: 0.053793, object_loss: 1.913935, nobject_loss: 0.000000, image_nums: 37888, speed: 60.28 images/s
+{TRAIN} iter[296], iou: 0.462641, object: 0.000033, anyobject: 0.000010, recall: 0.571429
+{TRAIN} iter[297], train_loss: 2.082818, coord_loss: 0.019823, object_loss: 1.445239, nobject_loss: 0.000000, image_nums: 38016, speed: 66.70 images/s
+{TRAIN} iter[297], iou: 0.557881, object: 0.000025, anyobject: 0.000010, recall: 0.675676
+{TRAIN} iter[298], train_loss: 3.507899, coord_loss: 0.077780, object_loss: 2.812369, nobject_loss: 0.000000, image_nums: 38144, speed: 58.34 images/s
+{TRAIN} iter[298], iou: 0.384277, object: 0.000023, anyobject: 0.000010, recall: 0.402778
+{TRAIN} iter[299], train_loss: 2.746505, coord_loss: 0.058615, object_loss: 2.070145, nobject_loss: 0.000000, image_nums: 38272, speed: 70.64 images/s
+{TRAIN} iter[299], iou: 0.389200, object: 0.000040, anyobject: 0.000010, recall: 0.433962
+{TRAIN} iter[300], train_loss: 2.821084, coord_loss: 0.055078, object_loss: 2.148268, nobject_loss: 0.000000, image_nums: 38400, speed: 70.40 images/s
+{TRAIN} iter[300], iou: 0.435507, object: 0.000039, anyobject: 0.000010, recall: 0.490909
+{TRAIN} iter[301], train_loss: 2.733532, coord_loss: 0.045610, object_loss: 2.070190, nobject_loss: 0.000000, image_nums: 38528, speed: 66.86 images/s
+{TRAIN} iter[301], iou: 0.484322, object: 0.000030, anyobject: 0.000011, recall: 0.547170
+{TRAIN} iter[302], train_loss: 2.884251, coord_loss: 0.079198, object_loss: 2.187326, nobject_loss: 0.000000, image_nums: 38656, speed: 64.20 images/s
+{TRAIN} iter[302], iou: 0.417557, object: 0.000040, anyobject: 0.000010, recall: 0.446429
+{TRAIN} iter[303], train_loss: 2.732347, coord_loss: 0.044497, object_loss: 2.070129, nobject_loss: 0.000000, image_nums: 38784, speed: 59.84 images/s
+{TRAIN} iter[303], iou: 0.432857, object: 0.000044, anyobject: 0.000010, recall: 0.433962
+{TRAIN} iter[304], train_loss: 2.542659, coord_loss: 0.050062, object_loss: 1.874883, nobject_loss: 0.000000, image_nums: 38912, speed: 57.39 images/s
+{TRAIN} iter[304], iou: 0.445049, object: 0.000031, anyobject: 0.000010, recall: 0.458333
+{TRAIN} iter[305], train_loss: 2.906110, coord_loss: 0.062039, object_loss: 2.226362, nobject_loss: 0.000000, image_nums: 39040, speed: 56.49 images/s
+{TRAIN} iter[305], iou: 0.463190, object: 0.000045, anyobject: 0.000010, recall: 0.543860
+{TRAIN} iter[306], train_loss: 2.580919, coord_loss: 0.049400, object_loss: 1.913816, nobject_loss: 0.000000, image_nums: 39168, speed: 69.59 images/s
+{TRAIN} iter[306], iou: 0.471601, object: 0.000064, anyobject: 0.000010, recall: 0.530612
+{TRAIN} iter[307], train_loss: 2.658055, coord_loss: 0.048296, object_loss: 1.992063, nobject_loss: 0.000000, image_nums: 39296, speed: 63.62 images/s
+{TRAIN} iter[307], iou: 0.475229, object: 0.000031, anyobject: 0.000010, recall: 0.509804
+{TRAIN} iter[308], train_loss: 2.960342, coord_loss: 0.077177, object_loss: 2.265475, nobject_loss: 0.000000, image_nums: 39424, speed: 65.57 images/s
+{TRAIN} iter[308], iou: 0.418934, object: 0.000033, anyobject: 0.000010, recall: 0.448276
+{TRAIN} iter[309], train_loss: 3.017069, coord_loss: 0.055900, object_loss: 2.343485, nobject_loss: 0.000000, image_nums: 39552, speed: 65.80 images/s
+{TRAIN} iter[309], iou: 0.413759, object: 0.000057, anyobject: 0.000011, recall: 0.500000
+{TRAIN} iter[310], train_loss: 2.623008, coord_loss: 0.052322, object_loss: 1.953008, nobject_loss: 0.000000, image_nums: 39680, speed: 68.36 images/s
+{TRAIN} iter[310], iou: 0.402065, object: 0.000030, anyobject: 0.000011, recall: 0.460000
+{TRAIN} iter[311], train_loss: 2.794692, coord_loss: 0.067775, object_loss: 2.109246, nobject_loss: 0.000000, image_nums: 39808, speed: 60.84 images/s
+{TRAIN} iter[311], iou: 0.367252, object: 0.000031, anyobject: 0.000009, recall: 0.314815
+{TRAIN} iter[312], train_loss: 2.848312, coord_loss: 0.043242, object_loss: 2.187404, nobject_loss: 0.000000, image_nums: 39936, speed: 60.46 images/s
+{TRAIN} iter[312], iou: 0.418806, object: 0.000022, anyobject: 0.000011, recall: 0.428571
+{TRAIN} iter[313], train_loss: 3.169775, coord_loss: 0.052358, object_loss: 2.499758, nobject_loss: 0.000000, image_nums: 40064, speed: 59.03 images/s
+{TRAIN} iter[313], iou: 0.414347, object: 0.000048, anyobject: 0.000010, recall: 0.453125
+{TRAIN} iter[314], train_loss: 3.015813, coord_loss: 0.054552, object_loss: 2.343608, nobject_loss: 0.000000, image_nums: 40192, speed: 58.72 images/s
+{TRAIN} iter[314], iou: 0.395067, object: 0.000030, anyobject: 0.000009, recall: 0.416667
+{TRAIN} iter[315], train_loss: 2.543549, coord_loss: 0.050994, object_loss: 1.874908, nobject_loss: 0.000000, image_nums: 40320, speed: 62.79 images/s
+{TRAIN} iter[315], iou: 0.403236, object: 0.000025, anyobject: 0.000010, recall: 0.354167
+{TRAIN} iter[316], train_loss: 2.010622, coord_loss: 0.025889, object_loss: 1.367091, nobject_loss: 0.000000, image_nums: 40448, speed: 61.50 images/s
+{TRAIN} iter[316], iou: 0.458242, object: 0.000036, anyobject: 0.000009, recall: 0.571429
+{TRAIN} iter[317], train_loss: 2.980929, coord_loss: 0.058800, object_loss: 2.304494, nobject_loss: 0.000000, image_nums: 40576, speed: 56.81 images/s
+{TRAIN} iter[317], iou: 0.404200, object: 0.000042, anyobject: 0.000010, recall: 0.491525
+{TRAIN} iter[318], train_loss: 2.408263, coord_loss: 0.032914, object_loss: 1.757720, nobject_loss: 0.000000, image_nums: 40704, speed: 58.76 images/s
+{TRAIN} iter[318], iou: 0.472452, object: 0.000026, anyobject: 0.000010, recall: 0.533333
+{TRAIN} iter[319], train_loss: 2.968211, coord_loss: 0.046163, object_loss: 2.304425, nobject_loss: 0.000000, image_nums: 40832, speed: 65.18 images/s
+{TRAIN} iter[319], iou: 0.482337, object: 0.000057, anyobject: 0.000011, recall: 0.542373
+{TRAIN} iter[320], train_loss: 2.671814, coord_loss: 0.062189, object_loss: 1.992009, nobject_loss: 0.000000, image_nums: 40960, speed: 58.09 images/s
+{TRAIN} iter[320], iou: 0.456195, object: 0.000045, anyobject: 0.000011, recall: 0.549020
+{TRAIN} iter[321], train_loss: 2.814000, coord_loss: 0.048174, object_loss: 2.148215, nobject_loss: 0.000000, image_nums: 41088, speed: 58.89 images/s
+{TRAIN} iter[321], iou: 0.469351, object: 0.000052, anyobject: 0.000010, recall: 0.509091
+{TRAIN} iter[322], train_loss: 2.704177, coord_loss: 0.055486, object_loss: 2.031087, nobject_loss: 0.000000, image_nums: 41216, speed: 59.03 images/s
+{TRAIN} iter[322], iou: 0.429835, object: 0.000040, anyobject: 0.000010, recall: 0.500000
+{TRAIN} iter[323], train_loss: 3.261628, coord_loss: 0.066229, object_loss: 2.577801, nobject_loss: 0.000000, image_nums: 41344, speed: 62.58 images/s
+{TRAIN} iter[323], iou: 0.411240, object: 0.000063, anyobject: 0.000011, recall: 0.454545
+{TRAIN} iter[324], train_loss: 3.028103, coord_loss: 0.067023, object_loss: 2.343488, nobject_loss: 0.000000, image_nums: 41472, speed: 62.89 images/s
+{TRAIN} iter[324], iou: 0.422987, object: 0.000056, anyobject: 0.000010, recall: 0.466667
+{TRAIN} iter[325], train_loss: 2.664865, coord_loss: 0.055258, object_loss: 1.992020, nobject_loss: 0.000000, image_nums: 41600, speed: 59.10 images/s
+{TRAIN} iter[325], iou: 0.438093, object: 0.000042, anyobject: 0.000011, recall: 0.529412
+{TRAIN} iter[326], train_loss: 2.386504, coord_loss: 0.050295, object_loss: 1.718629, nobject_loss: 0.000000, image_nums: 41728, speed: 65.40 images/s
+{TRAIN} iter[326], iou: 0.365300, object: 0.000035, anyobject: 0.000010, recall: 0.409091
+{TRAIN} iter[327], train_loss: 2.688134, coord_loss: 0.039400, object_loss: 2.031159, nobject_loss: 0.000000, image_nums: 41856, speed: 57.65 images/s
+{TRAIN} iter[327], iou: 0.449581, object: 0.000022, anyobject: 0.000010, recall: 0.442308
+{TRAIN} iter[328], train_loss: 3.015298, coord_loss: 0.054269, object_loss: 2.343461, nobject_loss: 0.000000, image_nums: 41984, speed: 59.12 images/s
+{TRAIN} iter[328], iou: 0.419611, object: 0.000062, anyobject: 0.000011, recall: 0.483333
+{TRAIN} iter[329], train_loss: 3.375517, coord_loss: 0.062905, object_loss: 2.695050, nobject_loss: 0.000000, image_nums: 42112, speed: 56.83 images/s
+{TRAIN} iter[329], iou: 0.435001, object: 0.000049, anyobject: 0.000011, recall: 0.507246
+{TRAIN} iter[330], train_loss: 2.296150, coord_loss: 0.038090, object_loss: 1.640504, nobject_loss: 0.000000, image_nums: 42240, speed: 63.24 images/s
+{TRAIN} iter[330], iou: 0.474259, object: 0.000037, anyobject: 0.000010, recall: 0.452381
+{TRAIN} iter[331], train_loss: 3.171556, coord_loss: 0.054218, object_loss: 2.499789, nobject_loss: 0.000000, image_nums: 42368, speed: 70.61 images/s
+{TRAIN} iter[331], iou: 0.467044, object: 0.000042, anyobject: 0.000011, recall: 0.500000
+{TRAIN} iter[332], train_loss: 2.809364, coord_loss: 0.043585, object_loss: 2.148236, nobject_loss: 0.000000, image_nums: 42496, speed: 71.57 images/s
+{TRAIN} iter[332], iou: 0.439371, object: 0.000047, anyobject: 0.000010, recall: 0.400000
+{TRAIN} iter[333], train_loss: 2.531993, coord_loss: 0.039595, object_loss: 1.874860, nobject_loss: 0.000000, image_nums: 42624, speed: 65.85 images/s
+{TRAIN} iter[333], iou: 0.474271, object: 0.000037, anyobject: 0.000011, recall: 0.562500
+{TRAIN} iter[334], train_loss: 2.405820, coord_loss: 0.030605, object_loss: 1.757684, nobject_loss: 0.000000, image_nums: 42752, speed: 59.18 images/s
+{TRAIN} iter[334], iou: 0.445946, object: 0.000037, anyobject: 0.000010, recall: 0.466667
+{TRAIN} iter[335], train_loss: 2.925546, coord_loss: 0.042666, object_loss: 2.265355, nobject_loss: 0.000000, image_nums: 42880, speed: 57.02 images/s
+{TRAIN} iter[335], iou: 0.446216, object: 0.000060, anyobject: 0.000012, recall: 0.517241
+{TRAIN} iter[336], train_loss: 2.807703, coord_loss: 0.041921, object_loss: 2.148263, nobject_loss: 0.000000, image_nums: 43008, speed: 58.21 images/s
+{TRAIN} iter[336], iou: 0.444023, object: 0.000041, anyobject: 0.000011, recall: 0.509091
+{TRAIN} iter[337], train_loss: 2.892600, coord_loss: 0.048727, object_loss: 2.226362, nobject_loss: 0.000000, image_nums: 43136, speed: 57.09 images/s
+{TRAIN} iter[337], iou: 0.401831, object: 0.000045, anyobject: 0.000011, recall: 0.421053
+{TRAIN} iter[338], train_loss: 2.166597, coord_loss: 0.025755, object_loss: 1.523336, nobject_loss: 0.000000, image_nums: 43264, speed: 60.12 images/s
+{TRAIN} iter[338], iou: 0.489585, object: 0.000033, anyobject: 0.000010, recall: 0.589744
+{TRAIN} iter[339], train_loss: 2.940070, coord_loss: 0.057112, object_loss: 2.265458, nobject_loss: 0.000000, image_nums: 43392, speed: 58.98 images/s
+{TRAIN} iter[339], iou: 0.515445, object: 0.000037, anyobject: 0.000011, recall: 0.637931
+{TRAIN} iter[340], train_loss: 2.642224, coord_loss: 0.032766, object_loss: 1.991964, nobject_loss: 0.000000, image_nums: 43520, speed: 57.51 images/s
+{TRAIN} iter[340], iou: 0.525169, object: 0.000056, anyobject: 0.000011, recall: 0.588235
+{TRAIN} iter[341], train_loss: 2.240789, coord_loss: 0.022042, object_loss: 1.601259, nobject_loss: 0.000000, image_nums: 43648, speed: 61.78 images/s
+{TRAIN} iter[341], iou: 0.558724, object: 0.000095, anyobject: 0.000013, recall: 0.707317
+{TRAIN} iter[342], train_loss: 2.688346, coord_loss: 0.039836, object_loss: 2.031029, nobject_loss: 0.000000, image_nums: 43776, speed: 58.83 images/s
+{TRAIN} iter[342], iou: 0.446353, object: 0.000055, anyobject: 0.000012, recall: 0.442308
+{TRAIN} iter[343], train_loss: 3.178565, coord_loss: 0.061350, object_loss: 2.499739, nobject_loss: 0.000000, image_nums: 43904, speed: 57.43 images/s
+{TRAIN} iter[343], iou: 0.442807, object: 0.000052, anyobject: 0.000011, recall: 0.468750
+{TRAIN} iter[344], train_loss: 2.814791, coord_loss: 0.049128, object_loss: 2.148194, nobject_loss: 0.000000, image_nums: 44032, speed: 58.48 images/s
+{TRAIN} iter[344], iou: 0.427512, object: 0.000057, anyobject: 0.000011, recall: 0.509091
+{TRAIN} iter[345], train_loss: 3.085909, coord_loss: 0.046736, object_loss: 2.421710, nobject_loss: 0.000000, image_nums: 44160, speed: 57.63 images/s
+{TRAIN} iter[345], iou: 0.466240, object: 0.000034, anyobject: 0.000012, recall: 0.580645
+{TRAIN} iter[346], train_loss: 2.573775, coord_loss: 0.042631, object_loss: 1.913686, nobject_loss: 0.000000, image_nums: 44288, speed: 59.25 images/s
+{TRAIN} iter[346], iou: 0.468732, object: 0.000098, anyobject: 0.000012, recall: 0.530612
+{TRAIN} iter[347], train_loss: 2.848557, coord_loss: 0.043809, object_loss: 2.187298, nobject_loss: 0.000000, image_nums: 44416, speed: 57.76 images/s
+{TRAIN} iter[347], iou: 0.510602, object: 0.000046, anyobject: 0.000012, recall: 0.571429
+{TRAIN} iter[348], train_loss: 2.296369, coord_loss: 0.038414, object_loss: 1.640510, nobject_loss: 0.000000, image_nums: 44544, speed: 59.50 images/s
+{TRAIN} iter[348], iou: 0.446895, object: 0.000035, anyobject: 0.000011, recall: 0.523810
+{TRAIN} iter[349], train_loss: 2.646985, coord_loss: 0.037627, object_loss: 1.991919, nobject_loss: 0.000000, image_nums: 44672, speed: 58.67 images/s
+{TRAIN} iter[349], iou: 0.486482, object: 0.000067, anyobject: 0.000012, recall: 0.529412
+{TRAIN} iter[350], train_loss: 2.349251, coord_loss: 0.052288, object_loss: 1.679530, nobject_loss: 0.000000, image_nums: 44800, speed: 59.62 images/s
+{TRAIN} iter[350], iou: 0.453506, object: 0.000047, anyobject: 0.000011, recall: 0.441860
+{TRAIN} iter[351], train_loss: 3.009444, coord_loss: 0.048456, object_loss: 2.343562, nobject_loss: 0.000000, image_nums: 44928, speed: 57.53 images/s
+{TRAIN} iter[351], iou: 0.393976, object: 0.000040, anyobject: 0.000012, recall: 0.416667
+{TRAIN} iter[352], train_loss: 2.736705, coord_loss: 0.049088, object_loss: 2.070196, nobject_loss: 0.000000, image_nums: 45056, speed: 59.18 images/s
+{TRAIN} iter[352], iou: 0.415827, object: 0.000028, anyobject: 0.000012, recall: 0.415094
+{TRAIN} iter[353], train_loss: 2.781919, coord_loss: 0.055321, object_loss: 2.109185, nobject_loss: 0.000000, image_nums: 45184, speed: 58.12 images/s
+{TRAIN} iter[353], iou: 0.400785, object: 0.000045, anyobject: 0.000012, recall: 0.425926
+{TRAIN} iter[354], train_loss: 2.885819, coord_loss: 0.042004, object_loss: 2.226408, nobject_loss: 0.000000, image_nums: 45312, speed: 57.85 images/s
+{TRAIN} iter[354], iou: 0.482055, object: 0.000035, anyobject: 0.000011, recall: 0.508772
+{TRAIN} iter[355], train_loss: 2.804515, coord_loss: 0.038848, object_loss: 2.148265, nobject_loss: 0.000000, image_nums: 45440, speed: 56.62 images/s
+{TRAIN} iter[355], iou: 0.448442, object: 0.000040, anyobject: 0.000011, recall: 0.490909
+{TRAIN} iter[356], train_loss: 2.851723, coord_loss: 0.046969, object_loss: 2.187358, nobject_loss: 0.000000, image_nums: 45568, speed: 59.80 images/s
+{TRAIN} iter[356], iou: 0.486034, object: 0.000033, anyobject: 0.000012, recall: 0.625000
+{TRAIN} iter[357], train_loss: 2.868832, coord_loss: 0.064135, object_loss: 2.187308, nobject_loss: 0.000000, image_nums: 45696, speed: 61.87 images/s
+{TRAIN} iter[357], iou: 0.464265, object: 0.000044, anyobject: 0.000012, recall: 0.517857
+{TRAIN} iter[358], train_loss: 3.053346, coord_loss: 0.053345, object_loss: 2.382617, nobject_loss: 0.000000, image_nums: 45824, speed: 58.54 images/s
+{TRAIN} iter[358], iou: 0.463336, object: 0.000041, anyobject: 0.000011, recall: 0.557377
+{TRAIN} iter[359], train_loss: 2.540904, coord_loss: 0.048667, object_loss: 1.874860, nobject_loss: 0.000000, image_nums: 45952, speed: 59.66 images/s
+{TRAIN} iter[359], iou: 0.386987, object: 0.000037, anyobject: 0.000012, recall: 0.416667
+{TRAIN} iter[360], train_loss: 2.858979, coord_loss: 0.054262, object_loss: 2.187346, nobject_loss: 0.000000, image_nums: 46080, speed: 56.58 images/s
+{TRAIN} iter[360], iou: 0.396810, object: 0.000035, anyobject: 0.000011, recall: 0.375000
+{TRAIN} iter[361], train_loss: 2.580168, coord_loss: 0.048994, object_loss: 1.913808, nobject_loss: 0.000000, image_nums: 46208, speed: 59.40 images/s
+{TRAIN} iter[361], iou: 0.463047, object: 0.000066, anyobject: 0.000012, recall: 0.510204
+{TRAIN} iter[362], train_loss: 2.768682, coord_loss: 0.042105, object_loss: 2.109218, nobject_loss: 0.000000, image_nums: 46336, speed: 57.52 images/s
+{TRAIN} iter[362], iou: 0.395111, object: 0.000037, anyobject: 0.000011, recall: 0.444444
+{TRAIN} iter[363], train_loss: 2.619510, coord_loss: 0.049248, object_loss: 1.952909, nobject_loss: 0.000000, image_nums: 46464, speed: 59.28 images/s
+{TRAIN} iter[363], iou: 0.434604, object: 0.000055, anyobject: 0.000012, recall: 0.460000
+{TRAIN} iter[364], train_loss: 2.647273, coord_loss: 0.037888, object_loss: 1.992038, nobject_loss: 0.000000, image_nums: 46592, speed: 61.00 images/s
+{TRAIN} iter[364], iou: 0.396675, object: 0.000038, anyobject: 0.000012, recall: 0.431373
+{TRAIN} iter[365], train_loss: 3.242852, coord_loss: 0.047653, object_loss: 2.577858, nobject_loss: 0.000000, image_nums: 46720, speed: 62.68 images/s
+{TRAIN} iter[365], iou: 0.475572, object: 0.000052, anyobject: 0.000012, recall: 0.560606
+{TRAIN} iter[366], train_loss: 2.738927, coord_loss: 0.051432, object_loss: 2.070161, nobject_loss: 0.000000, image_nums: 46848, speed: 57.46 images/s
+{TRAIN} iter[366], iou: 0.480533, object: 0.000037, anyobject: 0.000012, recall: 0.566038
+{TRAIN} iter[367], train_loss: 2.743783, coord_loss: 0.056347, object_loss: 2.070107, nobject_loss: 0.000000, image_nums: 46976, speed: 58.10 images/s
+{TRAIN} iter[367], iou: 0.426017, object: 0.000049, anyobject: 0.000012, recall: 0.490566
+{TRAIN} iter[368], train_loss: 2.856534, coord_loss: 0.052096, object_loss: 2.187116, nobject_loss: 0.000000, image_nums: 47104, speed: 69.31 images/s
+{TRAIN} iter[368], iou: 0.434574, object: 0.000088, anyobject: 0.000014, recall: 0.446429
+{TRAIN} iter[369], train_loss: 2.524217, coord_loss: 0.032061, object_loss: 1.874839, nobject_loss: 0.000000, image_nums: 47232, speed: 71.78 images/s
+{TRAIN} iter[369], iou: 0.457806, object: 0.000043, anyobject: 0.000012, recall: 0.583333
+{TRAIN} iter[370], train_loss: 3.045668, coord_loss: 0.045904, object_loss: 2.382454, nobject_loss: 0.000000, image_nums: 47360, speed: 69.74 images/s
+{TRAIN} iter[370], iou: 0.496979, object: 0.000075, anyobject: 0.000012, recall: 0.524590
+{TRAIN} iter[371], train_loss: 2.952667, coord_loss: 0.069961, object_loss: 2.265403, nobject_loss: 0.000000, image_nums: 47488, speed: 57.28 images/s
+{TRAIN} iter[371], iou: 0.417292, object: 0.000049, anyobject: 0.000012, recall: 0.448276
+{TRAIN} iter[372], train_loss: 2.612613, coord_loss: 0.042302, object_loss: 1.953013, nobject_loss: 0.000000, image_nums: 47616, speed: 59.23 images/s
+{TRAIN} iter[372], iou: 0.440656, object: 0.000029, anyobject: 0.000011, recall: 0.480000
+{TRAIN} iter[373], train_loss: 2.372660, coord_loss: 0.036756, object_loss: 1.718613, nobject_loss: 0.000000, image_nums: 47744, speed: 58.90 images/s
+{TRAIN} iter[373], iou: 0.476363, object: 0.000040, anyobject: 0.000011, recall: 0.545455
+{TRAIN} iter[374], train_loss: 2.807652, coord_loss: 0.042141, object_loss: 2.148226, nobject_loss: 0.000000, image_nums: 47872, speed: 57.58 images/s
+{TRAIN} iter[374], iou: 0.425038, object: 0.000049, anyobject: 0.000011, recall: 0.454545
+{TRAIN} iter[375], train_loss: 3.243164, coord_loss: 0.047971, object_loss: 2.577914, nobject_loss: 0.000000, image_nums: 48000, speed: 57.23 images/s
+{TRAIN} iter[375], iou: 0.476568, object: 0.000041, anyobject: 0.000011, recall: 0.530303
+{TRAIN} iter[376], train_loss: 3.218143, coord_loss: 0.062065, object_loss: 2.538804, nobject_loss: 0.000000, image_nums: 48128, speed: 59.01 images/s
+{TRAIN} iter[376], iou: 0.443547, object: 0.000051, anyobject: 0.000012, recall: 0.507692
+{TRAIN} iter[377], train_loss: 3.204359, coord_loss: 0.048182, object_loss: 2.538910, nobject_loss: 0.000000, image_nums: 48256, speed: 61.71 images/s
+{TRAIN} iter[377], iou: 0.483992, object: 0.000030, anyobject: 0.000012, recall: 0.569231
+{TRAIN} iter[378], train_loss: 2.780511, coord_loss: 0.054048, object_loss: 2.109201, nobject_loss: 0.000000, image_nums: 48384, speed: 57.74 images/s
+{TRAIN} iter[378], iou: 0.478351, object: 0.000041, anyobject: 0.000012, recall: 0.555556
+{TRAIN} iter[379], train_loss: 2.825460, coord_loss: 0.060133, object_loss: 2.148072, nobject_loss: 0.000000, image_nums: 48512, speed: 62.45 images/s
+{TRAIN} iter[379], iou: 0.462223, object: 0.000085, anyobject: 0.000012, recall: 0.527273
+{TRAIN} iter[380], train_loss: 2.208539, coord_loss: 0.028912, object_loss: 1.562379, nobject_loss: 0.000000, image_nums: 48640, speed: 59.47 images/s
+{TRAIN} iter[380], iou: 0.442787, object: 0.000039, anyobject: 0.000012, recall: 0.475000
+{TRAIN} iter[381], train_loss: 2.641882, coord_loss: 0.032645, object_loss: 1.991995, nobject_loss: 0.000000, image_nums: 48768, speed: 63.01 images/s
+{TRAIN} iter[381], iou: 0.453064, object: 0.000048, anyobject: 0.000012, recall: 0.549020
+{TRAIN} iter[382], train_loss: 2.692304, coord_loss: 0.043984, object_loss: 2.031084, nobject_loss: 0.000000, image_nums: 48896, speed: 63.51 images/s
+{TRAIN} iter[382], iou: 0.496420, object: 0.000041, anyobject: 0.000012, recall: 0.596154
+{TRAIN} iter[383], train_loss: 3.008914, coord_loss: 0.048117, object_loss: 2.343567, nobject_loss: 0.000000, image_nums: 49024, speed: 62.79 images/s
+{TRAIN} iter[383], iou: 0.424405, object: 0.000039, anyobject: 0.000012, recall: 0.500000
+{TRAIN} iter[384], train_loss: 3.247631, coord_loss: 0.052503, object_loss: 2.577904, nobject_loss: 0.000000, image_nums: 49152, speed: 64.86 images/s
+{TRAIN} iter[384], iou: 0.431182, object: 0.000043, anyobject: 0.000012, recall: 0.500000
+{TRAIN} iter[385], train_loss: 2.928327, coord_loss: 0.045761, object_loss: 2.265347, nobject_loss: 0.000000, image_nums: 49280, speed: 61.56 images/s
+{TRAIN} iter[385], iou: 0.445743, object: 0.000061, anyobject: 0.000012, recall: 0.482759
+{TRAIN} iter[386], train_loss: 3.233939, coord_loss: 0.077889, object_loss: 2.538838, nobject_loss: 0.000000, image_nums: 49408, speed: 61.68 images/s
+{TRAIN} iter[386], iou: 0.415366, object: 0.000044, anyobject: 0.000012, recall: 0.446154
+{TRAIN} iter[387], train_loss: 2.765311, coord_loss: 0.038905, object_loss: 2.109201, nobject_loss: 0.000000, image_nums: 49536, speed: 64.31 images/s
+{TRAIN} iter[387], iou: 0.397039, object: 0.000041, anyobject: 0.000012, recall: 0.425926
+{TRAIN} iter[388], train_loss: 2.786797, coord_loss: 0.099470, object_loss: 2.070128, nobject_loss: 0.000000, image_nums: 49664, speed: 63.27 images/s
+{TRAIN} iter[388], iou: 0.379800, object: 0.000045, anyobject: 0.000013, recall: 0.377358
+{TRAIN} iter[389], train_loss: 2.813697, coord_loss: 0.048421, object_loss: 2.148082, nobject_loss: 0.000000, image_nums: 49792, speed: 64.70 images/s
+{TRAIN} iter[389], iou: 0.413012, object: 0.000083, anyobject: 0.000012, recall: 0.472727
+{TRAIN} iter[390], train_loss: 3.387985, coord_loss: 0.075796, object_loss: 2.695001, nobject_loss: 0.000000, image_nums: 49920, speed: 63.18 images/s
+{TRAIN} iter[390], iou: 0.438627, object: 0.000058, anyobject: 0.000012, recall: 0.478261
+{TRAIN} iter[391], train_loss: 2.697436, coord_loss: 0.049205, object_loss: 2.031049, nobject_loss: 0.000000, image_nums: 50048, speed: 63.80 images/s
+{TRAIN} iter[391], iou: 0.466841, object: 0.000049, anyobject: 0.000011, recall: 0.557692
+{TRAIN} iter[392], train_loss: 2.379709, coord_loss: 0.043903, object_loss: 1.718631, nobject_loss: 0.000000, image_nums: 50176, speed: 66.53 images/s
+{TRAIN} iter[392], iou: 0.438661, object: 0.000035, anyobject: 0.000011, recall: 0.522727
+{TRAIN} iter[393], train_loss: 3.038153, coord_loss: 0.038345, object_loss: 2.382639, nobject_loss: 0.000000, image_nums: 50304, speed: 68.31 images/s
+{TRAIN} iter[393], iou: 0.443512, object: 0.000036, anyobject: 0.000012, recall: 0.426230
+{TRAIN} iter[394], train_loss: 3.537466, coord_loss: 0.068978, object_loss: 2.851325, nobject_loss: 0.000000, image_nums: 50432, speed: 56.86 images/s
+{TRAIN} iter[394], iou: 0.415987, object: 0.000042, anyobject: 0.000011, recall: 0.479452
+{TRAIN} iter[395], train_loss: 2.534477, coord_loss: 0.042519, object_loss: 1.874801, nobject_loss: 0.000000, image_nums: 50560, speed: 69.97 images/s
+{TRAIN} iter[395], iou: 0.430881, object: 0.000053, anyobject: 0.000013, recall: 0.500000
+{TRAIN} iter[396], train_loss: 2.658799, coord_loss: 0.049767, object_loss: 1.991882, nobject_loss: 0.000000, image_nums: 50688, speed: 70.15 images/s
+{TRAIN} iter[396], iou: 0.452792, object: 0.000077, anyobject: 0.000013, recall: 0.490196
+{TRAIN} iter[397], train_loss: 2.733579, coord_loss: 0.046454, object_loss: 2.069980, nobject_loss: 0.000000, image_nums: 50816, speed: 58.46 images/s
+{TRAIN} iter[397], iou: 0.456071, object: 0.000080, anyobject: 0.000013, recall: 0.528302
+{TRAIN} iter[398], train_loss: 2.692665, coord_loss: 0.044439, object_loss: 2.031088, nobject_loss: 0.000000, image_nums: 50944, speed: 58.07 images/s
+{TRAIN} iter[398], iou: 0.501694, object: 0.000040, anyobject: 0.000013, recall: 0.615385
+{TRAIN} iter[399], train_loss: 2.926260, coord_loss: 0.043866, object_loss: 2.265261, nobject_loss: 0.000000, image_nums: 51072, speed: 57.41 images/s
+{TRAIN} iter[399], iou: 0.482478, object: 0.000080, anyobject: 0.000013, recall: 0.568965
+{TRAIN} iter[400], train_loss: 2.533921, coord_loss: 0.041931, object_loss: 1.874864, nobject_loss: 0.000000, image_nums: 51200, speed: 68.83 images/s
+{TRAIN} iter[400], iou: 0.506664, object: 0.000036, anyobject: 0.000012, recall: 0.625000
+{TRAIN} iter[401], train_loss: 2.970168, coord_loss: 0.048608, object_loss: 2.304441, nobject_loss: 0.000000, image_nums: 51328, speed: 68.29 images/s
+{TRAIN} iter[401], iou: 0.476509, object: 0.000053, anyobject: 0.000014, recall: 0.525424
+{TRAIN} iter[402], train_loss: 2.457245, coord_loss: 0.043449, object_loss: 1.796683, nobject_loss: 0.000000, image_nums: 51456, speed: 62.82 images/s
+{TRAIN} iter[402], iou: 0.447160, object: 0.000053, anyobject: 0.000013, recall: 0.521739
+{TRAIN} iter[403], train_loss: 2.853742, coord_loss: 0.049399, object_loss: 2.187236, nobject_loss: 0.000000, image_nums: 51584, speed: 56.86 images/s
+{TRAIN} iter[403], iou: 0.503536, object: 0.000060, anyobject: 0.000012, recall: 0.589286
+{TRAIN} iter[404], train_loss: 2.797955, coord_loss: 0.071917, object_loss: 2.108937, nobject_loss: 0.000000, image_nums: 51712, speed: 58.40 images/s
+{TRAIN} iter[404], iou: 0.462823, object: 0.000104, anyobject: 0.000013, recall: 0.537037
+{TRAIN} iter[405], train_loss: 2.722861, coord_loss: 0.035698, object_loss: 2.070067, nobject_loss: 0.000000, image_nums: 51840, speed: 60.38 images/s
+{TRAIN} iter[405], iou: 0.481810, object: 0.000059, anyobject: 0.000013, recall: 0.566038
+{TRAIN} iter[406], train_loss: 2.930296, coord_loss: 0.047696, object_loss: 2.265511, nobject_loss: 0.000000, image_nums: 51968, speed: 56.76 images/s
+{TRAIN} iter[406], iou: 0.403338, object: 0.000025, anyobject: 0.000012, recall: 0.413793
+{TRAIN} iter[407], train_loss: 2.849633, coord_loss: 0.045258, object_loss: 2.187292, nobject_loss: 0.000000, image_nums: 52096, speed: 58.16 images/s
+{TRAIN} iter[407], iou: 0.437763, object: 0.000047, anyobject: 0.000012, recall: 0.464286
+{TRAIN} iter[408], train_loss: 3.137321, coord_loss: 0.059510, object_loss: 2.460735, nobject_loss: 0.000000, image_nums: 52224, speed: 58.63 images/s
+{TRAIN} iter[408], iou: 0.433777, object: 0.000041, anyobject: 0.000013, recall: 0.444444
+{TRAIN} iter[409], train_loss: 3.717517, coord_loss: 0.092912, object_loss: 3.007535, nobject_loss: 0.000000, image_nums: 52352, speed: 68.13 images/s
+{TRAIN} iter[409], iou: 0.417534, object: 0.000046, anyobject: 0.000014, recall: 0.441558
+{TRAIN} iter[410], train_loss: 3.061473, coord_loss: 0.061760, object_loss: 2.382648, nobject_loss: 0.000000, image_nums: 52480, speed: 66.10 images/s
+{TRAIN} iter[410], iou: 0.479967, object: 0.000034, anyobject: 0.000013, recall: 0.540984
+{TRAIN} iter[411], train_loss: 2.012107, coord_loss: 0.028093, object_loss: 1.366956, nobject_loss: 0.000000, image_nums: 52608, speed: 68.62 images/s
+{TRAIN} iter[411], iou: 0.505072, object: 0.000085, anyobject: 0.000014, recall: 0.628571
+{TRAIN} iter[412], train_loss: 3.549080, coord_loss: 0.080996, object_loss: 2.851032, nobject_loss: 0.000000, image_nums: 52736, speed: 68.33 images/s
+{TRAIN} iter[412], iou: 0.405260, object: 0.000093, anyobject: 0.000014, recall: 0.465753
+{TRAIN} iter[413], train_loss: 2.468632, coord_loss: 0.054904, object_loss: 1.796682, nobject_loss: 0.000000, image_nums: 52864, speed: 58.13 images/s
+{TRAIN} iter[413], iou: 0.454344, object: 0.000054, anyobject: 0.000012, recall: 0.565217
+{TRAIN} iter[414], train_loss: 2.849874, coord_loss: 0.045477, object_loss: 2.187358, nobject_loss: 0.000000, image_nums: 52992, speed: 59.01 images/s
+{TRAIN} iter[414], iou: 0.387650, object: 0.000032, anyobject: 0.000013, recall: 0.428571
+{TRAIN} iter[415], train_loss: 3.155532, coord_loss: 0.038703, object_loss: 2.499796, nobject_loss: 0.000000, image_nums: 53120, speed: 56.53 images/s
+{TRAIN} iter[415], iou: 0.464719, object: 0.000041, anyobject: 0.000013, recall: 0.531250
+{TRAIN} iter[416], train_loss: 3.195400, coord_loss: 0.078510, object_loss: 2.499861, nobject_loss: 0.000000, image_nums: 53248, speed: 55.57 images/s
+{TRAIN} iter[416], iou: 0.429638, object: 0.000028, anyobject: 0.000013, recall: 0.468750
+{TRAIN} iter[417], train_loss: 2.330179, coord_loss: 0.033650, object_loss: 1.679507, nobject_loss: 0.000000, image_nums: 53376, speed: 64.29 images/s
+{TRAIN} iter[417], iou: 0.521973, object: 0.000054, anyobject: 0.000013, recall: 0.604651
+{TRAIN} iter[418], train_loss: 2.822219, coord_loss: 0.056989, object_loss: 2.148214, nobject_loss: 0.000000, image_nums: 53504, speed: 63.49 images/s
+{TRAIN} iter[418], iou: 0.499988, object: 0.000052, anyobject: 0.000013, recall: 0.563636
+{TRAIN} iter[419], train_loss: 2.884706, coord_loss: 0.041399, object_loss: 2.226297, nobject_loss: 0.000000, image_nums: 53632, speed: 57.60 images/s
+{TRAIN} iter[419], iou: 0.495122, object: 0.000060, anyobject: 0.000013, recall: 0.578947
+{TRAIN} iter[420], train_loss: 2.795193, coord_loss: 0.069069, object_loss: 2.109121, nobject_loss: 0.000000, image_nums: 53760, speed: 60.11 images/s
+{TRAIN} iter[420], iou: 0.463040, object: 0.000060, anyobject: 0.000014, recall: 0.537037
+{TRAIN} iter[421], train_loss: 2.899394, coord_loss: 0.056183, object_loss: 2.226214, nobject_loss: 0.000000, image_nums: 53888, speed: 57.93 images/s
+{TRAIN} iter[421], iou: 0.489551, object: 0.000078, anyobject: 0.000014, recall: 0.543860
+{TRAIN} iter[422], train_loss: 2.494626, coord_loss: 0.042149, object_loss: 1.835486, nobject_loss: 0.000000, image_nums: 54016, speed: 60.75 images/s
+{TRAIN} iter[422], iou: 0.452604, object: 0.000123, anyobject: 0.000013, recall: 0.446809
+{TRAIN} iter[423], train_loss: 2.623505, coord_loss: 0.053695, object_loss: 1.952825, nobject_loss: 0.000000, image_nums: 54144, speed: 70.53 images/s
+{TRAIN} iter[423], iou: 0.383104, object: 0.000077, anyobject: 0.000013, recall: 0.440000
+{TRAIN} iter[424], train_loss: 3.044077, coord_loss: 0.083457, object_loss: 2.343641, nobject_loss: 0.000000, image_nums: 54272, speed: 59.71 images/s
+{TRAIN} iter[424], iou: 0.340033, object: 0.000023, anyobject: 0.000013, recall: 0.383333
+{TRAIN} iter[425], train_loss: 2.779909, coord_loss: 0.053708, object_loss: 2.109229, nobject_loss: 0.000000, image_nums: 54400, speed: 70.66 images/s
+{TRAIN} iter[425], iou: 0.441870, object: 0.000035, anyobject: 0.000014, recall: 0.518519
+{TRAIN} iter[426], train_loss: 2.454018, coord_loss: 0.040277, object_loss: 1.796774, nobject_loss: 0.000000, image_nums: 54528, speed: 68.83 images/s
+{TRAIN} iter[426], iou: 0.425775, object: 0.000028, anyobject: 0.000013, recall: 0.434783
+{TRAIN} iter[427], train_loss: 2.753937, coord_loss: 0.066822, object_loss: 2.070155, nobject_loss: 0.000000, image_nums: 54656, speed: 68.30 images/s
+{TRAIN} iter[427], iou: 0.407478, object: 0.000038, anyobject: 0.000013, recall: 0.415094
+{TRAIN} iter[428], train_loss: 2.939832, coord_loss: 0.057751, object_loss: 2.265126, nobject_loss: 0.000000, image_nums: 54784, speed: 57.49 images/s
+{TRAIN} iter[428], iou: 0.448108, object: 0.000110, anyobject: 0.000014, recall: 0.517241
+{TRAIN} iter[429], train_loss: 2.533472, coord_loss: 0.041650, object_loss: 1.874874, nobject_loss: 0.000000, image_nums: 54912, speed: 70.69 images/s
+{TRAIN} iter[429], iou: 0.469383, object: 0.000034, anyobject: 0.000013, recall: 0.520833
+{TRAIN} iter[430], train_loss: 3.122696, coord_loss: 0.045206, object_loss: 2.460548, nobject_loss: 0.000000, image_nums: 55040, speed: 57.51 images/s
+{TRAIN} iter[430], iou: 0.459827, object: 0.000079, anyobject: 0.000014, recall: 0.507937
+{TRAIN} iter[431], train_loss: 2.334392, coord_loss: 0.037850, object_loss: 1.679605, nobject_loss: 0.000000, image_nums: 55168, speed: 65.15 images/s
+{TRAIN} iter[431], iou: 0.399470, object: 0.000024, anyobject: 0.000013, recall: 0.418605
+{TRAIN} iter[432], train_loss: 3.211198, coord_loss: 0.055564, object_loss: 2.538704, nobject_loss: 0.000000, image_nums: 55296, speed: 67.62 images/s
+{TRAIN} iter[432], iou: 0.497466, object: 0.000071, anyobject: 0.000013, recall: 0.615385
+{TRAIN} iter[433], train_loss: 3.052394, coord_loss: 0.053073, object_loss: 2.382397, nobject_loss: 0.000000, image_nums: 55424, speed: 68.26 images/s
+{TRAIN} iter[433], iou: 0.471935, object: 0.000087, anyobject: 0.000014, recall: 0.590164
+{TRAIN} iter[434], train_loss: 2.887362, coord_loss: 0.044131, object_loss: 2.226313, nobject_loss: 0.000000, image_nums: 55552, speed: 68.24 images/s
+{TRAIN} iter[434], iou: 0.514737, object: 0.000056, anyobject: 0.000013, recall: 0.614035
+{TRAIN} iter[435], train_loss: 2.763451, coord_loss: 0.037412, object_loss: 2.109128, nobject_loss: 0.000000, image_nums: 55680, speed: 67.28 images/s
+{TRAIN} iter[435], iou: 0.465576, object: 0.000059, anyobject: 0.000014, recall: 0.555556
+{TRAIN} iter[436], train_loss: 2.416854, coord_loss: 0.042257, object_loss: 1.757692, nobject_loss: 0.000000, image_nums: 55808, speed: 62.64 images/s
+{TRAIN} iter[436], iou: 0.439122, object: 0.000034, anyobject: 0.000014, recall: 0.488889
+{TRAIN} iter[437], train_loss: 2.686938, coord_loss: 0.039193, object_loss: 2.030846, nobject_loss: 0.000000, image_nums: 55936, speed: 61.62 images/s
+{TRAIN} iter[437], iou: 0.489639, object: 0.000100, anyobject: 0.000015, recall: 0.596154
+{TRAIN} iter[438], train_loss: 2.612506, coord_loss: 0.042798, object_loss: 1.952815, nobject_loss: 0.000000, image_nums: 56064, speed: 57.25 images/s
+{TRAIN} iter[438], iou: 0.490371, object: 0.000079, anyobject: 0.000014, recall: 0.580000
+{TRAIN} iter[439], train_loss: 2.861185, coord_loss: 0.057128, object_loss: 2.187169, nobject_loss: 0.000000, image_nums: 56192, speed: 67.26 images/s
+{TRAIN} iter[439], iou: 0.396881, object: 0.000076, anyobject: 0.000013, recall: 0.464286
+{TRAIN} iter[440], train_loss: 2.807762, coord_loss: 0.042688, object_loss: 2.148193, nobject_loss: 0.000000, image_nums: 56320, speed: 58.83 images/s
+{TRAIN} iter[440], iou: 0.446971, object: 0.000057, anyobject: 0.000014, recall: 0.545455
+{TRAIN} iter[441], train_loss: 3.091062, coord_loss: 0.052502, object_loss: 2.421685, nobject_loss: 0.000000, image_nums: 56448, speed: 57.02 images/s
+{TRAIN} iter[441], iou: 0.438239, object: 0.000039, anyobject: 0.000013, recall: 0.467742
+{TRAIN} iter[442], train_loss: 3.449960, coord_loss: 0.060049, object_loss: 2.773042, nobject_loss: 0.000000, image_nums: 56576, speed: 61.26 images/s
+{TRAIN} iter[442], iou: 0.426055, object: 0.000071, anyobject: 0.000014, recall: 0.492958
+{TRAIN} iter[443], train_loss: 2.659103, coord_loss: 0.050219, object_loss: 1.992022, nobject_loss: 0.000000, image_nums: 56704, speed: 59.16 images/s
+{TRAIN} iter[443], iou: 0.432689, object: 0.000041, anyobject: 0.000013, recall: 0.509804
+{TRAIN} iter[444], train_loss: 2.655152, coord_loss: 0.085518, object_loss: 1.952776, nobject_loss: 0.000000, image_nums: 56832, speed: 57.16 images/s
+{TRAIN} iter[444], iou: 0.412608, object: 0.000089, anyobject: 0.000014, recall: 0.420000
+{TRAIN} iter[445], train_loss: 2.814469, coord_loss: 0.049417, object_loss: 2.148201, nobject_loss: 0.000000, image_nums: 56960, speed: 61.93 images/s
+{TRAIN} iter[445], iou: 0.421990, object: 0.000055, anyobject: 0.000014, recall: 0.509091
+{TRAIN} iter[446], train_loss: 2.564983, coord_loss: 0.034424, object_loss: 1.913715, nobject_loss: 0.000000, image_nums: 57088, speed: 70.83 images/s
+{TRAIN} iter[446], iou: 0.509366, object: 0.000091, anyobject: 0.000014, recall: 0.571429
+{TRAIN} iter[447], train_loss: 2.933263, coord_loss: 0.051076, object_loss: 2.265349, nobject_loss: 0.000000, image_nums: 57216, speed: 70.32 images/s
+{TRAIN} iter[447], iou: 0.488286, object: 0.000061, anyobject: 0.000014, recall: 0.603448
+{TRAIN} iter[448], train_loss: 3.057036, coord_loss: 0.057625, object_loss: 2.382579, nobject_loss: 0.000000, image_nums: 57344, speed: 60.91 images/s
+{TRAIN} iter[448], iou: 0.469232, object: 0.000049, anyobject: 0.000014, recall: 0.459016
+{TRAIN} iter[449], train_loss: 2.580580, coord_loss: 0.049861, object_loss: 1.913893, nobject_loss: 0.000000, image_nums: 57472, speed: 58.29 images/s
+{TRAIN} iter[449], iou: 0.551340, object: 0.000044, anyobject: 0.000013, recall: 0.591837
+{TRAIN} iter[450], train_loss: 2.874949, coord_loss: 0.071045, object_loss: 2.187085, nobject_loss: 0.000000, image_nums: 57600, speed: 61.55 images/s
+{TRAIN} iter[450], iou: 0.473169, object: 0.000095, anyobject: 0.000014, recall: 0.535714
+{TRAIN} iter[451], train_loss: 3.289891, coord_loss: 0.056426, object_loss: 2.616651, nobject_loss: 0.000000, image_nums: 57728, speed: 59.87 images/s
+{TRAIN} iter[451], iou: 0.436871, object: 0.000103, anyobject: 0.000015, recall: 0.492537
+{TRAIN} iter[452], train_loss: 2.485014, coord_loss: 0.032446, object_loss: 1.835761, nobject_loss: 0.000000, image_nums: 57856, speed: 59.86 images/s
+{TRAIN} iter[452], iou: 0.449757, object: 0.000048, anyobject: 0.000012, recall: 0.531915
+{TRAIN} iter[453], train_loss: 3.380232, coord_loss: 0.068482, object_loss: 2.694949, nobject_loss: 0.000000, image_nums: 57984, speed: 63.20 images/s
+{TRAIN} iter[453], iou: 0.485475, object: 0.000067, anyobject: 0.000015, recall: 0.550725
+{TRAIN} iter[454], train_loss: 2.827367, coord_loss: 0.062328, object_loss: 2.148244, nobject_loss: 0.000000, image_nums: 58112, speed: 64.14 images/s
+{TRAIN} iter[454], iou: 0.492306, object: 0.000045, anyobject: 0.000014, recall: 0.581818
+{TRAIN} iter[455], train_loss: 3.073498, coord_loss: 0.074295, object_loss: 2.382415, nobject_loss: 0.000000, image_nums: 58240, speed: 69.99 images/s
+{TRAIN} iter[455], iou: 0.454891, object: 0.000084, anyobject: 0.000014, recall: 0.540984
+{TRAIN} iter[456], train_loss: 2.659658, coord_loss: 0.050963, object_loss: 1.991912, nobject_loss: 0.000000, image_nums: 58368, speed: 69.21 images/s
+{TRAIN} iter[456], iou: 0.428761, object: 0.000069, anyobject: 0.000014, recall: 0.431373
+{TRAIN} iter[457], train_loss: 3.086547, coord_loss: 0.048388, object_loss: 2.421381, nobject_loss: 0.000000, image_nums: 58496, speed: 64.77 images/s
+{TRAIN} iter[457], iou: 0.540939, object: 0.000102, anyobject: 0.000015, recall: 0.661290
+{TRAIN} iter[458], train_loss: 2.456459, coord_loss: 0.043095, object_loss: 1.796593, nobject_loss: 0.000000, image_nums: 58624, speed: 65.93 images/s
+{TRAIN} iter[458], iou: 0.403882, object: 0.000079, anyobject: 0.000015, recall: 0.500000
+{TRAIN} iter[459], train_loss: 2.516895, coord_loss: 0.064309, object_loss: 1.835822, nobject_loss: 0.000000, image_nums: 58752, speed: 66.02 images/s
+{TRAIN} iter[459], iou: 0.425009, object: 0.000032, anyobject: 0.000013, recall: 0.489362
+{TRAIN} iter[460], train_loss: 3.017866, coord_loss: 0.057592, object_loss: 2.343516, nobject_loss: 0.000000, image_nums: 58880, speed: 65.76 images/s
+{TRAIN} iter[460], iou: 0.455211, object: 0.000050, anyobject: 0.000013, recall: 0.466667
+{TRAIN} iter[461], train_loss: 2.782323, coord_loss: 0.056540, object_loss: 2.109031, nobject_loss: 0.000000, image_nums: 59008, speed: 69.43 images/s
+{TRAIN} iter[461], iou: 0.410780, object: 0.000082, anyobject: 0.000015, recall: 0.462963
+{TRAIN} iter[462], train_loss: 2.611369, coord_loss: 0.041794, object_loss: 1.952829, nobject_loss: 0.000000, image_nums: 59136, speed: 70.89 images/s
+{TRAIN} iter[462], iou: 0.493150, object: 0.000076, anyobject: 0.000015, recall: 0.580000
+{TRAIN} iter[463], train_loss: 2.531273, coord_loss: 0.039860, object_loss: 1.874673, nobject_loss: 0.000000, image_nums: 59264, speed: 69.69 images/s
+{TRAIN} iter[463], iou: 0.491039, object: 0.000087, anyobject: 0.000016, recall: 0.583333
+{TRAIN} iter[464], train_loss: 2.757273, coord_loss: 0.031491, object_loss: 2.109048, nobject_loss: 0.000000, image_nums: 59392, speed: 64.32 images/s
+{TRAIN} iter[464], iou: 0.472891, object: 0.000077, anyobject: 0.000016, recall: 0.537037
+{TRAIN} iter[465], train_loss: 3.169091, coord_loss: 0.052921, object_loss: 2.499442, nobject_loss: 0.000000, image_nums: 59520, speed: 66.99 images/s
+{TRAIN} iter[465], iou: 0.442427, object: 0.000112, anyobject: 0.000016, recall: 0.453125
+{TRAIN} iter[466], train_loss: 2.453484, coord_loss: 0.040107, object_loss: 1.796655, nobject_loss: 0.000000, image_nums: 59648, speed: 60.78 images/s
+{TRAIN} iter[466], iou: 0.513546, object: 0.000061, anyobject: 0.000016, recall: 0.630435
+{TRAIN} iter[467], train_loss: 3.188386, coord_loss: 0.071835, object_loss: 2.499835, nobject_loss: 0.000000, image_nums: 59776, speed: 64.48 images/s
+{TRAIN} iter[467], iou: 0.443398, object: 0.000033, anyobject: 0.000014, recall: 0.531250
+{TRAIN} iter[468], train_loss: 2.558381, coord_loss: 0.027920, object_loss: 1.913752, nobject_loss: 0.000000, image_nums: 59904, speed: 72.24 images/s
+{TRAIN} iter[468], iou: 0.495206, object: 0.000081, anyobject: 0.000015, recall: 0.551020
+{TRAIN} iter[469], train_loss: 3.076683, coord_loss: 0.038562, object_loss: 2.421417, nobject_loss: 0.000000, image_nums: 60032, speed: 62.68 images/s
+{TRAIN} iter[469], iou: 0.478578, object: 0.000095, anyobject: 0.000016, recall: 0.516129
+{TRAIN} iter[470], train_loss: 2.858656, coord_loss: 0.054758, object_loss: 2.187201, nobject_loss: 0.000000, image_nums: 60160, speed: 63.65 images/s
+{TRAIN} iter[470], iou: 0.451468, object: 0.000068, anyobject: 0.000016, recall: 0.464286
+{TRAIN} iter[471], train_loss: 2.849849, coord_loss: 0.046119, object_loss: 2.187039, nobject_loss: 0.000000, image_nums: 60288, speed: 65.43 images/s
+{TRAIN} iter[471], iou: 0.448880, object: 0.000105, anyobject: 0.000017, recall: 0.482143
+{TRAIN} iter[472], train_loss: 2.803835, coord_loss: 0.039101, object_loss: 2.148049, nobject_loss: 0.000000, image_nums: 60416, speed: 64.69 images/s
+{TRAIN} iter[472], iou: 0.467124, object: 0.000090, anyobject: 0.000016, recall: 0.563636
+{TRAIN} iter[473], train_loss: 3.136568, coord_loss: 0.059190, object_loss: 2.460700, nobject_loss: 0.000000, image_nums: 60544, speed: 63.42 images/s
+{TRAIN} iter[473], iou: 0.462027, object: 0.000048, anyobject: 0.000015, recall: 0.507937
+{TRAIN} iter[474], train_loss: 2.565947, coord_loss: 0.035483, object_loss: 1.913791, nobject_loss: 0.000000, image_nums: 60672, speed: 64.66 images/s
+{TRAIN} iter[474], iou: 0.462954, object: 0.000071, anyobject: 0.000016, recall: 0.530612
+{TRAIN} iter[475], train_loss: 2.897712, coord_loss: 0.054788, object_loss: 2.226258, nobject_loss: 0.000000, image_nums: 60800, speed: 61.09 images/s
+{TRAIN} iter[475], iou: 0.434292, object: 0.000068, anyobject: 0.000015, recall: 0.526316
+{TRAIN} iter[476], train_loss: 3.308593, coord_loss: 0.075346, object_loss: 2.616586, nobject_loss: 0.000000, image_nums: 60928, speed: 62.86 images/s
+{TRAIN} iter[476], iou: 0.502666, object: 0.000115, anyobject: 0.000015, recall: 0.626866
+{TRAIN} iter[477], train_loss: 2.451904, coord_loss: 0.038642, object_loss: 1.796609, nobject_loss: 0.000000, image_nums: 61056, speed: 69.81 images/s
+{TRAIN} iter[477], iou: 0.429441, object: 0.000074, anyobject: 0.000015, recall: 0.521739
+{TRAIN} iter[478], train_loss: 2.868914, coord_loss: 0.064989, object_loss: 2.187277, nobject_loss: 0.000001, image_nums: 61184, speed: 67.35 images/s
+{TRAIN} iter[478], iou: 0.421607, object: 0.000051, anyobject: 0.000017, recall: 0.517857
+{TRAIN} iter[479], train_loss: 2.939979, coord_loss: 0.058027, object_loss: 2.265310, nobject_loss: 0.000000, image_nums: 61312, speed: 63.26 images/s
+{TRAIN} iter[479], iou: 0.497900, object: 0.000070, anyobject: 0.000016, recall: 0.551724
+{TRAIN} iter[480], train_loss: 2.765072, coord_loss: 0.039292, object_loss: 2.109145, nobject_loss: 0.000000, image_nums: 61440, speed: 58.85 images/s
+{TRAIN} iter[480], iou: 0.506054, object: 0.000055, anyobject: 0.000015, recall: 0.555556
+{TRAIN} iter[481], train_loss: 2.756118, coord_loss: 0.069620, object_loss: 2.069868, nobject_loss: 0.000000, image_nums: 61568, speed: 63.03 images/s
+{TRAIN} iter[481], iou: 0.418897, object: 0.000107, anyobject: 0.000016, recall: 0.490566
+{TRAIN} iter[482], train_loss: 2.968971, coord_loss: 0.048055, object_loss: 2.304293, nobject_loss: 0.000000, image_nums: 61696, speed: 59.30 images/s
+{TRAIN} iter[482], iou: 0.465512, object: 0.000086, anyobject: 0.000016, recall: 0.559322
+{TRAIN} iter[483], train_loss: 2.449161, coord_loss: 0.035914, object_loss: 1.796630, nobject_loss: 0.000001, image_nums: 61824, speed: 62.14 images/s
+{TRAIN} iter[483], iou: 0.468680, object: 0.000068, anyobject: 0.000018, recall: 0.608696
+{TRAIN} iter[484], train_loss: 2.807604, coord_loss: 0.043053, object_loss: 2.147940, nobject_loss: 0.000001, image_nums: 61952, speed: 59.34 images/s
+{TRAIN} iter[484], iou: 0.501969, object: 0.000116, anyobject: 0.000016, recall: 0.600000
+{TRAIN} iter[485], train_loss: 2.949207, coord_loss: 0.067457, object_loss: 2.265145, nobject_loss: 0.000001, image_nums: 62080, speed: 60.79 images/s
+{TRAIN} iter[485], iou: 0.441079, object: 0.000106, anyobject: 0.000017, recall: 0.465517
+{TRAIN} iter[486], train_loss: 2.923988, coord_loss: 0.042156, object_loss: 2.265234, nobject_loss: 0.000001, image_nums: 62208, speed: 60.82 images/s
+{TRAIN} iter[486], iou: 0.465121, object: 0.000086, anyobject: 0.000016, recall: 0.534483
+{TRAIN} iter[487], train_loss: 3.089601, coord_loss: 0.051359, object_loss: 2.421650, nobject_loss: 0.000000, image_nums: 62336, speed: 60.11 images/s
+{TRAIN} iter[487], iou: 0.410295, object: 0.000046, anyobject: 0.000015, recall: 0.419355
+{TRAIN} iter[488], train_loss: 3.042507, coord_loss: 0.043444, object_loss: 2.382476, nobject_loss: 0.000000, image_nums: 62464, speed: 59.14 images/s
+{TRAIN} iter[488], iou: 0.415199, object: 0.000071, anyobject: 0.000016, recall: 0.459016
+{TRAIN} iter[489], train_loss: 2.962306, coord_loss: 0.041575, object_loss: 2.304151, nobject_loss: 0.000000, image_nums: 62592, speed: 62.28 images/s
+{TRAIN} iter[489], iou: 0.501720, object: 0.000117, anyobject: 0.000016, recall: 0.576271
+{TRAIN} iter[490], train_loss: 2.741448, coord_loss: 0.055071, object_loss: 2.069803, nobject_loss: 0.000000, image_nums: 62720, speed: 59.24 images/s
+{TRAIN} iter[490], iou: 0.428839, object: 0.000123, anyobject: 0.000016, recall: 0.433962
+{TRAIN} iter[491], train_loss: 2.931727, coord_loss: 0.049753, object_loss: 2.265406, nobject_loss: 0.000000, image_nums: 62848, speed: 61.55 images/s
+{TRAIN} iter[491], iou: 0.476818, object: 0.000049, anyobject: 0.000016, recall: 0.500000
+{TRAIN} iter[492], train_loss: 2.953861, coord_loss: 0.033049, object_loss: 2.304250, nobject_loss: 0.000001, image_nums: 62976, speed: 62.14 images/s
+{TRAIN} iter[492], iou: 0.496961, object: 0.000095, anyobject: 0.000017, recall: 0.576271
+{TRAIN} iter[493], train_loss: 3.045577, coord_loss: 0.046558, object_loss: 2.382463, nobject_loss: 0.000000, image_nums: 63104, speed: 61.15 images/s
+{TRAIN} iter[493], iou: 0.461350, object: 0.000073, anyobject: 0.000017, recall: 0.491803
+{TRAIN} iter[494], train_loss: 2.573093, coord_loss: 0.042847, object_loss: 1.913695, nobject_loss: 0.000001, image_nums: 63232, speed: 61.45 images/s
+{TRAIN} iter[494], iou: 0.452830, object: 0.000096, anyobject: 0.000018, recall: 0.530612
+{TRAIN} iter[495], train_loss: 3.273014, coord_loss: 0.078496, object_loss: 2.577975, nobject_loss: 0.000000, image_nums: 63360, speed: 62.38 images/s
+{TRAIN} iter[495], iou: 0.440439, object: 0.000029, anyobject: 0.000016, recall: 0.469697
+{TRAIN} iter[496], train_loss: 2.420174, coord_loss: 0.045994, object_loss: 1.757643, nobject_loss: 0.000001, image_nums: 63488, speed: 65.20 images/s
+{TRAIN} iter[496], iou: 0.464668, object: 0.000048, anyobject: 0.000016, recall: 0.488889
+{TRAIN} iter[497], train_loss: 2.728961, coord_loss: 0.042245, object_loss: 2.070185, nobject_loss: 0.000001, image_nums: 63616, speed: 62.37 images/s
+{TRAIN} iter[497], iou: 0.471151, object: 0.000031, anyobject: 0.000018, recall: 0.547170
+{TRAIN} iter[498], train_loss: 3.363261, coord_loss: 0.052018, object_loss: 2.694718, nobject_loss: 0.000000, image_nums: 63744, speed: 66.65 images/s
+{TRAIN} iter[498], iou: 0.454142, object: 0.000110, anyobject: 0.000017, recall: 0.507246
+{TRAIN} iter[499], train_loss: 2.923785, coord_loss: 0.042125, object_loss: 2.265142, nobject_loss: 0.000001, image_nums: 63872, speed: 62.76 images/s
+{TRAIN} iter[499], iou: 0.510720, object: 0.000107, anyobject: 0.000018, recall: 0.568965
+{TRAIN} iter[500], train_loss: 2.689485, coord_loss: 0.042309, object_loss: 2.030662, nobject_loss: 0.000000, image_nums: 64000, speed: 64.51 images/s
+{TRAIN} iter[500], iou: 0.393929, object: 0.000145, anyobject: 0.000017, recall: 0.384615
+{TRAIN} iter[501], train_loss: 2.829433, coord_loss: 0.064913, object_loss: 2.148014, nobject_loss: 0.000000, image_nums: 64128, speed: 67.94 images/s
+{TRAIN} iter[501], iou: 0.490528, object: 0.000099, anyobject: 0.000017, recall: 0.509091
+{TRAIN} iter[502], train_loss: 2.407447, coord_loss: 0.033532, object_loss: 1.757415, nobject_loss: 0.000001, image_nums: 64256, speed: 66.12 images/s
+{TRAIN} iter[502], iou: 0.512071, object: 0.000113, anyobject: 0.000017, recall: 0.600000
+{TRAIN} iter[503], train_loss: 3.186636, coord_loss: 0.070475, object_loss: 2.499666, nobject_loss: 0.000000, image_nums: 64384, speed: 67.48 images/s
+{TRAIN} iter[503], iou: 0.432229, object: 0.000067, anyobject: 0.000017, recall: 0.484375
+{TRAIN} iter[504], train_loss: 2.703961, coord_loss: 0.056434, object_loss: 2.031039, nobject_loss: 0.000001, image_nums: 64512, speed: 66.17 images/s
+{TRAIN} iter[504], iou: 0.455742, object: 0.000052, anyobject: 0.000016, recall: 0.442308
+I tensorflow/core/common_runtime/gpu/pool_allocator.cc:247] PoolAllocator: After 4520324 get requests, put_count=4520327 evicted_count=3000 eviction_rate=0.000663669 and unsatisfied allocation rate=0.000691101
+{TRAIN} iter[505], train_loss: 3.340640, coord_loss: 0.068500, object_loss: 2.655658, nobject_loss: 0.000000, image_nums: 64640, speed: 59.13 images/s
+{TRAIN} iter[505], iou: 0.447151, object: 0.000112, anyobject: 0.000018, recall: 0.544118
+{TRAIN} iter[506], train_loss: 2.824057, coord_loss: 0.059366, object_loss: 2.148215, nobject_loss: 0.000001, image_nums: 64768, speed: 68.47 images/s
+{TRAIN} iter[506], iou: 0.406193, object: 0.000052, anyobject: 0.000018, recall: 0.436364
+{TRAIN} iter[507], train_loss: 2.882328, coord_loss: 0.039865, object_loss: 2.225994, nobject_loss: 0.000001, image_nums: 64896, speed: 63.11 images/s
+{TRAIN} iter[507], iou: 0.502571, object: 0.000128, anyobject: 0.000018, recall: 0.649123
+{TRAIN} iter[508], train_loss: 2.668802, coord_loss: 0.060451, object_loss: 1.991887, nobject_loss: 0.000001, image_nums: 65024, speed: 65.12 images/s
+{TRAIN} iter[508], iou: 0.448698, object: 0.000075, anyobject: 0.000019, recall: 0.470588
+{TRAIN} iter[509], train_loss: 3.087913, coord_loss: 0.050245, object_loss: 2.421210, nobject_loss: 0.000001, image_nums: 65152, speed: 60.25 images/s
+{TRAIN} iter[509], iou: 0.471077, object: 0.000138, anyobject: 0.000019, recall: 0.580645
+{TRAIN} iter[510], train_loss: 3.174603, coord_loss: 0.059009, object_loss: 2.499142, nobject_loss: 0.000001, image_nums: 65280, speed: 68.50 images/s
+{TRAIN} iter[510], iou: 0.534816, object: 0.000172, anyobject: 0.000019, recall: 0.671875
+{TRAIN} iter[511], train_loss: 3.162158, coord_loss: 0.046105, object_loss: 2.499607, nobject_loss: 0.000001, image_nums: 65408, speed: 63.03 images/s
+{TRAIN} iter[511], iou: 0.443056, object: 0.000079, anyobject: 0.000021, recall: 0.468750
+{TRAIN} iter[512], train_loss: 2.724410, coord_loss: 0.037966, object_loss: 2.070004, nobject_loss: 0.000000, image_nums: 65536, speed: 65.07 images/s
+{TRAIN} iter[512], iou: 0.511451, object: 0.000074, anyobject: 0.000017, recall: 0.584906
+{TRAIN} iter[513], train_loss: 2.398128, coord_loss: 0.024525, object_loss: 1.757169, nobject_loss: 0.000001, image_nums: 65664, speed: 67.63 images/s
+{TRAIN} iter[513], iou: 0.531969, object: 0.000183, anyobject: 0.000018, recall: 0.622222
+{TRAIN} iter[514], train_loss: 3.244437, coord_loss: 0.050342, object_loss: 2.577667, nobject_loss: 0.000001, image_nums: 65792, speed: 60.79 images/s
+{TRAIN} iter[514], iou: 0.428357, object: 0.000089, anyobject: 0.000019, recall: 0.454545
+{TRAIN} iter[515], train_loss: 2.606268, coord_loss: 0.037107, object_loss: 1.952740, nobject_loss: 0.000001, image_nums: 65920, speed: 59.80 images/s
+{TRAIN} iter[515], iou: 0.493999, object: 0.000099, anyobject: 0.000017, recall: 0.600000
+{TRAIN} iter[516], train_loss: 3.129181, coord_loss: 0.052170, object_loss: 2.460596, nobject_loss: 0.000001, image_nums: 66048, speed: 58.02 images/s
+{TRAIN} iter[516], iou: 0.456442, object: 0.000070, anyobject: 0.000019, recall: 0.492063
+{TRAIN} iter[517], train_loss: 2.286237, coord_loss: 0.029377, object_loss: 1.640450, nobject_loss: 0.000001, image_nums: 66176, speed: 64.77 images/s
+{TRAIN} iter[517], iou: 0.533655, object: 0.000053, anyobject: 0.000018, recall: 0.595238
+{TRAIN} iter[518], train_loss: 2.766882, coord_loss: 0.041566, object_loss: 2.108913, nobject_loss: 0.000000, image_nums: 66304, speed: 64.84 images/s
+{TRAIN} iter[518], iou: 0.483048, object: 0.000109, anyobject: 0.000018, recall: 0.611111
+{TRAIN} iter[519], train_loss: 2.609229, coord_loss: 0.039932, object_loss: 1.952901, nobject_loss: 0.000001, image_nums: 66432, speed: 64.40 images/s
+{TRAIN} iter[519], iou: 0.475718, object: 0.000057, anyobject: 0.000018, recall: 0.600000
+{TRAIN} iter[520], train_loss: 3.084409, coord_loss: 0.046353, object_loss: 2.421666, nobject_loss: 0.000001, image_nums: 66560, speed: 62.39 images/s
+{TRAIN} iter[520], iou: 0.367693, object: 0.000043, anyobject: 0.000018, recall: 0.419355
+{TRAIN} iter[521], train_loss: 2.731116, coord_loss: 0.044660, object_loss: 2.070072, nobject_loss: 0.000001, image_nums: 66688, speed: 71.12 images/s
+{TRAIN} iter[521], iou: 0.487878, object: 0.000058, anyobject: 0.000017, recall: 0.528302
+{TRAIN} iter[522], train_loss: 2.529163, coord_loss: 0.038313, object_loss: 1.874473, nobject_loss: 0.000001, image_nums: 66816, speed: 69.63 images/s
+{TRAIN} iter[522], iou: 0.495650, object: 0.000141, anyobject: 0.000018, recall: 0.645833
+{TRAIN} iter[523], train_loss: 3.002542, coord_loss: 0.043061, object_loss: 2.343109, nobject_loss: 0.000001, image_nums: 66944, speed: 63.86 images/s
+{TRAIN} iter[523], iou: 0.467897, object: 0.000137, anyobject: 0.000020, recall: 0.566667
+{TRAIN} iter[524], train_loss: 2.531991, coord_loss: 0.041323, object_loss: 1.874302, nobject_loss: 0.000001, image_nums: 67072, speed: 61.54 images/s
+{TRAIN} iter[524], iou: 0.502869, object: 0.000186, anyobject: 0.000019, recall: 0.583333
+{TRAIN} iter[525], train_loss: 3.184283, coord_loss: 0.068335, object_loss: 2.499588, nobject_loss: 0.000001, image_nums: 67200, speed: 64.21 images/s
+{TRAIN} iter[525], iou: 0.438926, object: 0.000082, anyobject: 0.000020, recall: 0.500000
+{TRAIN} iter[526], train_loss: 2.737890, coord_loss: 0.051450, object_loss: 2.070088, nobject_loss: 0.000001, image_nums: 67328, speed: 64.98 images/s
+{TRAIN} iter[526], iou: 0.410512, object: 0.000054, anyobject: 0.000018, recall: 0.377358
+{TRAIN} iter[527], train_loss: 2.855630, coord_loss: 0.052136, object_loss: 2.187146, nobject_loss: 0.000001, image_nums: 67456, speed: 68.38 images/s
+{TRAIN} iter[527], iou: 0.417896, object: 0.000081, anyobject: 0.000020, recall: 0.464286
+{TRAIN} iter[528], train_loss: 2.462492, coord_loss: 0.049875, object_loss: 1.796276, nobject_loss: 0.000001, image_nums: 67584, speed: 70.55 images/s
+{TRAIN} iter[528], iou: 0.478992, object: 0.000167, anyobject: 0.000020, recall: 0.608696
+{TRAIN} iter[529], train_loss: 2.476772, coord_loss: 0.024875, object_loss: 1.835563, nobject_loss: 0.000001, image_nums: 67712, speed: 69.24 images/s
+{TRAIN} iter[529], iou: 0.520293, object: 0.000102, anyobject: 0.000021, recall: 0.574468
+{TRAIN} iter[530], train_loss: 2.784248, coord_loss: 0.059368, object_loss: 2.108551, nobject_loss: 0.000001, image_nums: 67840, speed: 60.56 images/s
+{TRAIN} iter[530], iou: 0.482247, object: 0.000196, anyobject: 0.000019, recall: 0.555556
+{TRAIN} iter[531], train_loss: 3.011326, coord_loss: 0.052008, object_loss: 2.342995, nobject_loss: 0.000001, image_nums: 67968, speed: 64.59 images/s
+{TRAIN} iter[531], iou: 0.457930, object: 0.000161, anyobject: 0.000019, recall: 0.533333
+{TRAIN} iter[532], train_loss: 2.948770, coord_loss: 0.067187, object_loss: 2.265266, nobject_loss: 0.000001, image_nums: 68096, speed: 69.42 images/s
+{TRAIN} iter[532], iou: 0.416207, object: 0.000079, anyobject: 0.000019, recall: 0.448276
+{TRAIN} iter[533], train_loss: 2.731002, coord_loss: 0.044902, object_loss: 2.069789, nobject_loss: 0.000001, image_nums: 68224, speed: 65.68 images/s
+{TRAIN} iter[533], iou: 0.467380, object: 0.000127, anyobject: 0.000021, recall: 0.509434
+{TRAIN} iter[534], train_loss: 3.240597, coord_loss: 0.046818, object_loss: 2.577475, nobject_loss: 0.000001, image_nums: 68352, speed: 63.89 images/s
+{TRAIN} iter[534], iou: 0.525141, object: 0.000126, anyobject: 0.000020, recall: 0.651515
+{TRAIN} iter[535], train_loss: 2.643238, coord_loss: 0.034919, object_loss: 1.992020, nobject_loss: 0.000001, image_nums: 68480, speed: 72.95 images/s
+{TRAIN} iter[535], iou: 0.480588, object: 0.000042, anyobject: 0.000019, recall: 0.588235
+{TRAIN} iter[536], train_loss: 2.258206, coord_loss: 0.040637, object_loss: 1.601277, nobject_loss: 0.000001, image_nums: 68608, speed: 65.89 images/s
+{TRAIN} iter[536], iou: 0.373701, object: 0.000089, anyobject: 0.000020, recall: 0.463415
+{TRAIN} iter[537], train_loss: 2.634812, coord_loss: 0.026968, object_loss: 1.991558, nobject_loss: 0.000001, image_nums: 68736, speed: 63.18 images/s
+{TRAIN} iter[537], iou: 0.479871, object: 0.000158, anyobject: 0.000020, recall: 0.529412
+{TRAIN} iter[538], train_loss: 3.084383, coord_loss: 0.046610, object_loss: 2.421492, nobject_loss: 0.000001, image_nums: 68864, speed: 64.85 images/s
+{TRAIN} iter[538], iou: 0.403931, object: 0.000079, anyobject: 0.000020, recall: 0.435484
+{TRAIN} iter[539], train_loss: 2.461922, coord_loss: 0.049110, object_loss: 1.796537, nobject_loss: 0.000001, image_nums: 68992, speed: 65.42 images/s
+{TRAIN} iter[539], iou: 0.369383, object: 0.000094, anyobject: 0.000019, recall: 0.369565
+{TRAIN} iter[540], train_loss: 2.795581, coord_loss: 0.031177, object_loss: 2.148136, nobject_loss: 0.000001, image_nums: 69120, speed: 66.60 images/s
+{TRAIN} iter[540], iou: 0.520809, object: 0.000070, anyobject: 0.000020, recall: 0.618182
+{TRAIN} iter[541], train_loss: 2.965581, coord_loss: 0.045230, object_loss: 2.304090, nobject_loss: 0.000001, image_nums: 69248, speed: 68.45 images/s
+{TRAIN} iter[541], iou: 0.442579, object: 0.000130, anyobject: 0.000021, recall: 0.474576
+{TRAIN} iter[542], train_loss: 2.891582, coord_loss: 0.049269, object_loss: 2.226058, nobject_loss: 0.000001, image_nums: 69376, speed: 68.13 images/s
+{TRAIN} iter[542], iou: 0.470032, object: 0.000113, anyobject: 0.000022, recall: 0.543860
+{TRAIN} iter[543], train_loss: 3.125783, coord_loss: 0.049136, object_loss: 2.460397, nobject_loss: 0.000001, image_nums: 69504, speed: 62.74 images/s
+{TRAIN} iter[543], iou: 0.473493, object: 0.000110, anyobject: 0.000020, recall: 0.555556
+{TRAIN} iter[544], train_loss: 2.878587, coord_loss: 0.036133, object_loss: 2.226211, nobject_loss: 0.000001, image_nums: 69632, speed: 58.61 images/s
+{TRAIN} iter[544], iou: 0.428749, object: 0.000079, anyobject: 0.000022, recall: 0.491228
+{TRAIN} iter[545], train_loss: 2.895179, coord_loss: 0.052894, object_loss: 2.226048, nobject_loss: 0.000001, image_nums: 69760, speed: 66.73 images/s
+{TRAIN} iter[545], iou: 0.487959, object: 0.000116, anyobject: 0.000020, recall: 0.578947
+{TRAIN} iter[546], train_loss: 3.487556, coord_loss: 0.059824, object_loss: 2.811501, nobject_loss: 0.000001, image_nums: 69888, speed: 57.18 images/s
+{TRAIN} iter[546], iou: 0.423167, object: 0.000178, anyobject: 0.000022, recall: 0.513889
+{TRAIN} iter[547], train_loss: 2.448204, coord_loss: 0.035557, object_loss: 1.796421, nobject_loss: 0.000001, image_nums: 70016, speed: 62.81 images/s
+{TRAIN} iter[547], iou: 0.455372, object: 0.000126, anyobject: 0.000021, recall: 0.565217
+{TRAIN} iter[548], train_loss: 2.627547, coord_loss: 0.058672, object_loss: 1.952655, nobject_loss: 0.000001, image_nums: 70144, speed: 61.25 images/s
+{TRAIN} iter[548], iou: 0.442840, object: 0.000120, anyobject: 0.000020, recall: 0.500000
+{TRAIN} iter[549], train_loss: 3.164084, coord_loss: 0.048464, object_loss: 2.499407, nobject_loss: 0.000001, image_nums: 70272, speed: 57.60 images/s
+{TRAIN} iter[549], iou: 0.509673, object: 0.000119, anyobject: 0.000022, recall: 0.609375
+{TRAIN} iter[550], train_loss: 2.412414, coord_loss: 0.038568, object_loss: 1.757639, nobject_loss: 0.000002, image_nums: 70400, speed: 64.23 images/s
+{TRAIN} iter[550], iou: 0.485367, object: 0.000049, anyobject: 0.000024, recall: 0.533333
+{TRAIN} iter[551], train_loss: 2.991701, coord_loss: 0.071363, object_loss: 2.304138, nobject_loss: 0.000001, image_nums: 70528, speed: 58.24 images/s
+{TRAIN} iter[551], iou: 0.431638, object: 0.000119, anyobject: 0.000024, recall: 0.406780
+{TRAIN} iter[552], train_loss: 2.100199, coord_loss: 0.039063, object_loss: 1.444941, nobject_loss: 0.000001, image_nums: 70656, speed: 60.87 images/s
+{TRAIN} iter[552], iou: 0.390715, object: 0.000129, anyobject: 0.000023, recall: 0.351351
+{TRAIN} iter[553], train_loss: 3.006023, coord_loss: 0.046596, object_loss: 2.343239, nobject_loss: 0.000001, image_nums: 70784, speed: 57.26 images/s
+{TRAIN} iter[553], iou: 0.513758, object: 0.000109, anyobject: 0.000021, recall: 0.583333
+{TRAIN} iter[554], train_loss: 2.493655, coord_loss: 0.041740, object_loss: 1.835733, nobject_loss: 0.000001, image_nums: 70912, speed: 69.64 images/s
+{TRAIN} iter[554], iou: 0.397279, object: 0.000056, anyobject: 0.000024, recall: 0.446809
+{TRAIN} iter[555], train_loss: 2.537652, coord_loss: 0.047221, object_loss: 1.874254, nobject_loss: 0.000002, image_nums: 71040, speed: 69.22 images/s
+{TRAIN} iter[555], iou: 0.469177, object: 0.000199, anyobject: 0.000025, recall: 0.541667
+{TRAIN} iter[556], train_loss: 2.920271, coord_loss: 0.039131, object_loss: 2.264970, nobject_loss: 0.000001, image_nums: 71168, speed: 68.82 images/s
+{TRAIN} iter[556], iou: 0.515394, object: 0.000145, anyobject: 0.000022, recall: 0.655172
+{TRAIN} iter[557], train_loss: 2.520223, coord_loss: 0.029534, object_loss: 1.874524, nobject_loss: 0.000001, image_nums: 71296, speed: 71.06 images/s
+{TRAIN} iter[557], iou: 0.482216, object: 0.000127, anyobject: 0.000024, recall: 0.520833
+{TRAIN} iter[558], train_loss: 3.045647, coord_loss: 0.047184, object_loss: 2.382306, nobject_loss: 0.000001, image_nums: 71424, speed: 63.61 images/s
+{TRAIN} iter[558], iou: 0.465560, object: 0.000106, anyobject: 0.000021, recall: 0.508197
+{TRAIN} iter[559], train_loss: 2.902865, coord_loss: 0.060929, object_loss: 2.225785, nobject_loss: 0.000001, image_nums: 71552, speed: 68.37 images/s
+{TRAIN} iter[559], iou: 0.422233, object: 0.000175, anyobject: 0.000024, recall: 0.473684
+{TRAIN} iter[560], train_loss: 2.982633, coord_loss: 0.062214, object_loss: 2.304274, nobject_loss: 0.000001, image_nums: 71680, speed: 69.88 images/s
+{TRAIN} iter[560], iou: 0.425946, object: 0.000090, anyobject: 0.000022, recall: 0.474576
+{TRAIN} iter[561], train_loss: 2.726319, coord_loss: 0.040528, object_loss: 2.069651, nobject_loss: 0.000002, image_nums: 71808, speed: 69.08 images/s
+{TRAIN} iter[561], iou: 0.504783, object: 0.000160, anyobject: 0.000025, recall: 0.584906
+{TRAIN} iter[562], train_loss: 2.734982, coord_loss: 0.048989, object_loss: 2.069859, nobject_loss: 0.000001, image_nums: 71936, speed: 65.84 images/s
+{TRAIN} iter[562], iou: 0.463150, object: 0.000110, anyobject: 0.000026, recall: 0.490566
+{TRAIN} iter[563], train_loss: 2.929439, coord_loss: 0.048066, object_loss: 2.265245, nobject_loss: 0.000001, image_nums: 72064, speed: 69.31 images/s
+{TRAIN} iter[563], iou: 0.446503, object: 0.000084, anyobject: 0.000024, recall: 0.534483
+{TRAIN} iter[564], train_loss: 2.405732, coord_loss: 0.032402, object_loss: 1.757209, nobject_loss: 0.000001, image_nums: 72192, speed: 65.32 images/s
+{TRAIN} iter[564], iou: 0.535839, object: 0.000172, anyobject: 0.000022, recall: 0.622222
+{TRAIN} iter[565], train_loss: 3.154505, coord_loss: 0.039438, object_loss: 2.498951, nobject_loss: 0.000001, image_nums: 72320, speed: 68.33 images/s
+{TRAIN} iter[565], iou: 0.478750, object: 0.000210, anyobject: 0.000024, recall: 0.593750
+{TRAIN} iter[566], train_loss: 3.221321, coord_loss: 0.066693, object_loss: 2.538519, nobject_loss: 0.000002, image_nums: 72448, speed: 65.14 images/s
+{TRAIN} iter[566], iou: 0.480720, object: 0.000107, anyobject: 0.000028, recall: 0.538462
+{TRAIN} iter[567], train_loss: 2.682172, coord_loss: 0.035363, object_loss: 2.030705, nobject_loss: 0.000001, image_nums: 72576, speed: 65.29 images/s
+{TRAIN} iter[567], iou: 0.470050, object: 0.000134, anyobject: 0.000025, recall: 0.538462
+{TRAIN} iter[568], train_loss: 2.325931, coord_loss: 0.030584, object_loss: 1.679249, nobject_loss: 0.000002, image_nums: 72704, speed: 66.20 images/s
+{TRAIN} iter[568], iou: 0.403703, object: 0.000130, anyobject: 0.000027, recall: 0.395349
+{TRAIN} iter[569], train_loss: 2.565983, coord_loss: 0.037598, object_loss: 1.912294, nobject_loss: 0.000002, image_nums: 72832, speed: 65.61 images/s
+{TRAIN} iter[569], iou: 0.480360, object: 0.000463, anyobject: 0.000028, recall: 0.591837
+{TRAIN} iter[570], train_loss: 3.121572, coord_loss: 0.084222, object_loss: 2.421265, nobject_loss: 0.000001, image_nums: 72960, speed: 69.73 images/s
+{TRAIN} iter[570], iou: 0.432759, object: 0.000126, anyobject: 0.000024, recall: 0.483871
+{TRAIN} iter[571], train_loss: 2.667174, coord_loss: 0.059491, object_loss: 1.991604, nobject_loss: 0.000002, image_nums: 73088, speed: 66.29 images/s
+{TRAIN} iter[571], iou: 0.468058, object: 0.000147, anyobject: 0.000026, recall: 0.509804
+{TRAIN} iter[572], train_loss: 2.813283, coord_loss: 0.049493, object_loss: 2.147718, nobject_loss: 0.000002, image_nums: 73216, speed: 69.43 images/s
+{TRAIN} iter[572], iou: 0.447275, object: 0.000168, anyobject: 0.000026, recall: 0.509091
+{TRAIN} iter[573], train_loss: 2.409744, coord_loss: 0.036564, object_loss: 1.757113, nobject_loss: 0.000001, image_nums: 73344, speed: 71.20 images/s
+{TRAIN} iter[573], iou: 0.521172, object: 0.000199, anyobject: 0.000024, recall: 0.577778
+{TRAIN} iter[574], train_loss: 3.444021, coord_loss: 0.055581, object_loss: 2.772379, nobject_loss: 0.000002, image_nums: 73472, speed: 64.25 images/s
+{TRAIN} iter[574], iou: 0.473040, object: 0.000191, anyobject: 0.000027, recall: 0.577465
+{TRAIN} iter[575], train_loss: 2.810192, coord_loss: 0.046020, object_loss: 2.148118, nobject_loss: 0.000001, image_nums: 73600, speed: 64.58 images/s
+{TRAIN} iter[575], iou: 0.426612, object: 0.000074, anyobject: 0.000025, recall: 0.400000
+{TRAIN} iter[576], train_loss: 2.608086, coord_loss: 0.039539, object_loss: 1.952499, nobject_loss: 0.000001, image_nums: 73728, speed: 73.25 images/s
+{TRAIN} iter[576], iou: 0.482021, object: 0.000160, anyobject: 0.000025, recall: 0.560000
+{TRAIN} iter[577], train_loss: 2.607887, coord_loss: 0.039175, object_loss: 1.952670, nobject_loss: 0.000002, image_nums: 73856, speed: 74.30 images/s
+{TRAIN} iter[577], iou: 0.521087, object: 0.000116, anyobject: 0.000026, recall: 0.600000
+{TRAIN} iter[578], train_loss: 3.170701, coord_loss: 0.055166, object_loss: 2.499498, nobject_loss: 0.000002, image_nums: 73984, speed: 67.58 images/s
+{TRAIN} iter[578], iou: 0.460679, object: 0.000100, anyobject: 0.000026, recall: 0.515625
+{TRAIN} iter[579], train_loss: 3.093737, coord_loss: 0.056920, object_loss: 2.420787, nobject_loss: 0.000002, image_nums: 74112, speed: 64.28 images/s
+{TRAIN} iter[579], iou: 0.507031, object: 0.000225, anyobject: 0.000031, recall: 0.612903
+{TRAIN} iter[580], train_loss: 3.235190, coord_loss: 0.042363, object_loss: 2.576802, nobject_loss: 0.000003, image_nums: 74240, speed: 62.18 images/s
+{TRAIN} iter[580], iou: 0.462387, object: 0.000257, anyobject: 0.000032, recall: 0.500000
+{TRAIN} iter[581], train_loss: 2.727854, coord_loss: 0.042506, object_loss: 2.069330, nobject_loss: 0.000002, image_nums: 74368, speed: 65.11 images/s
+{TRAIN} iter[581], iou: 0.450197, object: 0.000238, anyobject: 0.000031, recall: 0.622642
+{TRAIN} iter[582], train_loss: 2.802880, coord_loss: 0.039765, object_loss: 2.147102, nobject_loss: 0.000003, image_nums: 74496, speed: 69.71 images/s
+{TRAIN} iter[582], iou: 0.474645, object: 0.000311, anyobject: 0.000032, recall: 0.490909
+{TRAIN} iter[583], train_loss: 2.795354, coord_loss: 0.031758, object_loss: 2.147590, nobject_loss: 0.000002, image_nums: 74624, speed: 69.83 images/s
+{TRAIN} iter[583], iou: 0.495109, object: 0.000197, anyobject: 0.000027, recall: 0.618182
+{TRAIN} iter[584], train_loss: 2.024114, coord_loss: 0.041276, object_loss: 1.366838, nobject_loss: 0.000002, image_nums: 74752, speed: 64.03 images/s
+{TRAIN} iter[584], iou: 0.523969, object: 0.000128, anyobject: 0.000028, recall: 0.600000
+{TRAIN} iter[585], train_loss: 2.734976, coord_loss: 0.049623, object_loss: 2.069360, nobject_loss: 0.000003, image_nums: 74880, speed: 69.82 images/s
+{TRAIN} iter[585], iou: 0.428407, object: 0.000230, anyobject: 0.000029, recall: 0.471698
+{TRAIN} iter[586], train_loss: 2.563518, coord_loss: 0.033997, object_loss: 1.913534, nobject_loss: 0.000002, image_nums: 75008, speed: 72.31 images/s
+{TRAIN} iter[586], iou: 0.512294, object: 0.000138, anyobject: 0.000027, recall: 0.612245
+{TRAIN} iter[587], train_loss: 2.808379, coord_loss: 0.044487, object_loss: 2.147910, nobject_loss: 0.000004, image_nums: 75136, speed: 72.19 images/s
+{TRAIN} iter[587], iou: 0.431830, object: 0.000123, anyobject: 0.000032, recall: 0.436364
+{TRAIN} iter[588], train_loss: 2.730479, coord_loss: 0.045143, object_loss: 2.069362, nobject_loss: 0.000001, image_nums: 75264, speed: 58.07 images/s
+{TRAIN} iter[588], iou: 0.458172, object: 0.000230, anyobject: 0.000025, recall: 0.547170
+{TRAIN} iter[589], train_loss: 2.895107, coord_loss: 0.053334, object_loss: 2.225806, nobject_loss: 0.000002, image_nums: 75392, speed: 64.45 images/s
+{TRAIN} iter[589], iou: 0.484212, object: 0.000170, anyobject: 0.000026, recall: 0.596491
+{TRAIN} iter[590], train_loss: 2.332404, coord_loss: 0.037574, object_loss: 1.678866, nobject_loss: 0.000003, image_nums: 75520, speed: 64.65 images/s
+{TRAIN} iter[590], iou: 0.504855, object: 0.000245, anyobject: 0.000032, recall: 0.558140
+{TRAIN} iter[591], train_loss: 3.077853, coord_loss: 0.041017, object_loss: 2.420879, nobject_loss: 0.000003, image_nums: 75648, speed: 63.92 images/s
+{TRAIN} iter[591], iou: 0.493990, object: 0.000206, anyobject: 0.000030, recall: 0.612903
+{TRAIN} iter[592], train_loss: 3.021071, coord_loss: 0.062056, object_loss: 2.343063, nobject_loss: 0.000003, image_nums: 75776, speed: 71.35 images/s
+{TRAIN} iter[592], iou: 0.457377, object: 0.000147, anyobject: 0.000033, recall: 0.550000
+{TRAIN} iter[593], train_loss: 2.414930, coord_loss: 0.041454, object_loss: 1.757532, nobject_loss: 0.000002, image_nums: 75904, speed: 62.99 images/s
+{TRAIN} iter[593], iou: 0.422976, object: 0.000080, anyobject: 0.000027, recall: 0.488889
+{TRAIN} iter[594], train_loss: 2.531153, coord_loss: 0.040762, object_loss: 1.874453, nobject_loss: 0.000003, image_nums: 76032, speed: 64.32 images/s
+{TRAIN} iter[594], iou: 0.455094, object: 0.000146, anyobject: 0.000030, recall: 0.541667
+{TRAIN} iter[595], train_loss: 3.242565, coord_loss: 0.049603, object_loss: 2.577029, nobject_loss: 0.000004, image_nums: 76160, speed: 61.89 images/s
+{TRAIN} iter[595], iou: 0.452144, object: 0.000213, anyobject: 0.000037, recall: 0.530303
+{TRAIN} iter[596], train_loss: 2.899100, coord_loss: 0.057702, object_loss: 2.225471, nobject_loss: 0.000003, image_nums: 76288, speed: 64.65 images/s
+{TRAIN} iter[596], iou: 0.437358, object: 0.000245, anyobject: 0.000034, recall: 0.526316
+{TRAIN} iter[597], train_loss: 2.837240, coord_loss: 0.034824, object_loss: 2.186496, nobject_loss: 0.000003, image_nums: 76416, speed: 64.05 images/s
+{TRAIN} iter[597], iou: 0.453111, object: 0.000230, anyobject: 0.000031, recall: 0.517857
+{TRAIN} iter[598], train_loss: 2.580692, coord_loss: 0.051333, object_loss: 1.913444, nobject_loss: 0.000003, image_nums: 76544, speed: 64.98 images/s
+{TRAIN} iter[598], iou: 0.456203, object: 0.000162, anyobject: 0.000034, recall: 0.489796
+{TRAIN} iter[599], train_loss: 2.446255, coord_loss: 0.034184, object_loss: 1.796162, nobject_loss: 0.000004, image_nums: 76672, speed: 70.34 images/s
+{TRAIN} iter[599], iou: 0.510856, object: 0.000199, anyobject: 0.000033, recall: 0.630435
+{TRAIN} iter[600], train_loss: 2.691628, coord_loss: 0.045356, object_loss: 2.030370, nobject_loss: 0.000003, image_nums: 76800, speed: 71.37 images/s
+{TRAIN} iter[600], iou: 0.446885, object: 0.000217, anyobject: 0.000033, recall: 0.519231
+{TRAIN} iter[601], train_loss: 2.696003, coord_loss: 0.050380, object_loss: 2.029727, nobject_loss: 0.000004, image_nums: 76928, speed: 61.33 images/s
+{TRAIN} iter[601], iou: 0.477975, object: 0.000376, anyobject: 0.000036, recall: 0.538462
+{TRAIN} iter[602], train_loss: 2.650862, coord_loss: 0.043376, object_loss: 1.991597, nobject_loss: 0.000003, image_nums: 77056, speed: 68.93 images/s
+{TRAIN} iter[602], iou: 0.465975, object: 0.000148, anyobject: 0.000031, recall: 0.490196
+{TRAIN} iter[603], train_loss: 2.683355, coord_loss: 0.037117, object_loss: 2.030356, nobject_loss: 0.000002, image_nums: 77184, speed: 68.60 images/s
+{TRAIN} iter[603], iou: 0.435664, object: 0.000220, anyobject: 0.000030, recall: 0.500000
+{TRAIN} iter[604], train_loss: 2.611683, coord_loss: 0.043118, object_loss: 1.952688, nobject_loss: 0.000003, image_nums: 77312, speed: 60.33 images/s
+{TRAIN} iter[604], iou: 0.407269, object: 0.000112, anyobject: 0.000033, recall: 0.440000
+{TRAIN} iter[605], train_loss: 3.041325, coord_loss: 0.043472, object_loss: 2.381980, nobject_loss: 0.000004, image_nums: 77440, speed: 59.34 images/s
+{TRAIN} iter[605], iou: 0.413592, object: 0.000175, anyobject: 0.000035, recall: 0.475410
+{TRAIN} iter[606], train_loss: 2.920577, coord_loss: 0.041097, object_loss: 2.263613, nobject_loss: 0.000005, image_nums: 77568, speed: 71.29 images/s
+{TRAIN} iter[606], iou: 0.506809, object: 0.000445, anyobject: 0.000039, recall: 0.603448
+{TRAIN} iter[607], train_loss: 3.142592, coord_loss: 0.066476, object_loss: 2.460255, nobject_loss: 0.000004, image_nums: 77696, speed: 69.54 images/s
+{TRAIN} iter[607], iou: 0.411334, object: 0.000139, anyobject: 0.000034, recall: 0.396825
+{TRAIN} iter[608], train_loss: 3.179716, coord_loss: 0.064372, object_loss: 2.499489, nobject_loss: 0.000005, image_nums: 77824, speed: 58.25 images/s
+{TRAIN} iter[608], iou: 0.475674, object: 0.000102, anyobject: 0.000033, recall: 0.562500
+{TRAIN} iter[609], train_loss: 2.614116, coord_loss: 0.046255, object_loss: 1.952011, nobject_loss: 0.000006, image_nums: 77952, speed: 70.98 images/s
+{TRAIN} iter[609], iou: 0.436037, object: 0.000286, anyobject: 0.000034, recall: 0.520000
+{TRAIN} iter[610], train_loss: 3.266539, coord_loss: 0.073059, object_loss: 2.577640, nobject_loss: 0.000003, image_nums: 78080, speed: 58.02 images/s
+{TRAIN} iter[610], iou: 0.437558, object: 0.000094, anyobject: 0.000035, recall: 0.515152
+{TRAIN} iter[611], train_loss: 2.338959, coord_loss: 0.045222, object_loss: 1.677900, nobject_loss: 0.000005, image_nums: 78208, speed: 59.84 images/s
+{TRAIN} iter[611], iou: 0.472566, object: 0.000534, anyobject: 0.000039, recall: 0.488372
+{TRAIN} iter[612], train_loss: 3.603385, coord_loss: 0.061819, object_loss: 2.925736, nobject_loss: 0.000004, image_nums: 78336, speed: 55.59 images/s
+{TRAIN} iter[612], iou: 0.477927, object: 0.000676, anyobject: 0.000039, recall: 0.546667
+{TRAIN} iter[613], train_loss: 2.976019, coord_loss: 0.056820, object_loss: 2.303376, nobject_loss: 0.000003, image_nums: 78464, speed: 57.95 images/s
+{TRAIN} iter[613], iou: 0.431710, object: 0.000285, anyobject: 0.000032, recall: 0.491525
+{TRAIN} iter[614], train_loss: 2.887662, coord_loss: 0.046150, object_loss: 2.225691, nobject_loss: 0.000007, image_nums: 78592, speed: 64.26 images/s
+{TRAIN} iter[614], iou: 0.522312, object: 0.000196, anyobject: 0.000041, recall: 0.596491
