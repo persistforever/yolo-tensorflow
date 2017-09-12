@@ -27,8 +27,16 @@ for key in colors:
 def draw_image(contents_dict, maindir):
 	n_processed = 1
 	for docid in contents_dict:
+		n_processed += 1
 		print('Draw Images: docid: %s, rate: %.2f%%' % (docid, 100.0 * n_processed / len(contents_dict)))
 		sys.stdout.flush()
+
+		continued = True
+		if docid == '426':
+			continued = False
+		if continued:
+			continue
+
 		if not os.path.exists(maindir):
 			os.mkdir(maindir)
 		if not os.path.exists(os.path.join(maindir, docid)):
@@ -48,6 +56,15 @@ def draw_image(contents_dict, maindir):
 			if len(contents_dict[docid][pageid]['tables']) == 0:
 				# 如果没有表格，则画图并保存在no_table文件夹中 
 				image = numpy.zeros((shape[1], shape[0], 3), dtype='uint8') + 255
+
+				new_text = []
+				for idx in range(len(contents_dict[docid][pageid]['boxes'])):
+					text = contents_dict[docid][pageid]['boxes'][idx]
+					if 0 <= text['position'][0] < shape[0] and 0 <= text['position'][1] < shape[0] and \
+						0 <= text['position'][2] < shape[1] and 0 <= text['position'][3] < shape[1]:
+						new_text.append(text)
+				contents_dict[docid][pageid]['boxes'] = new_text
+
 				for text in contents_dict[docid][pageid]['boxes']:
 					if text['type'] == 100:
 						image[text['position'][2]:text['position'][3],
@@ -147,15 +164,16 @@ def draw_image(contents_dict, maindir):
 					maindir, docid, 'png_noline_table', 
 					'%s_%s_nolinetable.png' % (docid, pageid))
 				misc.imsave(image_noline_path, image_noline)
-		n_processed += 1
 		
 def create_labels(contents_dict, maindir):
 	dataset = []
 
-	n_processed = 1
+	n_processed = 0
 	for docid in contents_dict:
+		n_processed += 1
 		print('Write Labels: docid: %s, rate: %.2f%%' % (docid, 100.0 * n_processed / len(contents_dict)))
 		sys.stdout.flush()
+
 		if not os.path.exists(maindir):
 			os.mkdir(maindir)
 		if not os.path.exists(os.path.join(maindir, 'JPEGImages', docid)):
@@ -171,18 +189,22 @@ def create_labels(contents_dict, maindir):
 			if len(contents_dict[docid][pageid]['tables']) == 0:
 				picpath = os.path.exists(maindir, 'JPEGImages', docid, 'png_notable',
 					'%d_%d_notable.png' % (docid, pageid))
+				label = [picpath]
+				if os.path.exists(label[0]):
+					dataset.append(' '.join(label))
 			else:
 				# noline
 				picpath = os.path.exists(maindir, 'JPEGImages', docid, 'png_noline_notable',
 					'%d_%d_nolinenotable.png' % (docid, pageid))
 				label = [picpath]
 				for table in contents_dict[docid][pageid]['tables']:
-					left = int(table['position'][0])
-					right = int(table['position'][1])
-					top = int(table['position'][2])
-					bottom = int(table['position'][3])
-					label.extend([left, right, top, bottom, 1])
-				dataset.append(label)
+					left = str(int(table['position'][0]))
+					right = str(int(table['position'][1]))
+					top = str(int(table['position'][2]))
+					bottom = str(int(table['position'][3]))
+					label.extend([left, right, top, bottom, '1'])
+				if os.path.exists(label[0]):
+					dataset.append(' '.join(label))
 
 				# line
 				picpath = os.path.exists(maindir, 'JPEGImages', docid, 'png_line_notable',
@@ -194,7 +216,8 @@ def create_labels(contents_dict, maindir):
 					top = str(int(table['position'][2]))
 					bottom = str(int(table['position'][3]))
 					label.extend([left, right, top, bottom, '1'])
-				dataset.append(' '.join(label))
+				if os.path.exists(label[0]):
+					dataset.append(' '.join(label))
 
 	random.shuffle(dataset)
 
@@ -233,5 +256,5 @@ if 'Windows' in platform.platform():
 	uint_test3('E:\\Temporal\Python\darknet-master\datasets\\table-png')
 elif 'Linux' in platform.platform():
 	contents_dict = read_json('/home/caory/github/table-detection/data/table-v2/texts.json')
-	# draw_image(contents_dict, '/home/caory/github/table-detection/data/table-v2/JPEGImages')
-	create_labels(contents_dict, '/home/caory/github/table-detection/data/table-v2/')
+	draw_image(contents_dict, '/home/caory/github/table-detection/data/table-v2/JPEGImages')
+	# create_labels(contents_dict, '/home/caory/github/table-detection/data/table-v2/')

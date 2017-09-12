@@ -65,7 +65,7 @@ class TinyYolo():
         # 设置学习率
         lr = tf.cond(tf.less(self.global_step, 100), 
                      lambda: tf.constant(0.001),
-                     lambda: tf.cond(tf.less(self.global_step, 80000),
+                     lambda: tf.cond(tf.less(self.global_step, 50000),
                                      lambda: tf.constant(0.01),
                                      lambda: tf.cond(tf.less(self.global_step, 100000),
                                                      lambda: tf.constant(0.001),
