@@ -221,6 +221,7 @@ def create_labels(contents_dict, maindir):
 
 	random.shuffle(dataset)
 
+	train_list, valid_list, test_list = [], [], []
 	train_list.extend(dataset[0: int(len(dataset) * 0.9)])
 	valid_list.extend(dataset[int(len(dataset) * 0.9): int(len(dataset) * 0.95)])
 	test_list.extend(dataset[int(len(dataset) * 0.95):])
