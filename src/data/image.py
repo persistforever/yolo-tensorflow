@@ -315,13 +315,6 @@ class ImageProcessor:
                     new_label[n] = [new_left, new_right, new_top, new_bottom, 
                                     label[j][4]]
                     n += 1
-            """
-            cv2.imwrite('old.png', old_image)
-            print(label)
-            cv2.imwrite('new.png', new_image)
-            print(new_label)
-            exit()
-            """
         else:
             new_image = cv2.resize(image, (resized_h, resized_w))
             
@@ -336,6 +329,11 @@ class ImageProcessor:
                 new_right = 1.0 * right / orig_w
                 new_top = 1.0 * top / orig_h
                 new_bottom = 1.0 * bottom / orig_h
+                    
+                new_left = min(max(0.0, new_left), 1.0 - 1e-6)
+                new_right = max(0.0, min(new_right, 1.0 - 1e-6))
+                new_top = min(max(0.0, new_top), 1.0 - 1e-6)
+                new_bottom = max(0.0, min(new_bottom, 1.0 - 1e-6))
                 
                 if new_right > new_left and new_bottom > new_top:
                     new_label[n] = [new_left, new_right, new_top, new_bottom, 
