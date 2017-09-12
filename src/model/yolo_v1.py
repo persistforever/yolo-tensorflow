@@ -72,7 +72,7 @@ class TinyYolo():
                                                      lambda: tf.constant(0.001),
                                                      lambda: tf.constant(0.0001))))
         self.optimizer = tf.train.MomentumOptimizer(
-            learning_rate=lr, momentum=0.9).minimize(
+            learning_rate=0.001, momentum=0.9).minimize(
                 self.avg_loss, global_step=self.global_step)
         
     def inference(self, images):
@@ -494,7 +494,7 @@ class TinyYolo():
                         processor.validsets, i, batch_size)
                     batch_images, batch_labels = processor.data_augmentation(
                         batch_image_paths, batch_labels, mode='test',
-                        flip=False, whiten=True, resize=True, jitter=0.2)
+                        flip=False, whiten=True, resize=True)
                     batch_class_labels, batch_class_masks, batch_box_labels, batch_object_nums = \
                         processor.process_batch_labels(batch_labels)
                     
@@ -530,88 +530,70 @@ class TinyYolo():
                 
         self.sess.close()
                 
-    def test(self, processor, backup_path, n_iter=0, batch_size=128):
+    def test(self, processor, backup_path, batch_size=128):
         # 构建会话
         gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.45)
         self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
         
         # 读取模型
         self.saver = tf.train.Saver(write_version=tf.train.SaverDef.V2)
-        model_path = os.path.join(backup_path, 'model_%d.ckpt' % (epoch))
+        model_path = os.path.join(backup_path, 'model.ckpt')
         assert(os.path.exists(model_path+'.index'))
         self.saver.restore(self.sess, model_path)
         print('read model from %s' % (model_path))
         
         # 在测试集上计算
         for i in range(0, processor.n_test-batch_size, batch_size):
-            batch_images, batch_class_labels, batch_class_masks, batch_box_labels, \
-                batch_object_masks, batch_nobject_masks, batch_object_nums = \
-                processor.get_test_batch(i, batch_size)
-                
+            
+            # 获取数据并进行数据增强
+            batch_image_paths, batch_labels = processor.get_index_batch(
+                processor.testsets, i, batch_size)
+            batch_images, batch_labels = processor.data_augmentation(
+                batch_image_paths, batch_labels, mode='test',
+                flip=False, whiten=True, resize=True)
+            _, _, batch_box_labels, batch_object_nums = \
+                processor.process_batch_labels(batch_labels)
+            
             [logits] = self.sess.run(
-                fetches=[self.logits],
-                feed_dict={self.images: batch_images, 
-                           self.class_labels: batch_class_labels, 
-                           self.class_masks: batch_class_masks,
+                fetches=[self.logits], 
+                feed_dict={self.images: batch_images,
                            self.box_labels: batch_box_labels,
-                           self.object_masks: batch_object_masks,
-                           self.nobject_masks: batch_nobject_masks,
-                           self.object_num: batch_object_nums,
+                           self.object_nums: batch_object_nums,
                            self.keep_prob: 1.0})
             
-            logits = tf.reshape(
-                logits, shape=[self.batch_size, self.cell_size, self.cell_size, 
-                               self.n_classes + self.n_boxes * 5])
-            class_preds = logits[:,:,:,0:self.n_classes]
-            box_preds = tf.reshape(
-                logits[:,:,:,self.n_classes:], 
-                shape=[self.batch_size, self.cell_size, self.cell_size, self.n_boxes, 5])
+            box_preds = numpy.reshape(
+                logits, (self.batch_size, self.cell_size, self.cell_size, 
+                         self.n_boxes, 5))
         
             for j in range(batch_images.shape[0]):
-                image = batch_images[j]
+                image_path = batch_image_paths[j]
+                image = cv2.imread(image_path)
                 # 画真实的框
-                for x in range(self.cell_size):
-                    for y in range(self.cell_size):
-                        for n in range(self.max_objects):
-                            box = batch_box_labels[i, x, y, n]
-                            if box[4] == 1.0:
-                                xmin = int((box[0] - box[2] / 2.0) * image.shape[0])
-                                xmax = int((box[0] + box[2] / 2.0) * image.shape[0])
-                                ymin = int((box[1] - box[3] / 2.0) * image.shape[1])
-                                ymax = int((box[1] + box[3] / 2.0) * image.shape[1])
-                                cv2.rectangle(image, (xmin, ymin), (xmax, ymax), (255, 99, 71))
+                for l in range(self.max_objects):
+                    [left, right, top, bottom] = batch_labels[j, l, 0:4]
+                    left = int(left * image.shape[1])
+                    right = int(right * image.shape[1])
+                    top = int(top * image.shape[0])
+                    bottom = int(bottom * image.shape[0])
+                    cv2.rectangle(image, (left, top), (right, bottom), 
+                                  (255, 99, 71), 2)
+                
                 # 画预测的框
                 for x in range(self.cell_size):
                     for y in range(self.cell_size):
-                        class_pred = numpy.argmax(class_preds[j, x, y])
                         for n in range(self.n_boxes):
-                            box = box_preds[j, x, y]
-                            if box[4] >= 0.25:
-                                xmin = int((box[0] - box[2] / 2.0) * image.shape[0])
-                                xmax = int((box[0] + box[2] / 2.0) * image.shape[0])
-                                ymin = int((box[1] - box[3] / 2.0) * image.shape[1])
-                                ymax = int((box[1] + box[3] / 2.0) * image.shape[1])
-                                cv2.rectangle(image, (xmin, ymin), (xmax, ymax), (238, 130, 238))
+                            box = box_preds[j, x, y, n]
+                            if box[4] >= 5e-4:
+                                print(box)
+                                left = int((box[0] - box[2] / 2.0) * image.shape[1])
+                                right = int((box[0] + box[2] / 2.0) * image.shape[1])
+                                top = int((box[1] - box[3] / 2.0) * image.shape[0])
+                                bottom = int((box[1] + box[3] / 2.0) * image.shape[0])
+                                cv2.rectangle(image, (left, top), (right, bottom), 
+                                              (238, 130, 238), 2)
                                 
-                plt.imshow(batch_images[0])
+                plt.imshow(image)
                 plt.show()
-            exit()
-            
-        accuracy_list = []
-        test_images = dataloader.data_augmentation(dataloader.test_images,
-            flip=True, crop=True, shape=(24,24,3), whiten=True, noise=False)
-        test_labels = dataloader.test_labels
-        for i in range(0, dataloader.n_test, batch_size):
-            batch_images = test_images[i: i+batch_size]
-            batch_labels = test_labels[i: i+batch_size]
-            [avg_accuracy] = self.sess.run(
-                fetches=[self.accuracy], 
-                feed_dict={self.images:batch_images, 
-                           self.labels:batch_labels,
-                           self.keep_prob:1.0})
-            accuracy_list.append(avg_accuracy)
-        print('test precision: %.4f' % (numpy.mean(accuracy_list)))
-        self.sess.close()
             
     def debug(self, processor):
         # 处理数据
