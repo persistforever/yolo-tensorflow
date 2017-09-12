@@ -187,15 +187,15 @@ def create_labels(contents_dict, maindir):
 		for pageid in contents_dict[docid]:
 			shape = contents_dict[docid][pageid]['size']
 			if len(contents_dict[docid][pageid]['tables']) == 0:
-				picpath = os.path.exists(maindir, 'JPEGImages', docid, 'png_notable',
-					'%d_%d_notable.png' % (docid, pageid))
+				picpath = os.path.join(maindir, 'JPEGImages', docid, 'png_notable',
+					'%s_%s_notable.png' % (docid, pageid))
 				label = [picpath]
 				if os.path.exists(label[0]):
 					dataset.append(' '.join(label))
 			else:
 				# noline
-				picpath = os.path.exists(maindir, 'JPEGImages', docid, 'png_noline_notable',
-					'%d_%d_nolinenotable.png' % (docid, pageid))
+				picpath = os.path.join(maindir, 'JPEGImages', docid, 'png_noline_notable',
+					'%s_%s_nolinenotable.png' % (docid, pageid))
 				label = [picpath]
 				for table in contents_dict[docid][pageid]['tables']:
 					left = str(int(table['position'][0]))
@@ -207,8 +207,8 @@ def create_labels(contents_dict, maindir):
 					dataset.append(' '.join(label))
 
 				# line
-				picpath = os.path.exists(maindir, 'JPEGImages', docid, 'png_line_notable',
-					'%d_%d_linenotable.png' % (docid, pageid))
+				picpath = os.path.join(maindir, 'JPEGImages', docid, 'png_line_notable',
+					'%s_%s_linenotable.png' % (docid, pageid))
 				label = [picpath]
 				for table in contents_dict[docid][pageid]['tables']:
 					left = str(int(table['position'][0]))
