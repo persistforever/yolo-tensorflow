@@ -442,7 +442,9 @@ if 'Windows' in platform.platform():
     uint_test2('E:\\Temporal\Python\darknet-master\datasets\\table-png')
     uint_test3('E:\\Temporal\Python\darknet-master\datasets\\table-png')
 elif 'Linux' in platform.platform():
-    word_dict = read_word_vector('/home/caory/github/table-detection/data/table-v5/word_vector_3.txt')
-    contents_dict = load_source('/home/wangxu/data/pdf2jpg_v4/output', word_dict)
+    # word_dict = read_word_vector('/home/caory/github/table-detection/data/table-v5/word_vector_3.txt')
+    # contents_dict = load_source('/home/wangxu/data/pdf2jpg_v4/output', word_dict)
+    # write_json(contents_dict, '/home/caory/github/table-detection/data/table-v6/texts.json')
+    contents_dict = read_json('/home/caory/github/table-detection/data/table-v6/texts.json')
     draw_image(contents_dict, '/home/caory/github/table-detection/data/table-v6/JPEGImages')
     # create_labels(contents_dict, '/home/caory/github/table-detection/data/table-v2/')
