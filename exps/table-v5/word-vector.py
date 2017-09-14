@@ -29,7 +29,10 @@ def read_txt(path, outpath):
 
 def split_words(path, outpath):
     segmentor = Segmentor()
-    segmentor.load('E:\\Github\\table-detection\\data\\table-v3\\ltp_data\\cws.model')
+    if 'Windows' in platform.platform():
+        segmentor.load('E:\\Github\\table-detection\\data\\table-v5\\ltp_data\\cws.model')
+    elif 'Linux' in platform.platform():
+        segmentor.load('/home/caory/github/table-detection/data/table-v5/ltp_data/cws.model')
     lines, sentences = [], []
 
     with codecs.open(path, 'r', 'utf8') as fo:
@@ -49,15 +52,17 @@ def split_words(path, outpath):
     		fw.writelines((' '.join(sentence) + '\n').encode('utf8'))
 
 def word2vec(path, outpath, wordpath):
-    sentences, word_dict = [], {}
+    sentences, word_dict, n = [], {}, 0
     with codecs.open(path, 'r', 'utf8') as fo:
-        for line in fo.readlines():
+        for line in fo:
             line = line.strip().split(' ')
             sentences.append(line)
     
     print('Start Training ...')
-    model = gensim.models.Word2Vec(sentences, size=100, iter=200, min_count=20, sg=1)
+    model = gensim.models.Word2Vec(sentences, size=3, iter=50, min_count=50, sg=1)
+    print('Finish Training ...')
 
+    print('word number: %d' % (len(model.wv.index2word)))
     word_vector, word_dict, n = [], {}, 0
     with open(outpath, 'w') as fw:
         for word in model.wv.index2word:
@@ -70,19 +75,9 @@ def word2vec(path, outpath, wordpath):
         for word in model.wv.index2word:
             fw.writelines((word + '\n').encode('utf8'))
 
-    drawing(numpy.array(word_vector), word_dict)
+    # drawing(numpy.array(word_vector), word_dict)
 
-def drawing(vectorpath):
-    word_vector, word_dict, n = [], {}, 0
-    with codecs.open(vectorpath, 'r', 'utf8') as fo:
-        for line in fo:
-            [word, vector] = line.strip().split('\t')
-            vector = [float(t) for t in vector.split(' ')]
-            word_dict[n] = word
-            n += 1
-            word_vector.append(vector)
-    word_vector = numpy.array(word_vector)
-
+def drawing(word_vector, word_dict):
     tsne = TSNE(n_components=2)
     tsne.fit(word_vector[0:1000, :])
     word_embedding = tsne.embedding_
@@ -94,13 +89,18 @@ def drawing(vectorpath):
     plt.show()
 
 if 'Windows' in platform.platform():
-    # sentences = read_txt('E:\\Github\\table-detection\\data\\table-v5\\sentences.txt', 
-    #     'E:\\Github\\table-detection\\data\\table-v5\\new_sentences.txt')
-    # split_words('E:\\Github\\table-detection\\data\\table-v5\\new_sentences.txt', \
-    #     'E:\\Github\\table-detection\\data\\table-v5\\split_sentences.txt')
-    # word2vec('E:\\Github\\table-detection\\data\\table-v5\\split_sentences.txt', \
-    #     'E:\\Github\\table-detection\\data\\table-v5\\word_vector.txt',
-    #     'E:\\Github\\table-detection\\data\\table-v5\\word_dict.txt')
-    drawing('E:\\Github\\table-detection\\data\\table-v5\\word_vector.txt')
+    # sentences = read_txt('E:\\Github\\table-detection\\data\\table-v3\\sentences.txt', 
+    #     'E:\\Github\\table-detection\\data\\table-v3\\new_sentences.txt')
+    # split_words('E:\\Github\\table-detection\\data\\table-v3\\new_sentences.txt', \
+    #     'E:\\Github\\table-detection\\data\\table-v3\\split_sentences.txt')
+    word2vec('E:\\Github\\table-detection\\data\\table-v3\\split_sentences.txt', \
+        'E:\\Github\\table-detection\\data\\table-v3\\word_vector.txt',
+        'E:\\Github\\table-detection\\data\\table-v3\\word_dict.txt')
 elif 'Linux' in platform.platform():
-    sentences = read_txt('/home/caory/github/table-detection/data/table-v2/texts.json')
+    # sentences = read_txt('/home/caory/github/table-detection/data/table-v5/sentences.txt', \
+	# 	'/home/caory/github/table-detection/data/table-v5/new_sentences.txt')
+    # split_words('/home/caory/github/table-detection/data/table-v5/new_sentences.txt', \
+    #     '/home/caory/github/table-detection/data/table-v5/split_sentences.txt')
+    word2vec('/home/caory/github/table-detection/data/table-v5/split_sentences.txt', \
+        '/home/caory/github/table-detection/data/table-v5/word_vector_3.txt',
+        '/home/caory/github/table-detection/data/table-v5/word_dict.txt')

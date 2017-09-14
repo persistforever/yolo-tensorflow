@@ -19,7 +19,7 @@ def train():
     from src.model.yolo_v1 import TinyYolo
     
     image_processor = ImageProcessor(
-        os.path.join(maindir, 'data', 'table-v1'),
+        os.path.join(maindir, 'data', 'table-v5'),
         image_size=256, max_objects_per_image=30, cell_size=4, n_classes=1)
     
     tiny_yolo = TinyYolo(
@@ -29,8 +29,8 @@ def train():
         recall_thresh=0.5)
     
     tiny_yolo.train(
-        processor=image_processor, backup_path=os.path.join(maindir, 'backup', 'table-v4'),
-        n_iters=500000, batch_size=64)
+        processor=image_processor, backup_path=os.path.join(maindir, 'backup', 'table-v7'),
+        n_iters=100000, batch_size=64)
     
     
 def test():

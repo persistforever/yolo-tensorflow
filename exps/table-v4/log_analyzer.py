@@ -99,7 +99,7 @@ def plot_curve(infos_dict1, infos_dict2):
 	plt.title('train iou value')
 	plt.xlabel('# of iterations')
 	plt.ylabel('iou')
-	plt.xlim(xmin=0, xmax=100000)
+	plt.xlim(xmin=0, xmax=50000)
 	plt.ylim(ymin=0.0, ymax=0.85)
 
 	plt.subplot(222)
@@ -111,7 +111,7 @@ def plot_curve(infos_dict1, infos_dict2):
 	plt.title('valid iou value')
 	plt.xlabel('# of iterations')
 	plt.ylabel('iou')
-	plt.xlim(xmin=0, xmax=100000)
+	plt.xlim(xmin=0, xmax=50000)
 	plt.ylim(ymin=0.0, ymax=0.85)
 
 	plt.subplot(223)
@@ -123,7 +123,7 @@ def plot_curve(infos_dict1, infos_dict2):
 	plt.title('train object value')
 	plt.xlabel('# of iterations')
 	plt.ylabel('accuracy')
-	plt.xlim(xmin=0, xmax=100000)
+	plt.xlim(xmin=0, xmax=50000)
 	plt.ylim(ymin=0.0, ymax=1.0)
 
 	plt.subplot(224)
@@ -135,7 +135,7 @@ def plot_curve(infos_dict1, infos_dict2):
 	plt.title('valid object value')
 	plt.xlabel('# of iterations')
 	plt.ylabel('accuracy')
-	plt.xlim(xmin=0, xmax=100000)
+	plt.xlim(xmin=0, xmax=50000)
 	plt.ylim(ymin=0.0, ymax=1.0)
 
 	plt.show()

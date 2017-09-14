@@ -3,6 +3,7 @@
 import json
 import os
 import shutil
+import codecs
 import random
 import math
 import numpy
@@ -11,6 +12,7 @@ import matplotlib.image as mpimg
 from scipy import misc
 import platform
 import sys
+from pyltp import Segmentor
 
 colors = {
     'word': [150, 150, 150], # 灰色
@@ -22,143 +24,183 @@ colors = {
     'picture': [255, 236, 139], # 黄色
 }
 
-def load_source(maindir):
-	n_processed = 0
-    for docid in os.listdir(maindir)[0:2]:
-		n_processed += 1
-		logging.info('Load Source: doc: %s, rate: %.2f%%' % (
-			docid, 100.0 * (idx+1) / len(dirlist)))
+def read_word_vector(path):
+    word_dict, word_vector, n = {}, [], 0
+
+    with codecs.open(path, 'r', 'utf8') as fo:
+        for line in fo:
+            [word, vector] = line.strip().split('\t')
+            vector = [float(t) for t in vector.split(' ')]
+            word_dict[n] = word
+            n += 1
+            word_vector.append(vector)
+
+    for j in range(3):
+        col_min = min([word_vector[i][j] for i in range(n)])
+        col_max = max([word_vector[i][j] for i in range(n)])
+        for i in range(n):
+            word_vector[i][j] = 1.0 * (word_vector[i][j] - col_min) / (col_max - col_min)
+
+    new_word_dict = {}
+    for i in range(n):
+        new_word_dict[word_dict[i]] = word_vector[i]
+
+    return new_word_dict
+
+def load_source(maindir, word_dict):
+    n_processed = 0
+    contents_dict = {}
+    segmentor = Segmentor()
+    segmentor.load('/home/caory/github/table-detection/data/table-v5/ltp_data/cws.model')
+
+    dirlist = os.listdir(maindir)
+    for docid in dirlist:
+        n_processed += 1
+        print('Load Source: doc: %s, rate: %.2f%%' % (
+            docid, 100.0 * n_processed / len(dirlist)))
+        sys.stdout.flush()
+        contents_dict[docid] = {}
 
         json_path = os.path.join(maindir, docid, 'pages_with_tables')
         data = read_json(json_path)
         for pageid in data:
-            print(data[pageid].keys())
+            contents_dict[docid][pageid] = {}
             size = data[pageid]['size']
             texts, curves, others, tables = [], [], [], []
-			# 获取表格框
-			pad = 2
-			for box in data[pageid]['tables']:
-				pos = [int(math.floor(float(box[0])) - pad), \
-					int(math.ceil(float(box[2])) + pad), \
-					int(math.floor(float(size[1]-box[3])) - pad), \
-					int(math.ceil(float(size[1]-box[1])) + pad)]
-				tables.append({'position': pos, 'lines': [], 'texts': [], 'cells': []})
-			# 获取文本框
-			for text in data[pageid]['texts']:
+			
+            # 获取表格框
+            pad = 2
+            for box in data[pageid]['tables']:
+                left = int(math.floor(float(box[0])) - pad)
+                right = int(math.ceil(float(box[2])) + pad)
+                top = int(math.floor(float(size[1]-box[3])) - pad)
+                bottom = int(math.ceil(float(size[1]-box[1])) + pad)
+                if 0 <= left <= right < size[0] and 0 <= top <= bottom < size[1]:
+                    tables.append({'position': [left, right, top, bottom]})
+			
+            # 获取文本框
+            for text in data[pageid]['texts']:
 				# 获取每一个字符的位置
-				chars = []
-				for char in text['chars']:
-					pos = [int(math.floor(float(char['box'][0]))),
-						int(math.floor(float(char['box'][2]))),
-						int(math.floor(float(size[1]-char['box'][3]))),
-						int(math.floor(float(size[1]-char['box'][1])))]
-					chars.append({'position': pos, 'sentence': char['text'].strip()})
-				# 对于距离近的字符进行合并
-				for char in chars:
-					merged = False
-					for i in range(len(texts)):
-						box = texts[i]
-						if char['position'][2] == texts[i]['position'][2] and \
-							char['position'][3] == texts[i]['position'][3] and \
-							text['type'] == texts[i]['type']:
-							if abs(char['position'][0] - texts[i]['position'][1]) <= 5:
-								texts[i]['position'][1] = char['position'][1]
-								merged = True
-								break
-							elif abs(char['position'][1] - texts[i]['position'][0]) <= 5:
-								texts[i]['position'][0] = char['position'][0]
-								merged = True
-								break
-					if not merged:
-						texts.append({'position': char['position'], 'type': text['type'],
-									'sentence': text['text'].strip()})
-			new_texts = []
-			for text in texts:
-				for table in tables:
-					if text['position'][0] >= table['position'][0] and \
-						text['position'][1] <= table['position'][1] and \
-						text['position'][2] >= table['position'][2] and \
-						text['position'][3] <= table['position'][3]:
-						table['texts'].append(text)
-						break
-				else:
-					new_texts.append(text)
-			texts = new_texts
-			# 对于页码进行特殊识别
-			left_bottom, middle_bottom, right_bottom = [], [], []
-			for i in range(len(texts)):
-				xrate = float((texts[i]['position'][0]+texts[i]['position'][1]) / 2) / size[0]
-				yrate = float((texts[i]['position'][2]+texts[i]['position'][3]) / 2) / size[1]
-				if 0.02 <= xrate <= 0.1 and 0.85 <= yrate <= 1.0 and \
-					texts[i]['type'] == 4:
-					left_bottom.append(i)
-				elif 0.45 <= xrate <= 0.55 and 0.85 <= yrate <= 1.0 and \
-					texts[i]['type'] == 4:
-					middle_bottom.append(i)
-				elif 0.90 <= xrate <= 0.94 and 0.85 <= yrate <= 1.0 and \
-					texts[i]['type'] == 4:
-					right_bottom.append(i)
-			if len(left_bottom) != 0:
-				i = max(left_bottom, key=lambda x: texts[x]['position'][3])
-				texts[i]['type'] = 5
-			elif len(right_bottom) != 0:
-				i = max(right_bottom, key=lambda x: texts[x]['position'][3])
-				texts[i]['type'] = 5
-			elif len(middle_bottom) != 0:
-				i = max(middle_bottom, key=lambda x: texts[x]['position'][3])
-				texts[i]['type'] = 5
-			# 将下划线文本框改为表格框
-			new_texts = []
-			for text in texts:
-				isline = True
-				if 'sentence' in text and text['type'] == 2:
-					for s in text['sentence']:
-						if s != '_':
-							isline = False
-					if isline and len(text['sentence']) >= 3:
-						pos = [text['position'][0], text['position'][1], 
-							text['position'][3]-1, text['position'][3]]
-						curves.append({'position': pos, 'type': 1})
-					else:
-						new_texts.append(text)
-				else:
-					new_texts.append(text)
-			texts = new_texts
-			# 获取其他框（图片等）
-			for other in data[pageid]['others']:
-				pos = [int(math.floor(float(other['box'][0]))), \
-					int(math.floor(float(other['box'][2]))), \
-					int(math.floor(float(size[1]-other['box'][3]))), \
-					int(math.floor(float(size[1]-other['box'][1])))]
-				others.append({'position': pos, 'type': other['type']})
-			# 获取每一个线条的位置
-			curves = []
-			curve_width = 2
-			for curve in data[pageid]['curves']:
-				pos = [int(math.floor(float(curve['box'][0]))), \
-					int(math.floor(float(curve['box'][2]))), \
-					int(math.floor(float(size[1]-curve['box'][3]))), \
-					int(math.floor(float(size[1]-curve['box'][1])))]
-				if pos[1] - pos[0] <= curve_width and pos[3] - pos[2] > curve_width:
-					pos[1] = pos[0]
-					line = {'position': pos, 'type': curve['type']}
-				elif pos[1] - pos[0] > curve_width and pos[3] - pos[2] <= curve_width:
-					pos[3] = pos[2]
-					line = {'position': pos, 'type': curve['type']}
-				for table in tables:
-					if line['position'][0] >= table['position'][0] and \
-						line['position'][1] <= table['position'][1] and \
-						line['position'][2] >= table['position'][2] and \
-						line['position'][3] <= table['position'][3] and \
-						line['type'] == 1:
-						table['lines'].append(line)
-						break
-				else:
-					curves.append(line)
+                chars = []
+                for char in text['chars']:
+                    left = int(math.floor(float(char['box'][0])))
+                    right = int(math.floor(float(char['box'][2])))
+                    top = int(math.floor(float(size[1]-char['box'][3])))
+                    bottom = int(math.floor(float(size[1]-char['box'][1])))
+                    if 0 <= left <= right < size[0] and 0 <= top <= bottom < size[1]:
+                        chars.append({'position': [left, right, top, bottom], 'sentence': char['text'].strip()})
+                
+                # 对于距离近的字符进行合并
+                for char in chars:
+                    merged = False
+                    for i in range(len(texts)):
+                        box = texts[i]
+                        if char['position'][2] == texts[i]['position'][2] and \
+                            char['position'][3] == texts[i]['position'][3] and \
+                            text['type'] == texts[i]['type']:
+                            if abs(char['position'][0] - texts[i]['position'][1]) <= 5:
+                                texts[i]['position'][1] = char['position'][1]
+                                merged = True
+                                break
+                            elif abs(char['position'][1] - texts[i]['position'][0]) <= 5:
+                                texts[i]['position'][0] = char['position'][0]
+                                merged = True
+                                break
+                    if not merged:
+                        texts.append({'position': char['position'], 'type': text['type'],
+                            'sentence': text['text'].strip()})
+			
+            # 对于页码进行特殊识别
+            for i in range(len(texts)):
+                top = texts[i]['position'][2]
+                bottom = texts[i]['position'][3]
+                if 1.0 * top / size[1] <= 0.85:
+                    continue
+                is_page = True
 
+                for j in range(len(texts)):
+                    if j == i:
+                        continue
+                    other_top = texts[j]['position'][2]
+                    other_bottom = texts[j]['position'][3]
+                    if other_bottom >= top:
+                        is_page = False
+                        break
+                
+                if is_page:
+                    texts[i]['type'] = 5
+			
+            # 将下划线文本框改为表格框
+            new_texts = []
+            for text in texts:
+                isline = True
+                if 'sentence' in text and text['type'] == 2:
+                    for s in text['sentence']:
+                        if s != '_':
+                            isline = False
+                    if isline and len(text['sentence']) >= 3:
+                        pos = [text['position'][0], text['position'][1], 
+                            text['position'][3]-1, text['position'][3]]
+                        curves.append({'position': pos, 'type': 1})
+                    else:
+                        new_texts.append(text)
+                else:
+                    new_texts.append(text)
+            texts = new_texts
+			
+            # 获取其他框（图片等）
+            for other in data[pageid]['others']:
+                left = int(math.floor(float(other['box'][0])))
+                right = int(math.floor(float(other['box'][2])))
+                top = int(math.floor(float(size[1]-other['box'][3])))
+                bottom = int(math.floor(float(size[1]-other['box'][1])))
+                if 0 <= left <= right < size[0] and 0 <= top <= bottom < size[1]:
+                    others.append({'position': [left, right, top, bottom], 'type': other['type']})
+			
+            # 获取每一个线条的位置
+            curves = []
+            curve_width = 2
+            for curve in data[pageid]['curves']:
+                left = int(math.floor(float(curve['box'][0])))
+                right = int(math.floor(float(curve['box'][2])))
+                top = int(math.floor(float(size[1]-curve['box'][3])))
+                bottom = int(math.floor(float(size[1]-curve['box'][1])))
+                if right - left <= curve_width and bottom - top > curve_width:
+                    right = left
+                    line = {'position': [left, right, top, bottom], 'type': curve['type']}
+                elif right - left > curve_width and bottom - top <= curve_width:
+                    bottom = top
+                    line = {'position': [left, right, top, bottom], 'type': curve['type']}
+                if line:
+                    if 0 <= line['position'][0] <= line['position'][1] < size[0] and \
+                        0 <= line['position'][2] <= line['position'][3] < size[1]:
+                        curves.append(line)
+            
+            contents_dict[docid][pageid] = {
+                'texts': texts, 'size': size, 'tables': tables,
+                'others': others, 'curves': curves}
+            
+            for text in texts:
+                if text['type'] == 2:
+                    vectors = []
+                    words = segmentor.segment(text['sentence'].encode('utf8'))
+                    words = [word.decode('utf8') for word in words]
+                    for word in words:
+                        if word in word_dict:
+                            vectors.append(word_dict[word])
+                
+                    if len(vectors) != 0:
+                        vectors = numpy.array(vectors)
+                        vector = list(numpy.array(numpy.mean(vectors, axis=0) * 255, dtype='int'))
+                    else:
+                        vector = [150, 150, 150]
+
+                    text['color'] = vector
+
+    return contents_dict
 
 def draw_image(contents_dict, maindir):
-	n_processed = 1
+	n_processed = 0
 	for docid in contents_dict:
 		n_processed += 1
 		print('Draw Images: docid: %s, rate: %.2f%%' % (docid, 100.0 * n_processed / len(contents_dict)))
@@ -184,80 +226,83 @@ def draw_image(contents_dict, maindir):
 				# 如果没有表格，则画图并保存在no_table文件夹中 
 				image = numpy.zeros((shape[1], shape[0], 3), dtype='uint8') + 255
 
-				new_text = []
-				for idx in range(len(contents_dict[docid][pageid]['boxes'])):
-					text = contents_dict[docid][pageid]['boxes'][idx]
-					if 0 <= text['position'][0] < shape[0] and 0 <= text['position'][1] < shape[0] and \
-						0 <= text['position'][2] < shape[1] and 0 <= text['position'][3] < shape[1]:
-						new_text.append(text)
-				contents_dict[docid][pageid]['boxes'] = new_text
-
-				for text in contents_dict[docid][pageid]['boxes']:
+				for text in contents_dict[docid][pageid]['others']:
 					if text['type'] == 100:
 						image[text['position'][2]:text['position'][3],
 							text['position'][0]:text['position'][1], :] = colors['picture']
-				for text in contents_dict[docid][pageid]['boxes']:
+
+				for text in contents_dict[docid][pageid]['texts']:
 					if text['type'] == 2:
 						image[text['position'][2]:text['position'][3],
-							text['position'][0]:text['position'][1], :] = colors['word']
-				for text in contents_dict[docid][pageid]['boxes']:
+							text['position'][0]:text['position'][1], :] = text['color']
+
+				for text in contents_dict[docid][pageid]['texts']:
 					if text['type'] == 5:
 						image[text['position'][2]:text['position'][3],
 							text['position'][0]:text['position'][1], :] = colors['page']
-				for text in contents_dict[docid][pageid]['boxes']:
+
+				for text in contents_dict[docid][pageid]['texts']:
 					if text['type'] == 3:
 						image[text['position'][2]:text['position'][3],
 							text['position'][0]:text['position'][1], :] = colors['date']
-				for text in contents_dict[docid][pageid]['boxes']:
+
+				for text in contents_dict[docid][pageid]['texts']:
 					if text['type'] == 4:
 						image[text['position'][2]:text['position'][3],
 							text['position'][0]:text['position'][1], :] = colors['digit']
-				for text in contents_dict[docid][pageid]['boxes']:
+
+				for text in contents_dict[docid][pageid]['curves']:
 					if text['type'] == 1:
 						image[text['position'][2]:text['position'][3],
 							text['position'][0]:text['position'][1], :] = colors['line']
-					if text['type'] not in [1, 2, 3, 4, 5, 100]:
-						print(text)
+
 				image_path = os.path.join(
 					maindir, docid, 'png_notable', '%s_%s_notable.png' % (docid, pageid))
 				misc.imsave(image_path, image)
 			else:
 				image_line = numpy.zeros((shape[1], shape[0], 3), dtype='uint8') + 255
 				image_noline = numpy.zeros((shape[1], shape[0], 3), dtype='uint8') + 255
-				for text in contents_dict[docid][pageid]['boxes']:
+
+				for text in contents_dict[docid][pageid]['others']:
 					if text['type'] == 100:
 						image_line[text['position'][2]:text['position'][3],
 							text['position'][0]:text['position'][1], :] = colors['picture']
 						image_noline[text['position'][2]:text['position'][3],
 							text['position'][0]:text['position'][1], :] = colors['picture']
-				for text in contents_dict[docid][pageid]['boxes']:
+
+				for text in contents_dict[docid][pageid]['texts']:
 					if text['type'] == 2:
 						image_line[text['position'][2]:text['position'][3],
-							text['position'][0]:text['position'][1], :] = colors['word']
+							text['position'][0]:text['position'][1], :] = text['color']
 						image_noline[text['position'][2]:text['position'][3],
-							text['position'][0]:text['position'][1], :] = colors['word']
-				for text in contents_dict[docid][pageid]['boxes']:
+							text['position'][0]:text['position'][1], :] = text['color']
+
+				for text in contents_dict[docid][pageid]['texts']:
 					if text['type'] == 5:
 						image_line[text['position'][2]:text['position'][3],
 							text['position'][0]:text['position'][1], :] = colors['page']
 						image_noline[text['position'][2]:text['position'][3],
 							text['position'][0]:text['position'][1], :] = colors['page']
-				for text in contents_dict[docid][pageid]['boxes']:
+
+				for text in contents_dict[docid][pageid]['texts']:
 					if text['type'] == 3:
 						image_line[text['position'][2]:text['position'][3],
 							text['position'][0]:text['position'][1], :] = colors['date']
 						image_noline[text['position'][2]:text['position'][3],
 							text['position'][0]:text['position'][1], :] = colors['date']
-				for text in contents_dict[docid][pageid]['boxes']:
+
+				for text in contents_dict[docid][pageid]['texts']:
 					if text['type'] == 4:
 						image_line[text['position'][2]:text['position'][3],
 							text['position'][0]:text['position'][1], :] = colors['digit']
 						image_noline[text['position'][2]:text['position'][3],
 							text['position'][0]:text['position'][1], :] = colors['digit']
-				for text in contents_dict[docid][pageid]['boxes']:
+
+				for text in contents_dict[docid][pageid]['curves']:
 					if text['type'] == 1:
 						image_line[text['position'][2]:text['position'][3],
 							text['position'][0]:text['position'][1], :] = colors['line']
+
 				image_line_path = os.path.join(
 					maindir, docid, 'png_line_notable',
 					'%s_%s_linenotable.png' % (docid, pageid))
@@ -266,6 +311,7 @@ def draw_image(contents_dict, maindir):
 					maindir, docid, 'png_noline_notable',
 					'%s_%s_nolinenotable.png' % (docid, pageid))
 				misc.imsave(image_noline_path, image_noline)
+
 				for table in contents_dict[docid][pageid]['tables']:
 					image_line[table['position'][2]:table['position'][3],
 						table['position'][0]-1:table['position'][0]+1, :] = colors['table']
@@ -283,6 +329,7 @@ def draw_image(contents_dict, maindir):
 						table['position'][0]:table['position'][1], :] = colors['table']
 					image_noline[table['position'][3]-1:table['position'][3]+1,
 						table['position'][0]:table['position'][1], :] = colors['table']
+
 				image_line_path = os.path.join(
 					maindir, docid, 'png_line_table',
 					'%s_%s_linetable.png' % (docid, pageid))
@@ -384,6 +431,7 @@ if 'Windows' in platform.platform():
     uint_test2('E:\\Temporal\Python\darknet-master\datasets\\table-png')
     uint_test3('E:\\Temporal\Python\darknet-master\datasets\\table-png')
 elif 'Linux' in platform.platform():
-    contents_dict = load_source('/home/wangxu/data/pdf2jpg_v4/output')
-    # draw_image(contents_dict, '/home/caory/github/table-detection/data/table-v2/JPEGImages')
+    word_dict = read_word_vector('/home/caory/github/table-detection/data/table-v5/word_vector_3.txt')
+    contents_dict = load_source('/home/wangxu/data/pdf2jpg_v4/output', word_dict)
+    draw_image(contents_dict, '/home/caory/github/table-detection/data/table-v5/JPEGImages')
     # create_labels(contents_dict, '/home/caory/github/table-detection/data/table-v2/')
