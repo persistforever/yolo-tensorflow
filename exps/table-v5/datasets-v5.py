@@ -62,6 +62,9 @@ def load_source(maindir, word_dict):
         contents_dict[docid] = {}
 
         json_path = os.path.join(maindir, docid, 'pages_with_tables')
+        if not os.path.exists(json_path):
+            continue
+
         data = read_json(json_path)
         for pageid in data:
             contents_dict[docid][pageid] = {}
@@ -71,16 +74,16 @@ def load_source(maindir, word_dict):
             # 获取表格框
             pad = 2
             for box in data[pageid]['tables']:
-                left = int(math.floor(float(box[0])) - pad)
-                right = int(math.ceil(float(box[2])) + pad)
-                top = int(math.floor(float(size[1]-box[3])) - pad)
-                bottom = int(math.ceil(float(size[1]-box[1])) + pad)
+                left = max(offset, int(math.floor(float(box[0])) - pad))
+                right = min(int(math.ceil(float(box[2])) + pad), size[0]-offset)
+                top = max(offset, int(math.floor(float(size[1]-box[3])) - pad))
+                bottom = min(int(math.ceil(float(size[1]-box[1])) + pad), size[1]-offset)
                 if 0 <= left <= right < size[0] and 0 <= top <= bottom < size[1]:
                     tables.append({'position': [left, right, top, bottom]})
 			
             # 获取文本框
             for text in data[pageid]['texts']:
-				# 获取每一个字符的位置
+                # 获取每一个字符的位置
                 chars = []
                 for char in text['chars']:
                     left = int(math.floor(float(char['box'][0])))
@@ -200,144 +203,144 @@ def load_source(maindir, word_dict):
     return contents_dict
 
 def draw_image(contents_dict, maindir):
-	n_processed = 0
-	for docid in contents_dict:
-		n_processed += 1
-		print('Draw Images: docid: %s, rate: %.2f%%' % (docid, 100.0 * n_processed / len(contents_dict)))
-		sys.stdout.flush()
+    n_processed = 0
+    for docid in contents_dict:
+        n_processed += 1
+        print('Draw Images: docid: %s, rate: %.2f%%' % (docid, 100.0 * n_processed / len(contents_dict)))
+        sys.stdout.flush()
 
-		if not os.path.exists(maindir):
-			os.mkdir(maindir)
-		if not os.path.exists(os.path.join(maindir, docid)):
-			os.mkdir(os.path.join(maindir, docid))
-		if not os.path.exists(os.path.join(maindir, docid, 'png_notable')):
-			os.mkdir(os.path.join(maindir, docid, 'png_notable'))
-		if not os.path.exists(os.path.join(maindir, docid, 'png_line_table')):
-			os.mkdir(os.path.join(maindir, docid, 'png_line_table'))
-		if not os.path.exists(os.path.join(maindir, docid, 'png_noline_table')):
-			os.mkdir(os.path.join(maindir, docid, 'png_noline_table'))
-		if not os.path.exists(os.path.join(maindir, docid, 'png_line_notable')):
-			os.mkdir(os.path.join(maindir, docid, 'png_line_notable'))
-		if not os.path.exists(os.path.join(maindir, docid, 'png_noline_notable')):
-			os.mkdir(os.path.join(maindir, docid, 'png_noline_notable'))
-		for pageid in contents_dict[docid]:
-			shape = contents_dict[docid][pageid]['size']
-			if len(contents_dict[docid][pageid]['tables']) == 0:
-				# 如果没有表格，则画图并保存在no_table文件夹中 
-				image = numpy.zeros((shape[1], shape[0], 3), dtype='uint8') + 255
+    if not os.path.exists(maindir):
+        os.mkdir(maindir)
+    if not os.path.exists(os.path.join(maindir, docid)):
+        os.mkdir(os.path.join(maindir, docid))
+    if not os.path.exists(os.path.join(maindir, docid, 'png_notable')):
+        os.mkdir(os.path.join(maindir, docid, 'png_notable'))
+    if not os.path.exists(os.path.join(maindir, docid, 'png_line_table')):
+        os.mkdir(os.path.join(maindir, docid, 'png_line_table'))
+    if not os.path.exists(os.path.join(maindir, docid, 'png_noline_table')):
+        os.mkdir(os.path.join(maindir, docid, 'png_noline_table'))
+    if not os.path.exists(os.path.join(maindir, docid, 'png_line_notable')):
+        os.mkdir(os.path.join(maindir, docid, 'png_line_notable'))
+    if not os.path.exists(os.path.join(maindir, docid, 'png_noline_notable')):
+        os.mkdir(os.path.join(maindir, docid, 'png_noline_notable'))
+    for pageid in contents_dict[docid]:
+        shape = contents_dict[docid][pageid]['size']
+        if len(contents_dict[docid][pageid]['tables']) == 0:
+            # 如果没有表格，则画图并保存在no_table文件夹中 
+            image = numpy.zeros((shape[1], shape[0], 3), dtype='uint8') + 255
 
-				for text in contents_dict[docid][pageid]['others']:
-					if text['type'] == 100:
-						image[text['position'][2]:text['position'][3],
-							text['position'][0]:text['position'][1], :] = colors['picture']
+            for text in contents_dict[docid][pageid]['others']:
+                if text['type'] == 100:
+                    image[text['position'][2]:text['position'][3],
+                        text['position'][0]:text['position'][1], :] = colors['picture']
 
-				for text in contents_dict[docid][pageid]['texts']:
-					if text['type'] == 2:
-						image[text['position'][2]:text['position'][3],
-							text['position'][0]:text['position'][1], :] = text['color']
+            for text in contents_dict[docid][pageid]['texts']:
+                if text['type'] == 2:
+                    image[text['position'][2]:text['position'][3],
+                        text['position'][0]:text['position'][1], :] = text['color']
 
-				for text in contents_dict[docid][pageid]['texts']:
-					if text['type'] == 5:
-						image[text['position'][2]:text['position'][3],
-							text['position'][0]:text['position'][1], :] = colors['page']
+            for text in contents_dict[docid][pageid]['texts']:
+                if text['type'] == 5:
+                    image[text['position'][2]:text['position'][3],
+                        text['position'][0]:text['position'][1], :] = colors['page']
 
-				for text in contents_dict[docid][pageid]['texts']:
-					if text['type'] == 3:
-						image[text['position'][2]:text['position'][3],
-							text['position'][0]:text['position'][1], :] = colors['date']
+            for text in contents_dict[docid][pageid]['texts']:
+                if text['type'] == 3:
+                    image[text['position'][2]:text['position'][3],
+                        text['position'][0]:text['position'][1], :] = colors['date']
 
-				for text in contents_dict[docid][pageid]['texts']:
-					if text['type'] == 4:
-						image[text['position'][2]:text['position'][3],
-							text['position'][0]:text['position'][1], :] = colors['digit']
+            for text in contents_dict[docid][pageid]['texts']:
+                if text['type'] == 4:
+                    image[text['position'][2]:text['position'][3],
+                        text['position'][0]:text['position'][1], :] = colors['digit']
 
-				for text in contents_dict[docid][pageid]['curves']:
-					if text['type'] == 1:
-						image[text['position'][2]:text['position'][3],
-							text['position'][0]:text['position'][1], :] = colors['line']
+            for text in contents_dict[docid][pageid]['curves']:
+                if text['type'] == 1:
+                    image[text['position'][2]:text['position'][3],
+                        text['position'][0]:text['position'][1], :] = colors['line']
 
-				image_path = os.path.join(
-					maindir, docid, 'png_notable', '%s_%s_notable.png' % (docid, pageid))
-				misc.imsave(image_path, image)
-			else:
-				image_line = numpy.zeros((shape[1], shape[0], 3), dtype='uint8') + 255
-				image_noline = numpy.zeros((shape[1], shape[0], 3), dtype='uint8') + 255
+            image_path = os.path.join(
+                maindir, docid, 'png_notable', '%s_%s_notable.png' % (docid, pageid))
+            misc.imsave(image_path, image)
+        else:
+            image_line = numpy.zeros((shape[1], shape[0], 3), dtype='uint8') + 255
+            image_noline = numpy.zeros((shape[1], shape[0], 3), dtype='uint8') + 255
 
-				for text in contents_dict[docid][pageid]['others']:
-					if text['type'] == 100:
-						image_line[text['position'][2]:text['position'][3],
-							text['position'][0]:text['position'][1], :] = colors['picture']
-						image_noline[text['position'][2]:text['position'][3],
-							text['position'][0]:text['position'][1], :] = colors['picture']
+            for text in contents_dict[docid][pageid]['others']:
+                if text['type'] == 100:
+                    image_line[text['position'][2]:text['position'][3],
+                        text['position'][0]:text['position'][1], :] = colors['picture']
+                    image_noline[text['position'][2]:text['position'][3],
+                        text['position'][0]:text['position'][1], :] = colors['picture']
+                        
+            for text in contents_dict[docid][pageid]['texts']:
+                if text['type'] == 2:
+                    image_line[text['position'][2]:text['position'][3],
+                        text['position'][0]:text['position'][1], :] = text['color']
+                    image_noline[text['position'][2]:text['position'][3],
+                        text['position'][0]:text['position'][1], :] = text['color']
 
-				for text in contents_dict[docid][pageid]['texts']:
-					if text['type'] == 2:
-						image_line[text['position'][2]:text['position'][3],
-							text['position'][0]:text['position'][1], :] = text['color']
-						image_noline[text['position'][2]:text['position'][3],
-							text['position'][0]:text['position'][1], :] = text['color']
+            for text in contents_dict[docid][pageid]['texts']:
+                if text['type'] == 5:
+                    image_line[text['position'][2]:text['position'][3],
+                        text['position'][0]:text['position'][1], :] = colors['page']
+                    image_noline[text['position'][2]:text['position'][3],
+                        text['position'][0]:text['position'][1], :] = colors['page']
 
-				for text in contents_dict[docid][pageid]['texts']:
-					if text['type'] == 5:
-						image_line[text['position'][2]:text['position'][3],
-							text['position'][0]:text['position'][1], :] = colors['page']
-						image_noline[text['position'][2]:text['position'][3],
-							text['position'][0]:text['position'][1], :] = colors['page']
+            for text in contents_dict[docid][pageid]['texts']:
+                if text['type'] == 3:
+                    image_line[text['position'][2]:text['position'][3],
+                        text['position'][0]:text['position'][1], :] = colors['date']
+                    image_noline[text['position'][2]:text['position'][3],
+                        text['position'][0]:text['position'][1], :] = colors['date']
 
-				for text in contents_dict[docid][pageid]['texts']:
-					if text['type'] == 3:
-						image_line[text['position'][2]:text['position'][3],
-							text['position'][0]:text['position'][1], :] = colors['date']
-						image_noline[text['position'][2]:text['position'][3],
-							text['position'][0]:text['position'][1], :] = colors['date']
+            for text in contents_dict[docid][pageid]['texts']:
+                if text['type'] == 4:
+                    image_line[text['position'][2]:text['position'][3],
+                        text['position'][0]:text['position'][1], :] = colors['digit']
+                    image_noline[text['position'][2]:text['position'][3],
+                        text['position'][0]:text['position'][1], :] = colors['digit']
 
-				for text in contents_dict[docid][pageid]['texts']:
-					if text['type'] == 4:
-						image_line[text['position'][2]:text['position'][3],
-							text['position'][0]:text['position'][1], :] = colors['digit']
-						image_noline[text['position'][2]:text['position'][3],
-							text['position'][0]:text['position'][1], :] = colors['digit']
+            for text in contents_dict[docid][pageid]['curves']:
+                if text['type'] == 1:
+                    image_line[text['position'][2]:text['position'][3],
+                        text['position'][0]:text['position'][1], :] = colors['line']
 
-				for text in contents_dict[docid][pageid]['curves']:
-					if text['type'] == 1:
-						image_line[text['position'][2]:text['position'][3],
-							text['position'][0]:text['position'][1], :] = colors['line']
+            image_line_path = os.path.join(
+                maindir, docid, 'png_line_notable',
+                '%s_%s_linenotable.png' % (docid, pageid))
+            misc.imsave(image_line_path, image_line)
+            image_noline_path = os.path.join(
+                maindir, docid, 'png_noline_notable',
+                '%s_%s_nolinenotable.png' % (docid, pageid))
+            misc.imsave(image_noline_path, image_noline)
 
-				image_line_path = os.path.join(
-					maindir, docid, 'png_line_notable',
-					'%s_%s_linenotable.png' % (docid, pageid))
-				misc.imsave(image_line_path, image_line)
-				image_noline_path = os.path.join(
-					maindir, docid, 'png_noline_notable',
-					'%s_%s_nolinenotable.png' % (docid, pageid))
-				misc.imsave(image_noline_path, image_noline)
+            for table in contents_dict[docid][pageid]['tables']:
+                image_line[table['position'][2]:table['position'][3],
+                    table['position'][0]-1:table['position'][0]+1, :] = colors['table']
+                image_line[table['position'][2]:table['position'][3],
+                    table['position'][1]-1:table['position'][1]+1, :] = colors['table']
+                image_line[table['position'][2]-1:table['position'][2]+1,
+                    table['position'][0]:table['position'][1], :] = colors['table']
+                image_line[table['position'][3]-1:table['position'][3]+1,
+                    table['position'][0]:table['position'][1], :] = colors['table']
+                image_noline[table['position'][2]:table['position'][3],
+                    table['position'][0]-1:table['position'][0]+1, :] = colors['table']
+                image_noline[table['position'][2]:table['position'][3],
+                    table['position'][1]-1:table['position'][1]+1, :] = colors['table']
+                image_noline[table['position'][2]-1:table['position'][2]+1,
+                    table['position'][0]:table['position'][1], :] = colors['table']
+                image_noline[table['position'][3]-1:table['position'][3]+1,
+                    table['position'][0]:table['position'][1], :] = colors['table']
 
-				for table in contents_dict[docid][pageid]['tables']:
-					image_line[table['position'][2]:table['position'][3],
-						table['position'][0]-1:table['position'][0]+1, :] = colors['table']
-					image_line[table['position'][2]:table['position'][3],
-						table['position'][1]-1:table['position'][1]+1, :] = colors['table']
-					image_line[table['position'][2]-1:table['position'][2]+1,
-						table['position'][0]:table['position'][1], :] = colors['table']
-					image_line[table['position'][3]-1:table['position'][3]+1,
-						table['position'][0]:table['position'][1], :] = colors['table']
-					image_noline[table['position'][2]:table['position'][3],
-						table['position'][0]-1:table['position'][0]+1, :] = colors['table']
-					image_noline[table['position'][2]:table['position'][3],
-						table['position'][1]-1:table['position'][1]+1, :] = colors['table']
-					image_noline[table['position'][2]-1:table['position'][2]+1,
-						table['position'][0]:table['position'][1], :] = colors['table']
-					image_noline[table['position'][3]-1:table['position'][3]+1,
-						table['position'][0]:table['position'][1], :] = colors['table']
-
-				image_line_path = os.path.join(
-					maindir, docid, 'png_line_table',
-					'%s_%s_linetable.png' % (docid, pageid))
-				misc.imsave(image_line_path, image_line)
-				image_noline_path = os.path.join(
-					maindir, docid, 'png_noline_table', 
-					'%s_%s_nolinetable.png' % (docid, pageid))
-				misc.imsave(image_noline_path, image_noline)
+            image_line_path = os.path.join(
+                maindir, docid, 'png_line_table',
+                '%s_%s_linetable.png' % (docid, pageid))
+            misc.imsave(image_line_path, image_line)
+            image_noline_path = os.path.join(
+                maindir, docid, 'png_noline_table', 
+                '%s_%s_nolinetable.png' % (docid, pageid))
+            misc.imsave(image_noline_path, image_noline)
 		
 def create_labels(contents_dict, maindir):
     dataset = []
