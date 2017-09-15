@@ -70,8 +70,8 @@ class ImageProcessor:
                 label = [[0, 0, 0, 0, 0]] * self.max_objects
                 while i < len(label_infos) and n_objects < self.max_objects:
                     left = int(label_infos[i])
-                    top = int(label_infos[i+1])
-                    right = int(label_infos[i+2])
+                    right = int(label_infos[i+1])
+                    top = int(label_infos[i+2])
                     bottom = int(label_infos[i+3])
                     class_index = int(label_infos[i+4])
                     
@@ -105,13 +105,6 @@ class ImageProcessor:
         return batch_image_paths, batch_labels
     
     def process_label(self, label):
-        # true label and mask in 类别标记
-        class_label = numpy.zeros(
-            shape=(self.cell_size, self.cell_size, self.n_classes), 
-            dtype='int32')
-        class_mask = numpy.zeros(
-            shape=(self.cell_size, self.cell_size),
-            dtype='float32')
         
         # true_label and mask in 包围框标记
         box_label = numpy.zeros(
@@ -136,48 +129,23 @@ class ImageProcessor:
                 box_label[j, :] = numpy.array(
                     [center_cell_x, center_cell_y, center_x, center_y, w, h])
                 
-                # 计算类别标记
-                left_cell_x = max(
-                    0, int(math.floor(self.cell_size * left)))
-                right_cell_x = min(
-                    int(math.floor(self.cell_size * right)), 
-                    self.cell_size-1)
-                top_cell_y = max(
-                    0, int(math.floor(self.cell_size * top)))
-                bottom_cell_y = min(
-                    int(math.floor(self.cell_size * bottom)),
-                    self.cell_size-1)
-                
-                for x in range(left_cell_x, right_cell_x+1):
-                    for y in range(top_cell_y, bottom_cell_y+1):
-                        _class_label = numpy.zeros(
-                            shape=[self.n_classes,], dtype='int32')
-                        _class_label[int(class_index)-1] = 1
-                        class_label[y, x, :] = _class_label
-                        class_mask[y, x] = 1.0
-                
                 # object_num增加
                 object_num += 1
                             
-        return class_label, class_mask, box_label, object_num
+        return box_label, object_num
     
     def process_batch_labels(self, batch_labels):
-        batch_class_labels, batch_class_masks, batch_box_labels, \
-            batch_object_nums = [], [], [], []
+        batch_box_labels, batch_object_nums = [], []
             
         for i in range(len(batch_labels)):
             class_label, class_mask, box_label, object_num = self.process_label(batch_labels[i])
-            batch_class_labels.append(class_label)
-            batch_class_masks.append(class_mask)
             batch_box_labels.append(box_label)
             batch_object_nums.append(object_num)
         
-        batch_class_labels = numpy.array(batch_class_labels, dtype='int32')
-        batch_class_masks = numpy.array(batch_class_masks, dtype='float32')
         batch_box_labels = numpy.array(batch_box_labels, dtype='float32')
         batch_object_nums = numpy.array(batch_object_nums, dtype='int32')
         
-        return batch_class_labels, batch_class_masks, batch_box_labels, batch_object_nums
+        return batch_box_labels, batch_object_nums
         
     def _shuffle_datasets(self, images, labels):
         index = list(range(images.shape[0]))

@@ -99,7 +99,7 @@ def plot_curve(infos_dict1, infos_dict2, infos_dict3):
 	plt.title('train iou value')
 	plt.xlabel('# of iterations')
 	plt.ylabel('iou')
-	plt.xlim(xmin=0, xmax=50000)
+	plt.xlim(xmin=0, xmax=10000)
 	plt.ylim(ymin=0.0, ymax=0.85)
 
 	plt.subplot(222)
@@ -111,7 +111,7 @@ def plot_curve(infos_dict1, infos_dict2, infos_dict3):
 	plt.title('valid iou value')
 	plt.xlabel('# of iterations')
 	plt.ylabel('iou')
-	plt.xlim(xmin=0, xmax=50000)
+	plt.xlim(xmin=0, xmax=10000)
 	plt.ylim(ymin=0.0, ymax=0.85)
 
 	plt.subplot(223)
@@ -123,7 +123,7 @@ def plot_curve(infos_dict1, infos_dict2, infos_dict3):
 	plt.title('train object value')
 	plt.xlabel('# of iterations')
 	plt.ylabel('accuracy')
-	plt.xlim(xmin=0, xmax=50000)
+	plt.xlim(xmin=0, xmax=10000)
 	plt.ylim(ymin=0.0, ymax=1.0)
 
 	plt.subplot(224)
@@ -135,7 +135,7 @@ def plot_curve(infos_dict1, infos_dict2, infos_dict3):
 	plt.title('valid object value')
 	plt.xlabel('# of iterations')
 	plt.ylabel('accuracy')
-	plt.xlim(xmin=0, xmax=50000)
+	plt.xlim(xmin=0, xmax=10000)
 	plt.ylim(ymin=0.0, ymax=1.0)
 
 	plt.show()
@@ -146,8 +146,8 @@ infos_dict1 = load_log('E:\\Github\\table-detection\\exps\\table-v3\\table-v3.tx
 infos_dict2 = load_log('E:\\Github\\table-detection\\exps\\table-v4\\table-v6.txt')
 infos_dict3 = load_log('E:\\Github\\table-detection\\exps\\table-v5\\table-v7.txt')
 
-infos_dict1 = curve_smooth(infos_dict1, batch_size=100)
-infos_dict2 = curve_smooth(infos_dict2, batch_size=100)
-infos_dict3 = curve_smooth(infos_dict3, batch_size=100)
+infos_dict1 = curve_smooth(infos_dict1, batch_size=10)
+infos_dict2 = curve_smooth(infos_dict2, batch_size=10)
+infos_dict3 = curve_smooth(infos_dict3, batch_size=10)
 
 plot_curve(infos_dict1, infos_dict2, infos_dict3)

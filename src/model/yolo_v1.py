@@ -432,10 +432,10 @@ class TinyYolo():
             batch_images, batch_labels = processor.data_augmentation(
                 batch_image_paths, batch_labels, mode='train',
                 flip=True, whiten=True, resize=True, jitter=0.2)
-            _, _, batch_box_labels, batch_object_nums = \
+            batch_box_labels, batch_object_nums = \
                 processor.process_batch_labels(batch_labels)
             
-            [_, avg_loss, coord_loss, object_loss, noobject_loss,
+            [avg_loss, coord_loss, object_loss, noobject_loss,
              iou_value, object_value, anyobject_value, recall_value] = self.sess.run(
                 fetches=[self.optimizer, self.avg_loss,
                          self.coord_loss,
@@ -495,7 +495,7 @@ class TinyYolo():
                     batch_images, batch_labels = processor.data_augmentation(
                         batch_image_paths, batch_labels, mode='test',
                         flip=False, whiten=True, resize=True)
-                    batch_class_labels, batch_class_masks, batch_box_labels, batch_object_nums = \
+                    batch_box_labels, batch_object_nums = \
                         processor.process_batch_labels(batch_labels)
                     
                     [iou_value, object_value,
