@@ -374,14 +374,14 @@ def create_labels(contents_dict, maindir):
             shape = contents_dict[docid][pageid]['size']
             if len(contents_dict[docid][pageid]['tables']) == 0:
                 picpath = os.path.join(maindir, 'JPEGImages', docid, 'png_notable', \
-                    '%s_%s_notable.txt' % (docid, pageid))
+                    '%s_%s_notable.png' % (docid, pageid))
                 label = [picpath]
                 if os.path.exists(label[0]):
                     dataset.append(' '.join(label))
             else:
                 # noline
                 picpath = os.path.join(maindir, 'JPEGImages', docid, 'png_noline_notable', \
-                    '%s_%s_nolinenotable.txt' % (docid, pageid))
+                    '%s_%s_nolinenotable.png' % (docid, pageid))
                 label = [picpath]
                 for table in contents_dict[docid][pageid]['tables']:
                     left = str(int(table['position'][0]))
@@ -389,12 +389,12 @@ def create_labels(contents_dict, maindir):
                     top = str(int(table['position'][2]))
                     bottom = str(int(table['position'][3]))
                     label.extend([left, right, top, bottom, '1'])
-                    if os.path.exists(label[0]):
-                        dataset.append(' '.join(label))
+                if os.path.exists(label[0]):
+                    dataset.append(' '.join(label))
 
                 # line
                 picpath = os.path.join(maindir, 'JPEGImages', docid, 'png_line_notable', \
-                    '%s_%s_linenotable.txt' % (docid, pageid))
+                    '%s_%s_linenotable.png' % (docid, pageid))
                 label = [picpath]
                 for table in contents_dict[docid][pageid]['tables']:
                     left = str(int(table['position'][0]))
@@ -402,8 +402,8 @@ def create_labels(contents_dict, maindir):
                     top = str(int(table['position'][2]))
                     bottom = str(int(table['position'][3]))
                     label.extend([left, right, top, bottom, '1'])
-                    if os.path.exists(label[0]):
-                        dataset.append(' '.join(label))
+                if os.path.exists(label[0]):
+                    dataset.append(' '.join(label))
 
     random.shuffle(dataset)
 

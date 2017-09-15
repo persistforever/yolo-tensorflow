@@ -179,23 +179,6 @@ def load_source(maindir, word_dict):
                         0 <= line['position'][2] <= line['position'][3] < size[1]:
                         curves.append(line)
             
-            for text in texts:
-                if text['type'] == 2:
-                    vectors = []
-                    words = segmentor.segment(text['sentence'].encode('utf8'))
-                    words = [word.decode('utf8') for word in words]
-                    for word in words:
-                        if word in word_dict:
-                            vectors.append(word_dict[word])
-                
-                    if len(vectors) != 0:
-                        vectors = numpy.array(vectors)
-                        vector = list(numpy.array(numpy.mean(vectors, axis=0) * 255, dtype='int'))
-                    else:
-                        vector = [150, 150, 150]
-
-                    text['color'] = vector
-            
             contents_dict[docid][pageid] = {
                 'texts': texts, 'size': size, 'tables': tables,
                 'others': others, 'curves': curves}
@@ -237,7 +220,7 @@ def draw_image(contents_dict, maindir):
                 for text in contents_dict[docid][pageid]['texts']:
                     if text['type'] == 2:
                         image[text['position'][2]:text['position'][3],
-                            text['position'][0]:text['position'][1], :] = text['color']
+                            text['position'][0]:text['position'][1], :] = colors['word']
 
                 for text in contents_dict[docid][pageid]['texts']:
                     if text['type'] == 5:
@@ -276,9 +259,9 @@ def draw_image(contents_dict, maindir):
                 for text in contents_dict[docid][pageid]['texts']:
                     if text['type'] == 2:
                         image_line[text['position'][2]:text['position'][3],
-                            text['position'][0]:text['position'][1], :] = text['color']
+                            text['position'][0]:text['position'][1], :] = colors['word']
                         image_noline[text['position'][2]:text['position'][3],
-                            text['position'][0]:text['position'][1], :] = text['color']
+                            text['position'][0]:text['position'][1], :] = colors['word']
 
                 for text in contents_dict[docid][pageid]['texts']:
                     if text['type'] == 5:
@@ -438,5 +421,5 @@ elif 'Linux' in platform.platform():
     # contents_dict = load_source('/home/wangxu/data/pdf2jpg_v4/output', word_dict)
     # write_json(contents_dict, '/home/caory/github/table-detection/data/table-v5/texts.json')
     contents_dict = read_json('/home/caory/github/table-detection/data/table-v5/texts.json')
-    draw_image(contents_dict, '/home/caory/github/table-detection/data/table-v5/JPEGImages')
+    draw_image(contents_dict, '/home/caory/github/table-detection/data/table-v3/JPEGImages')
     # create_labels(contents_dict, '/home/caory/github/table-detection/data/table-v2/')
