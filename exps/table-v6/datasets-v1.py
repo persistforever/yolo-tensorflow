@@ -243,7 +243,7 @@ def draw_image(contents_dict, maindir):
                             text['position'][0]:text['position'][1], :] = colors['line']
 
                 image_path = os.path.join(
-                    maindir, docid, 'png_notable', '%s_%s_notable.png' % (docid, pageid))
+                    maindir, 'Images', docid, 'png_notable', '%s_%s_notable.png' % (docid, pageid))
                 misc.imsave(image_path, image)
             else:
                 image_line = numpy.zeros((shape[1], shape[0], 3), dtype='uint8') + 255
@@ -290,11 +290,11 @@ def draw_image(contents_dict, maindir):
                             text['position'][0]:text['position'][1], :] = colors['line']
 
                 image_line_path = os.path.join(
-                    maindir, docid, 'png_line_notable',
+                    maindir, 'Images', docid, 'png_line_notable',
                     '%s_%s_linenotable.png' % (docid, pageid))
                 misc.imsave(image_line_path, image_line)
                 image_noline_path = os.path.join(
-                    maindir, docid, 'png_noline_notable',
+                    maindir, 'Images', docid, 'png_noline_notable',
                     '%s_%s_nolinenotable.png' % (docid, pageid))
                 misc.imsave(image_noline_path, image_noline)
 
@@ -317,11 +317,11 @@ def draw_image(contents_dict, maindir):
                         table['position'][0]:table['position'][1], :] = colors['table']
 
                 image_line_path = os.path.join(
-                    maindir, docid, 'png_line_table',
+                    maindir, 'Images', docid, 'png_line_table',
                     '%s_%s_linetable.png' % (docid, pageid))
                 misc.imsave(image_line_path, image_line)
                 image_noline_path = os.path.join(
-                    maindir, docid, 'png_noline_table', 
+                    maindir, 'Images', docid, 'png_noline_table', 
                     '%s_%s_nolinetable.png' % (docid, pageid))
                 misc.imsave(image_noline_path, image_noline)
 		
