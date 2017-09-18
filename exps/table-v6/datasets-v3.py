@@ -183,7 +183,8 @@ def load_source(maindir, word_dict):
             for text in texts:
                 if text['type'] == 2:
                     ws = segmentor.segment(text['sentence'].encode('utf8'))
-                    uint = 1.0 * (text['position'][1] - text['position'][0]) / len(text['sentence'])
+                    uint = 1.0 * (text['position'][1] - text['position'][0]) / len(text['sentence']) \
+                        if len(text['sentence']) != 0 else 0
                     ws = [w.decode('utf8') for w in ws]
                     n_passed = 0
                     for w in ws:
