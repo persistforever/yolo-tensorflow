@@ -63,31 +63,31 @@ def curve_smooth(infos_dict, batch_size=1):
 
 	return new_infos_dict
 
-def plot_curve(infos_dict1):
+def plot_curve(infos_dict1, infos_dict2):
 	fig = plt.figure(figsize=(10, 5))
 
 	plt.subplot(121)
 	p1 = plt.plot(infos_dict1['train_eval']['iter'], infos_dict1['train_eval']['iou'], '.-', color='#66CDAA')
-	# p2 = plt.plot(infos_dict2['train_eval']['iter'], infos_dict2['train_eval']['iou'], '.-', color='#1E90FF')
+	p2 = plt.plot(infos_dict2['train_eval']['iter'], infos_dict2['train_eval']['iou'], '.-', color='#1E90FF')
 	# p3 = plt.plot(infos_dict3['train_eval']['iter'], infos_dict3['train_eval']['iou'], '.-', color='#FF6347')
 	# plt.legend((p1[0], p2[0], p3[0]), ('image + text', 'only image', 'image + all text'))
 	plt.grid(True)
 	plt.title('train iou value')
 	plt.xlabel('# of iterations')
 	plt.ylabel('iou')
-	plt.xlim(xmin=0, xmax=250000)
+	plt.xlim(xmin=0, xmax=150000)
 	plt.ylim(ymin=0.5, ymax=1.0)
 
 	plt.subplot(122)
 	p1 = plt.plot(infos_dict1['train_eval']['iter'], infos_dict1['train_eval']['object'], '.-', color='#66CDAA')
-	# p2 = plt.plot(infos_dict2['train_eval']['iter'], infos_dict2['train_eval']['object'], '.-', color='#1E90FF')
+	p2 = plt.plot(infos_dict2['train_eval']['iter'], infos_dict2['train_eval']['object'], '.-', color='#1E90FF')
 	# p3 = plt.plot(infos_dict3['train_eval']['iter'], infos_dict3['train_eval']['object'], '.-', color='#FF6347')
 	# plt.legend((p1[0], p2[0], p3[0]), ('image + text', 'only image', 'image + all text'))
 	plt.grid(True)
 	plt.title('train object value')
 	plt.xlabel('# of iterations')
 	plt.ylabel('accuracy')
-	plt.xlim(xmin=0, xmax=250000)
+	plt.xlim(xmin=0, xmax=150000)
 	plt.ylim(ymin=0.5, ymax=1.0)
 
 	plt.show()
@@ -95,11 +95,11 @@ def plot_curve(infos_dict1):
 
 
 infos_dict1 = load_log('E:\\Github\\table-detection\\exps\\table-v6\\table-v1.txt')
-# infos_dict2 = load_log('E:\\Github\\table-detection\\exps\\table-v4\\table-v6.txt')
+infos_dict2 = load_log('E:\\Github\\table-detection\\exps\\table-v6\\table-v2.txt')
 # infos_dict3 = load_log('E:\\Github\\table-detection\\exps\\table-v5\\table-v7.txt')
 
-infos_dict1 = curve_smooth(infos_dict1, batch_size=100)
-# infos_dict2 = curve_smooth(infos_dict2, batch_size=10)
+infos_dict1 = curve_smooth(infos_dict1, batch_size=250)
+infos_dict2 = curve_smooth(infos_dict2, batch_size=250)
 # infos_dict3 = curve_smooth(infos_dict3, batch_size=10)
 
-plot_curve(infos_dict1)
+plot_curve(infos_dict1, infos_dict2)
