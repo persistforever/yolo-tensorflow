@@ -482,7 +482,7 @@ class TinyYolo():
             train_iou_value, train_object_value, \
                 train_anyobject_value, train_recall_value = 0.0, 0.0, 0.0, 0.0 
             
-            # 每100轮观测一次验证集evaluation
+            # 每1000轮观测一次验证集evaluation
             if n_iter % 1000 == 0:
                 valid_iou_value, valid_object_value, \
                     valid_nobject_value, valid_recall_value = 0.0, 0.0, 0.0, 0.0 

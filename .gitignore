@@ -112,3 +112,5 @@ ENV/
 # Data files
 /data/
 /backup/
+/exps/table-v6/test-v1
+/exps/table-v6/test-v2

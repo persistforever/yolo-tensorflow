@@ -98,8 +98,8 @@ infos_dict1 = load_log('E:\\Github\\table-detection\\exps\\table-v6\\table-v1.tx
 infos_dict2 = load_log('E:\\Github\\table-detection\\exps\\table-v6\\table-v2.txt')
 infos_dict3 = load_log('E:\\Github\\table-detection\\exps\\table-v6\\table-v4.txt')
 
-infos_dict1 = curve_smooth(infos_dict1, batch_size=100)
-infos_dict2 = curve_smooth(infos_dict2, batch_size=100)
-infos_dict3 = curve_smooth(infos_dict3, batch_size=100)
+infos_dict1 = curve_smooth(infos_dict1, batch_size=500)
+infos_dict2 = curve_smooth(infos_dict2, batch_size=500)
+infos_dict3 = curve_smooth(infos_dict3, batch_size=500)
 
 plot_curve(infos_dict1, infos_dict2, infos_dict3)
