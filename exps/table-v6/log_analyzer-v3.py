@@ -95,7 +95,7 @@ def plot_curve(infos_dict1, infos_dict2):
 	# plt.savefig('E:\\Github\\table-detection\\exps\\table-v3\\table-v3.png', dpi=120, format='png')
 
 
-infos_dict1 = load_log('E:\\Github\\table-detection\\exps\\table-v6\\valid-v1.txt')
+infos_dict1 = load_log('E:\\Github\\table-detection\\logs\\table-v6\\valid-v4.txt')
 # infos_dict2 = load_log('E:\\Github\\table-detection\\exps\\table-v6\\valid-v2.txt')
 
 infos_dict1 = curve_smooth(infos_dict1, batch_size=1)
