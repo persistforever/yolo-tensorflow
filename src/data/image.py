@@ -294,7 +294,7 @@ class ImageProcessor:
         else:
             new_image = cv2.resize(image, (resized_h, resized_w))
             
-            new_label = [[0, 0, 0, 0, 0]] * self.max_objects
+            new_label = [[0, 0, 0, 0]] * self.max_objects
             n = 0
             for j in range(len(label)):
                 if sum(label[j]) == 0:
