@@ -63,9 +63,10 @@ class TinyYolo():
         self.avg_loss = tf.add_n(tf.get_collection('losses'))
         
         # 设置学习率
-        lr = tf.cond(tf.less(self.global_step, 100), 
+        lr = tf.cond(tf.less(self.global_step, 100),
                      lambda: tf.constant(0.001),
-                     lambda: tf.cond(tf.less(self.global_step, 50000),
+                     lambda: tf.cond(tf.less(self.global_step, 80000),
+                                     
                                      lambda: tf.constant(0.01),
                                      lambda: tf.cond(tf.less(self.global_step, 100000),
                                                      lambda: tf.constant(0.001),
@@ -134,7 +135,7 @@ class TinyYolo():
             batch_normal=True, weight_decay=5e-4, name='conv8')
         conv_layer9 = ConvLayer(
             input_shape=(self.batch_size, int(self.image_size/64), int(self.image_size/64), 1024), 
-            n_size=1, n_filter=self.n_boxes*5, stride=1, activation='none',
+            n_size=1, n_filter=self.n_boxes*5, stride=1, activation='sigmoid',
             batch_normal=False, weight_decay=5e-4, name='conv9')
         
         # 数据流
