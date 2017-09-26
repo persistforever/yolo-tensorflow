@@ -63,10 +63,9 @@ class TinyYolo():
         self.avg_loss = tf.add_n(tf.get_collection('losses'))
         
         # 设置学习率
-        lr = tf.cond(tf.less(self.global_step, 100),
+        lr = tf.cond(tf.less(self.global_step, 100), 
                      lambda: tf.constant(0.001),
                      lambda: tf.cond(tf.less(self.global_step, 80000),
-                                     
                                      lambda: tf.constant(0.01),
                                      lambda: tf.cond(tf.less(self.global_step, 100000),
                                                      lambda: tf.constant(0.001),
@@ -135,7 +134,7 @@ class TinyYolo():
             batch_normal=True, weight_decay=5e-4, name='conv8')
         conv_layer9 = ConvLayer(
             input_shape=(self.batch_size, int(self.image_size/64), int(self.image_size/64), 1024), 
-            n_size=1, n_filter=self.n_boxes*5, stride=1, activation='sigmoid',
+            n_size=1, n_filter=self.n_boxes*5, stride=1, activation='none',
             batch_normal=False, weight_decay=5e-4, name='conv9')
         
         # 数据流
@@ -525,8 +524,8 @@ class TinyYolo():
                         processor.validsets, i, batch_size)
                     batch_images, batch_labels = processor.data_augmentation(
                         batch_image_paths, batch_labels, mode='test',
-                        flip=False, whiten=True, resize=True)
-                    batch_box_labels, batch_object_nums = \
+                        flip=False, whiten=True, resize=True, jitter=0.2)
+                    batch_class_labels, batch_class_masks, batch_box_labels, batch_object_nums = \
                         processor.process_batch_labels(batch_labels)
                     
                     [iou_value, object_value,
@@ -563,7 +562,7 @@ class TinyYolo():
                 
     def test(self, processor, backup_path, n_iter=0, batch_size=128):
         # 构建会话
-        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.95)
+        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.45)
         self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
         
         # 读取模型
