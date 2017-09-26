@@ -55,31 +55,40 @@ class ImageProcessor:
         
     def load_datasets_whole(self, filename):
         # 读取训练集/验证集/测试集
+        image_paths = []
         datasets = []
         
-        # 读取info_list
+        # 读取image_paths
         with open(filename, 'r') as fo:
             for line in fo:
-                infos = line.strip().split(' ')
+                image_path = line.strip().split(' ')
+                image_paths.append(image_path)
                 
-                image_path = infos[0]
-                label_infos = infos[1:]
-                
-                # 处理 label
-                i, n_objects = 0, 0
-                label = [[0, 0, 0, 0, 0]] * self.max_objects
-                while i < len(label_infos) and n_objects < self.max_objects:
-                    left = int(label_infos[i])
-                    right = int(label_infos[i+1])
-                    top = int(label_infos[i+2])
-                    bottom = int(label_infos[i+3])
-                    class_index = int(label_infos[i+4])
+        for image_path in image_paths:    
+            label_path = image_path.replace('Images', 'Labels')
+            label_path = label_path.replace('png', 'txt')
+            
+            label = [[0, 0, 0, 0]] * self.max_objects
+            n_objects = 0
                     
-                    label[n_objects] = [left, right, top, bottom, class_index]
-                    i += 5
+            with open(label_path, 'r') as fo:
+                for line in fo:
+                    infos = line.strip().split(' ')
+                    
+                    x = float(infos[1])
+                    y = float(infos[2])
+                    w = float(infos[3])
+                    h = float(infos[4])
+                    
+                    left = x - w / 2.0
+                    right = x + w / 2.0
+                    top = y - h / 2.0
+                    bottom = y + h / 2.0
+                    
+                    label[n_objects] = [left, right, top, bottom]
                     n_objects += 1
-                    
-                datasets.append([image_path, label])
+                        
+            datasets.append([image_path, label])
         
         return datasets
     
@@ -116,7 +125,7 @@ class ImageProcessor:
         
         for j in range(self.max_objects):
             
-            [left, right, top, bottom, class_index] = label[j]
+            [left, right, top, bottom] = label[j]
             center_x = (left + right) / 2.0
             center_y = (top + bottom) / 2.0
             w = right - left
@@ -215,7 +224,7 @@ class ImageProcessor:
             new_ar = 1.0 * (orig_w + random.randint(-int(dw), int(dw))) / \
                 (orig_h + random.randint(-int(dh), int(dh)))
             # 随机缩放尺度
-            scala = random.random() * (2 - 0.5) + 0.5
+            scala = random.random() * (1.2 - 0.8) + 0.8
             
             # 新图像事原图像的scala的缩放，并使新图像的比例为new_ar
             if new_ar < 1.0:
@@ -251,7 +260,7 @@ class ImageProcessor:
                 temp_image[old_sy: old_ey, old_sx: old_ex, :]
         
             # 重新计算labels
-            new_label = [[0, 0, 0, 0, 0]] * self.max_objects
+            new_label = [[0, 0, 0, 0]] * self.max_objects
             n = 0
             
             for j in range(len(label)):
@@ -261,18 +270,18 @@ class ImageProcessor:
                 [left, right, top, bottom] = label[j][0:4]
                     
                 if resized_w > nw:
-                    new_left = (1.0 * left / orig_w * nw + dx) / resized_w
-                    new_right = (1.0 * right / orig_w * nw + dx) / resized_w
+                    new_left = (1.0 * left * nw + dx) / resized_w
+                    new_right = (1.0 * right * nw + dx) / resized_w
                 else:
-                    new_left = (1.0 * left / orig_w * nw - dx) / resized_w
-                    new_right = (1.0 * right / orig_w * nw - dx) / resized_w
+                    new_left = (1.0 * left * nw - dx) / resized_w
+                    new_right = (1.0 * right * nw - dx) / resized_w
                     
                 if resized_h > nh:
-                    new_top = (1.0 * top / orig_h * nh + dy) / resized_h
-                    new_bottom = (1.0 * bottom / orig_h * nh + dy) / resized_h
+                    new_top = (1.0 * top * nh + dy) / resized_h
+                    new_bottom = (1.0 * bottom * nh + dy) / resized_h
                 else:
-                    new_top = (1.0 * top / orig_h * nh - dy) / resized_h
-                    new_bottom = (1.0 * bottom / orig_h * nh - dy) / resized_h
+                    new_top = (1.0 * top * nh - dy) / resized_h
+                    new_bottom = (1.0 * bottom * nh - dy) / resized_h
                     
                 new_left = min(max(0.0, new_left), 1.0 - 1e-6)
                 new_right = max(0.0, min(new_right, 1.0 - 1e-6))
@@ -280,8 +289,7 @@ class ImageProcessor:
                 new_bottom = max(0.0, min(new_bottom, 1.0 - 1e-6))
                 
                 if new_right > new_left and new_bottom > new_top:
-                    new_label[n] = [new_left, new_right, new_top, new_bottom, 
-                                    label[j][4]]
+                    new_label[n] = [new_left, new_right, new_top, new_bottom]
                     n += 1
         else:
             new_image = cv2.resize(image, (resized_h, resized_w))
@@ -293,10 +301,10 @@ class ImageProcessor:
                     break
                         
                 [left, right, top, bottom] = label[j][0:4]
-                new_left = 1.0 * left / orig_w
-                new_right = 1.0 * right / orig_w
-                new_top = 1.0 * top / orig_h
-                new_bottom = 1.0 * bottom / orig_h
+                new_left = left
+                new_right = right
+                new_top = top
+                new_bottom = bottom
                     
                 new_left = min(max(0.0, new_left), 1.0 - 1e-6)
                 new_right = max(0.0, min(new_right, 1.0 - 1e-6))
@@ -304,8 +312,7 @@ class ImageProcessor:
                 new_bottom = max(0.0, min(new_bottom, 1.0 - 1e-6))
                 
                 if new_right > new_left and new_bottom > new_top:
-                    new_label[n] = [new_left, new_right, new_top, new_bottom, 
-                                    label[j][4]]
+                    new_label[n] = [new_left, new_right, new_top, new_bottom]
                     n += 1
         
         return new_image, new_label

@@ -20,11 +20,11 @@ def train():
     
     image_processor = ImageProcessor(
         os.path.join(maindir, 'data', 'table-v5'),
-        image_size=256, max_objects_per_image=30, cell_size=4, n_classes=1)
+        image_size=448, max_objects_per_image=30, cell_size=4, n_classes=1)
     
     tiny_yolo = TinyYolo(
-        n_channel=3, n_classes=1, image_size=256, max_objects_per_image=30,
-        cell_size=4, box_per_cell=5, object_scale=10, noobject_scale=3,
+        n_channel=3, n_classes=1, image_size=448, max_objects_per_image=30,
+        cell_size=4, box_per_cell=7, object_scale=10, noobject_scale=3,
         coord_scale=10, batch_size=64, noobject_thresh=0.6,
         recall_thresh=0.5)
     
