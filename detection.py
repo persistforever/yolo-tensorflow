@@ -6,7 +6,7 @@ import os
 import platform
 
 os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
-os.environ['CUDA_VISIBLE_DEVICES'] = '3'
+# os.environ['CUDA_VISIBLE_DEVICES'] = 'CPU'
 
 if 'Windows' in platform.platform():
     maindir = 'E:\Github\\table-detection\\'
