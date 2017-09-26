@@ -435,7 +435,7 @@ class TinyYolo():
             batch_box_labels, batch_object_nums = \
                 processor.process_batch_labels(batch_labels)
             
-            [avg_loss, coord_loss, object_loss, noobject_loss,
+            [_, avg_loss, coord_loss, object_loss, noobject_loss,
              iou_value, object_value, anyobject_value, recall_value] = self.sess.run(
                 fetches=[self.optimizer, self.avg_loss,
                          self.coord_loss,

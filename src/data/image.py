@@ -61,12 +61,12 @@ class ImageProcessor:
         # 读取image_paths
         with open(filename, 'r') as fo:
             for line in fo:
-                image_path = line.strip().split(' ')
+                image_path = line.strip()
                 image_paths.append(image_path)
                 
         for image_path in image_paths:    
             label_path = image_path.replace('Images', 'Labels')
-            label_path = label_path.replace('png', 'txt')
+            label_path = label_path.replace('.png', '.txt')
             
             label = [[0, 0, 0, 0]] * self.max_objects
             n_objects = 0
@@ -131,7 +131,7 @@ class ImageProcessor:
             w = right - left
             h = bottom - top
             
-            if class_index != 0:
+            if left != 0.0 and right != 0.0 and top != 0.0 and bottom != 0.0:
                 # 计算包围框标记
                 center_cell_x = int(math.floor(self.cell_size * center_x))
                 center_cell_y = int(math.floor(self.cell_size * center_y))
@@ -147,7 +147,7 @@ class ImageProcessor:
         batch_box_labels, batch_object_nums = [], []
             
         for i in range(len(batch_labels)):
-            class_label, class_mask, box_label, object_num = self.process_label(batch_labels[i])
+            box_label, object_num = self.process_label(batch_labels[i])
             batch_box_labels.append(box_label)
             batch_object_nums.append(object_num)
         

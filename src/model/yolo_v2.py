@@ -462,7 +462,7 @@ class TinyYolo():
             batch_images, batch_labels = processor.data_augmentation(
                 batch_image_paths, batch_labels, mode='train',
                 flip=True, whiten=True, resize=True, jitter=0.2)
-            _, _, batch_box_labels, batch_object_nums = \
+            batch_box_labels, batch_object_nums = \
                 processor.process_batch_labels(batch_labels)
             
             [_, avg_loss, coord_loss, object_loss, noobject_loss,
@@ -512,7 +512,7 @@ class TinyYolo():
             train_iou_value, train_object_value, \
                 train_anyobject_value, train_recall_value = 0.0, 0.0, 0.0, 0.0 
             
-            # 每100轮观测一次验证集evaluation
+            # 每1000轮观测一次验证集evaluation
             if n_iter % 1000 == 0:
                 valid_iou_value, valid_object_value, \
                     valid_nobject_value, valid_recall_value = 0.0, 0.0, 0.0, 0.0 
@@ -525,7 +525,7 @@ class TinyYolo():
                     batch_images, batch_labels = processor.data_augmentation(
                         batch_image_paths, batch_labels, mode='test',
                         flip=False, whiten=True, resize=True, jitter=0.2)
-                    batch_class_labels, batch_class_masks, batch_box_labels, batch_object_nums = \
+                    batch_box_labels, batch_object_nums = \
                         processor.process_batch_labels(batch_labels)
                     
                     [iou_value, object_value,
@@ -562,7 +562,7 @@ class TinyYolo():
                 
     def test(self, processor, backup_path, n_iter=0, batch_size=128):
         # 构建会话
-        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.45)
+        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.95)
         self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
         
         # 读取模型
