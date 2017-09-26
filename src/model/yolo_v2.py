@@ -175,11 +175,10 @@ class TinyYolo():
                            self.n_boxes, 5])
         
         # 获取class_pred和box_pred
-        self.box_preds = tf.reshape(
-            tf.concat([tf.sigmoid(logits[:,:,:,:,0:2]),
-                       logits[:,:,:,:,2:4],
-                       tf.sigmoid(logits[:,:,:,:,4:5])], axis=4), 
-            shape=[self.batch_size, self.cell_size, self.cell_size, self.n_boxes, 5])
+        self.box_preds = tf.concat(
+            [tf.sigmoid(logits[:,:,:,:,0:2]),
+             logits[:,:,:,:,2:4],
+             tf.sigmoid(logits[:,:,:,:,4:5])], axis=4)
         
         # 循环每一个example
         results = tf.while_loop(

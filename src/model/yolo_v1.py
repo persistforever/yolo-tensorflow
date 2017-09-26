@@ -176,9 +176,7 @@ class TinyYolo():
                            self.n_boxes, 5])
         
         # 获取class_pred和box_pred
-        self.box_preds = tf.reshape(
-            logits[:,:,:,:,0:5], 
-            shape=[self.batch_size, self.cell_size, self.cell_size, self.n_boxes, 5])
+        self.box_preds = logits
         
         # 循环每一个example
         results = tf.while_loop(
