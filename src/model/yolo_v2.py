@@ -524,7 +524,7 @@ class TinyYolo():
                         processor.validsets, i, batch_size)
                     batch_images, batch_labels = processor.data_augmentation(
                         batch_image_paths, batch_labels, mode='test',
-                        flip=False, whiten=True, resize=True, jitter=0.2)
+                        flip=False, whiten=True, resize=True)
                     batch_box_labels, batch_object_nums = \
                         processor.process_batch_labels(batch_labels)
                     
