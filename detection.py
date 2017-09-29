@@ -6,13 +6,13 @@ import os
 import platform
 
 os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
-os.environ['CUDA_VISIBLE_DEVICES'] = '3'
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 if 'Windows' in platform.platform():
     maindir = 'E:\Github\\table-detection\\'
 elif 'Linux' in platform.platform():
-    datadir = '/home/caory/github/darknet-table/'
-    storedir = '/home/caory/github/table-detection/'
+    datadir = '/home/caory/github/yolo-tensorflow/'
+    storedir = '/home/caory/github/yolo-tensorflow/'
 
 
 def train():
@@ -20,8 +20,8 @@ def train():
     from src.model.yolo_v1 import TinyYolo
     
     image_processor = ImageProcessor(
-        os.path.join(datadir, 'datasets', 'table-v1'),
-        image_size=448, max_objects_per_image=30, cell_size=4, n_classes=1)
+        os.path.join(datadir, 'datasets', 'voc-v2'),
+        image_size=448, max_objects_per_image=30, cell_size=7, n_classes=1)
     
     tiny_yolo = TinyYolo(
         n_channel=3, n_classes=1, image_size=448, max_objects_per_image=30,
@@ -30,8 +30,8 @@ def train():
         recall_thresh=0.5)
     
     tiny_yolo.train(
-        processor=image_processor, backup_path=os.path.join(storedir, 'backup', 'table-v1'),
-        n_iters=100000, batch_size=32)
+        processor=image_processor, backup_path=os.path.join(storedir, 'backup', 'voc-v1'),
+        n_iters=500000, batch_size=32)
     
     
 def test():
