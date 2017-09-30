@@ -10,12 +10,7 @@ import numpy
 import random
 import platform
 import cv2
-from multiprocessing import Process, Lock, Queue, Value
-
-if 'Windows' in platform.platform():
-    from queue import Queue
-elif 'Linux' in platform.platform():
-    from Queue import Queue
+import multiprocessing as mp
 
 
 class ImageProcessor:
@@ -166,42 +161,42 @@ class ImageProcessor:
     
     def data_augmentation(self, image_paths, labels, mode='train', 
                           resize=False, jitter=0.2, flip=False, whiten=False):
-        dataset_queue = Queue(maxsize=1000)
-        new_dataset_queue = Queue(maxsize=1000)
+        dataset_queue = mp.Queue(maxsize=self.batch_size)
+        new_dataset_queue = mp.Queue(maxsize=self.batch_size)
         
         for i in range(len(image_paths)):
-            dataset_queue.put(image_paths[i], labels[i])
+            dataset_queue.put([image_paths[i], labels[i]])
             
         process_list = []
         for i in range(self.n_processes):
-            process = Process(
+            process = mp.Process(
                 target=self.data_augmentation_consumer,
                 args=(dataset_queue, new_dataset_queue,
                       mode, resize, jitter, flip, whiten))
             process_list.append(process)
         for process in process_list:
             process.start()
-        for process in process_list:
-            process.join()
+        # for process in process_list:
+        #     process.join()
+
+        # print(new_dataset_queue.qsize())
         
-        new_images, new_labels = [], []
+        # new_images, new_labels = [], []
+        """
         while not new_dataset_queue.empty():
             image, label = new_dataset_queue.get()
             new_images.append(image)
             new_labels.append(label)
-            
-        return numpy.array(new_images, dtype='uint8'), numpy.array(new_labels, dtype='float32')
+        """ 
+        # return numpy.array(new_images, dtype='uint8'), numpy.array(new_labels, dtype='float32')
         
     def data_augmentation_consumer(self, dataset_queue, new_dataset_queue,
                                    mode, resize, jitter, flip, whiten):
-        n_iter = int(self.batch_size / self.n_processes)
-        i = 0
-        
         while not dataset_queue.empty():
-            if i >= n_iter:
-                break
- 
-            image_path, label = cv2.imread(path_queue.get())
+            # print(dataset_queue.qsize(), new_dataset_queue.qsize())
+
+            [image_path, label] = dataset_queue.get()
+            # print(image_path, label)
             image = cv2.imread(image_path)
             # 图像尺寸变换
             if resize:
@@ -214,8 +209,9 @@ class ImageProcessor:
             if whiten:
                 image = self.image_whitening(image)
                 
-            new_dataset_queue.put([image, label])
-            i += 1
+            # new_dataset_queue.put([image, label])
+
+        print('FINISH')
     
     def image_flip(self, image, label):
         # 图像翻转

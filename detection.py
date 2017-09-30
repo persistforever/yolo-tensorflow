@@ -22,7 +22,7 @@ def train():
     image_processor = ImageProcessor(
         os.path.join(datadir, 'datasets', 'voc-v2'),
         image_size=448, max_objects_per_image=30, cell_size=7, n_classes=1,
-        n_processes=8, batch_size=64)
+        n_processes=1, batch_size=64)
     
     tiny_yolo = TinyYolo(
         n_channel=3, n_classes=1, image_size=448, max_objects_per_image=30,

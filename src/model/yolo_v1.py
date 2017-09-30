@@ -420,19 +420,20 @@ class TinyYolo():
         train_iou_value, train_object_value, \
             train_anyobject_value, train_recall_value = 0.0, 0.0, 0.0, 0.0 
         
-        for n_iter in range(1, n_iters+1):
+        for n_iter in range(1, 2):
             # 训练一个batch，计算从准备数据到训练结束的时间
             start_time = time.time()
             
             # 获取数据并进行数据增强
             batch_image_paths, batch_labels = processor.get_random_batch(
                 processor.trainsets, batch_size)
-            batch_images, batch_labels = processor.data_augmentation(
+            # batch_images, batch_labels = 
+            processor.data_augmentation(
                 batch_image_paths, batch_labels, mode='train',
                 flip=True, whiten=True, resize=True, jitter=0.2)
-            batch_box_labels, batch_object_nums = \
-                processor.process_batch_labels(batch_labels)
-            print(batch_box_labels.shape, batch_object_nums.shape, batch_images.shape)
+            # batch_box_labels, batch_object_nums = \
+            #     processor.process_batch_labels(batch_labels)
+            # print(batch_images.shape, batch_labels.shape)
             
             end_time = time.time()
             print(end_time - start_time)
