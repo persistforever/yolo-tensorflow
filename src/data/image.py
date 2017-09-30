@@ -8,7 +8,6 @@ import pickle
 import math
 import numpy
 import random
-import matplotlib.pyplot as plt
 import platform
 import cv2
 from threading import Thread
@@ -67,6 +66,7 @@ class ImageProcessor:
         for image_path in image_paths:    
             label_path = image_path.replace('Images', 'Labels')
             label_path = label_path.replace('.png', '.txt')
+            label_path = label_path.replace('.jpg', '.txt')
             
             label = [[0, 0, 0, 0]] * self.max_objects
             n_objects = 0

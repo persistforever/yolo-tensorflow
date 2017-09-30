@@ -59,22 +59,26 @@ def construct_dataset(source_dir, target_dir):
     with open(os.path.join(source_dir, 'ImageSets', 'Main', 'cat_train.txt'), 'r') as fo:
         for line in fo:
             filename = line.strip().split(' ')[0]
-            filepath = os.path.join(source_dir, 'Images', '%s.jpg' % (filename))
+            filepath = os.path.join(target_dir, 'Images', '%s.jpg' % (filename))
             trainsets.append(filepath)
 
     with open(os.path.join(source_dir, 'ImageSets', 'Main', 'cat_val.txt'), 'r') as fo:
         for line in fo:
             filename = line.strip().split(' ')[0]
-            filepath = os.path.join(source_dir, 'Images', '%s.jpg' % (filename))
+            filepath = os.path.join(target_dir, 'Images', '%s.jpg' % (filename))
             testsets.append(filepath)
 
     with open(os.path.join(target_dir, 'train.txt'), 'w') as fw:
         for filepath in trainsets:
+            fw.writelines(('%s\n' % (filepath)).encode('utf8'))
+    
+    with open(os.path.join(target_dir, 'valid.txt'), 'w') as fw:
+        for filepath in testsets:
             fw.writelines(('%s\n' % (filepath)).encode('utf8'))
 
     with open(os.path.join(target_dir, 'test.txt'), 'w') as fw:
         for filepath in testsets:
             fw.writelines(('%s\n' % (filepath)).encode('utf8'))
 
-construct_label('/home/caory/github/yolo-tensorflow/datasets/voc-v0/VOC2007', '/home/caory/github/yolo-tensorflow/datasets/voc-v2')
+construct_label('/home/caory/github/yolo-tensorflow/datasets/voc-v0/VOC2012', '/home/caory/github/yolo-tensorflow/datasets/voc-v2')
 construct_dataset('/home/caory/github/yolo-tensorflow/datasets/voc-v0/VOC2012', '/home/caory/github/yolo-tensorflow/datasets/voc-v2')
