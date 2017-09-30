@@ -10,7 +10,7 @@ import numpy
 import random
 import platform
 import cv2
-from threading import Thread
+from multiprocessing import Process, Lock, Queue, Value
 
 if 'Windows' in platform.platform():
     from queue import Queue
@@ -20,13 +20,15 @@ elif 'Linux' in platform.platform():
 
 class ImageProcessor:
     
-    def __init__(self, directory, image_size=288, max_objects_per_image=20, cell_size=7,
-                 n_classes=1):
+    def __init__(self, directory, image_size, max_objects_per_image, cell_size,
+                 n_classes, batch_size, n_processes):
         # 参数赋值
         self.image_size = image_size
         self.max_objects = max_objects_per_image
         self.cell_size = cell_size
         self.n_classes = n_classes
+        self.n_processes = n_processes
+        self.batch_size = batch_size
         
         self.load_images_labels(directory)
     
@@ -126,6 +128,7 @@ class ImageProcessor:
         for j in range(self.max_objects):
             
             [left, right, top, bottom] = label[j]
+            
             center_x = (left + right) / 2.0
             center_y = (top + bottom) / 2.0
             w = right - left
@@ -135,8 +138,7 @@ class ImageProcessor:
                 # 计算包围框标记
                 center_cell_x = int(math.floor(self.cell_size * center_x))
                 center_cell_y = int(math.floor(self.cell_size * center_y))
-                box_label[j, :] = numpy.array(
-                    [center_cell_x, center_cell_y, center_x, center_y, w, h])
+                box_label[j, :] = numpy.array([center_x, center_y, w, h])
                 
                 # object_num增加
                 object_num += 1
@@ -161,16 +163,42 @@ class ImageProcessor:
         random.shuffle(index)
         
         return images[index], labels[index]
-        
+    
     def data_augmentation(self, image_paths, labels, mode='train', 
-                          resize=False, jitter=0.2,
-                          flip=False,
-                          whiten=False):
-        new_images, new_labels = [], []
+                          resize=False, jitter=0.2, flip=False, whiten=False):
+        dataset_queue = Queue(maxsize=1000)
+        new_dataset_queue = Queue(maxsize=1000)
         
         for i in range(len(image_paths)):
-            image = cv2.imread(image_paths[i])
-            label = labels[i]
+            dataset_queue.put(image_paths[i], labels[i])
+            
+        process_list = []
+        for i in range(self.n_processes):
+            process = Process(
+                target=self.data_augmentation_consumer,
+                args=(dataset_queue, new_dataset_queue,
+                      mode, resize, jitter, flip, whiten))
+            process_list.append(process)
+        for process in process_list:
+            process.start()
+        for process in process_list:
+            process.join()
+        
+        new_images, new_labels = [], []
+        while not new_dataset_queue.empty():
+            image, label = new_dataset_queue.get()
+            new_images.append(image)
+            new_labels.append(label)
+            
+        return numpy.array(new_images, dtype='uint8'), numpy.array(new_labels, dtype='float32')
+        
+    def data_augmentation_consumer(self, dataset_queue, new_dataset_queue,
+                                   mode, resize, jitter, flip, whiten):
+        n_iter = int(self.batch_size / self.n_processes)
+        
+        while not path_queue.empty() and not label_queue.empty():
+            image_path, label = cv2.imread(path_queue.get())
+            image = cv2.imread(image_path)
             # 图像尺寸变换
             if resize:
                 image, label = self.image_resize(
@@ -182,10 +210,7 @@ class ImageProcessor:
             if whiten:
                 image = self.image_whitening(image)
                 
-            new_images.append(image)
-            new_labels.append(label)
-            
-        return numpy.array(new_images, dtype='uint8'), numpy.array(new_labels, dtype='float32')
+            new_dataset_queue.put([image, label])
     
     def image_flip(self, image, label):
         # 图像翻转

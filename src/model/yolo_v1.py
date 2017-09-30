@@ -41,7 +41,7 @@ class TinyYolo():
             name='images')
         self.box_labels = tf.placeholder(
             dtype=tf.float32, shape=[
-                self.batch_size, self.max_objects, 6], 
+                self.batch_size, self.max_objects, 4], 
             name='box_labels')
         self.object_nums = tf.placeholder(
             dtype=tf.int32, shape=[self.batch_size, ],
@@ -435,7 +435,7 @@ class TinyYolo():
             
             end_time = time.time()
             print(end_time - start_time)
-            
+            """
             [_, avg_loss, coord_loss, object_loss, noobject_loss,
              iou_value, object_value, anyobject_value, recall_value] = self.sess.run(
                 fetches=[self.optimizer, self.avg_loss,
@@ -529,7 +529,7 @@ class TinyYolo():
             if n_iter % 10000 == 0:
                 saver_path = self.saver.save(
                     self.sess, os.path.join(backup_path, 'model.ckpt'))
-                
+            """
         self.sess.close()
                 
     def test(self, processor, backup_path, batch_size=128):
