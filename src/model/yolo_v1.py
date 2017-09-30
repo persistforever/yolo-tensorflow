@@ -432,6 +432,7 @@ class TinyYolo():
                 flip=True, whiten=True, resize=True, jitter=0.2)
             batch_box_labels, batch_object_nums = \
                 processor.process_batch_labels(batch_labels)
+            print(batch_box_labels.shape, batch_object_nums.shape, batch_images.shape)
             
             end_time = time.time()
             print(end_time - start_time)

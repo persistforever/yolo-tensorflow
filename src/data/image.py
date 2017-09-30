@@ -195,8 +195,12 @@ class ImageProcessor:
     def data_augmentation_consumer(self, dataset_queue, new_dataset_queue,
                                    mode, resize, jitter, flip, whiten):
         n_iter = int(self.batch_size / self.n_processes)
+        i = 0
         
-        while not path_queue.empty() and not label_queue.empty():
+        while not dataset_queue.empty():
+            if i >= n_iter:
+                break
+ 
             image_path, label = cv2.imread(path_queue.get())
             image = cv2.imread(image_path)
             # 图像尺寸变换
@@ -211,6 +215,7 @@ class ImageProcessor:
                 image = self.image_whitening(image)
                 
             new_dataset_queue.put([image, label])
+            i += 1
     
     def image_flip(self, image, label):
         # 图像翻转
