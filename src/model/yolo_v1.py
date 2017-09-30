@@ -433,6 +433,9 @@ class TinyYolo():
             batch_box_labels, batch_object_nums = \
                 processor.process_batch_labels(batch_labels)
             
+            end_time = time.time()
+            print(end_time - start_time)
+            
             [_, avg_loss, coord_loss, object_loss, noobject_loss,
              iou_value, object_value, anyobject_value, recall_value] = self.sess.run(
                 fetches=[self.optimizer, self.avg_loss,
@@ -455,6 +458,7 @@ class TinyYolo():
             train_recall_value += recall_value
                 
             end_time = time.time()
+            print(end_time - start_time)
             
             process_images += batch_size
             speed = 1.0 * batch_size / (end_time - start_time)
