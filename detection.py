@@ -26,12 +26,12 @@ def train():
     tiny_yolo = TinyYolo(
         n_channel=3, n_classes=1, image_size=448, max_objects_per_image=30,
         cell_size=7, box_per_cell=5, object_scale=10, noobject_scale=3,
-        coord_scale=10, batch_size=32, noobject_thresh=0.6,
+        coord_scale=10, batch_size=64, noobject_thresh=0.6,
         recall_thresh=0.5)
     
     tiny_yolo.train(
         processor=image_processor, backup_path=os.path.join(storedir, 'backup', 'voc-v1'),
-        n_iters=500000, batch_size=32)
+        n_iters=500000, batch_size=64)
     
     
 def test():

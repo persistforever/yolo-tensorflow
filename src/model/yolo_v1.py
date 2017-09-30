@@ -16,9 +16,9 @@ from src.layer.pool_layer import PoolLayer
 
 class TinyYolo():
     
-    def __init__(self, n_channel=3, n_classes=1, image_size=288, max_objects_per_image=20,
-                 cell_size=5, box_per_cell=5, object_scale=1, noobject_scale=1,
-                 coord_scale=1, batch_size=2, noobject_thresh=0.6,
+    def __init__(self, n_channel, n_classes, image_size, max_objects_per_image,
+                 cell_size, box_per_cell, object_scale, noobject_scale,
+                 coord_scale, batch_size, noobject_thresh=0.6,
                  recall_thresh=0.5):
         # 设置参数
         self.n_classes = n_classes
@@ -444,8 +444,6 @@ class TinyYolo():
                            self.box_labels: batch_box_labels,
                            self.object_nums: batch_object_nums,
                            self.keep_prob: 0.5})
-                
-            end_time = time.time()
             
             train_avg_loss += avg_loss
             train_coord_loss += coord_loss
@@ -455,12 +453,14 @@ class TinyYolo():
             train_object_value += object_value
             train_anyobject_value += anyobject_value
             train_recall_value += recall_value
+                
+            end_time = time.time()
             
             process_images += batch_size
             speed = 1.0 * batch_size / (end_time - start_time)
                 
             # 每1轮训练观测一次train_loss    
-            print('{TRAIN} iter[%d], train_loss: %.6f, coord_loss: %.6f, '
+            print('{TRAIN} [%d], train_loss: %.6f, coord_loss: %.6f, '
                   'object_loss: %.6f, nobject_loss: %.6f, image_nums: %d, '
                   'speed: %.2f images/s' % (
                 n_iter, train_avg_loss, train_coord_loss, 
@@ -471,8 +471,8 @@ class TinyYolo():
                 train_object_loss, train_noobject_loss = 0.0, 0.0, 0.0, 0.0
             
             # 每1轮观测一次训练集evaluation
-            print('{TRAIN} iter[%d], iou: %.6f, object: %.6f, '
-                  'anyobject: %.6f, recall: %.6f' % (
+            print('{TRAIN} [%d], IOU: %.6f, Object: %.6f, '
+                  'Noobject: %.6f, Recall: %.6f\n' % (
                 n_iter, train_iou_value, train_object_value, 
                 train_anyobject_value, train_recall_value))
             sys.stdout.flush()
@@ -481,7 +481,7 @@ class TinyYolo():
                 train_anyobject_value, train_recall_value = 0.0, 0.0, 0.0, 0.0 
             
             # 每1000轮观测一次验证集evaluation
-            if n_iter % 1000 == 0:
+            if n_iter % 2500 == 0:
                 valid_iou_value, valid_object_value, \
                     valid_nobject_value, valid_recall_value = 0.0, 0.0, 0.0, 0.0 
                 
@@ -525,8 +525,6 @@ class TinyYolo():
             if n_iter % 1000 == 0:
                 saver_path = self.saver.save(
                     self.sess, os.path.join(backup_path, 'model.ckpt'))
-
-            sys.stdout.flush()
                 
         self.sess.close()
                 
