@@ -65,13 +65,14 @@ class ImageProcessor:
             label_path = label_path.replace('.png', '.txt')
             label_path = label_path.replace('.jpg', '.txt')
             
-            label = [[0, 0, 0, 0]] * self.max_objects
+            label = [[0, 0, 0, 0, 0]] * self.max_objects
             n_objects = 0
                     
             with open(label_path, 'r') as fo:
                 for line in fo:
                     infos = line.strip().split(' ')
                     
+                    index = float(infos[0])
                     x = float(infos[1])
                     y = float(infos[2])
                     w = float(infos[3])
@@ -82,7 +83,7 @@ class ImageProcessor:
                     top = y - h / 2.0
                     bottom = y + h / 2.0
                     
-                    label[n_objects] = [left, right, top, bottom]
+                    label[n_objects] = [left, right, top, bottom, index]
                     n_objects += 1
                         
             datasets.append([image_path, label])
@@ -114,7 +115,7 @@ class ImageProcessor:
         
         # true_label and mask in 包围框标记
         box_label = numpy.zeros(
-            shape=(self.max_objects, 4),
+            shape=(self.max_objects, 5),
             dtype='float32')
         
         object_num = numpy.zeros(
@@ -122,7 +123,7 @@ class ImageProcessor:
         
         for j in range(self.max_objects):
             
-            [left, right, top, bottom] = label[j]
+            [left, right, top, bottom, index] = label[j]
             
             center_x = (left + right) / 2.0
             center_y = (top + bottom) / 2.0
@@ -133,7 +134,7 @@ class ImageProcessor:
                 # 计算包围框标记
                 center_cell_x = int(math.floor(self.cell_size * center_x))
                 center_cell_y = int(math.floor(self.cell_size * center_y))
-                box_label[j, :] = numpy.array([center_x, center_y, w, h])
+                box_label[j, :] = numpy.array([center_x, center_y, w, h, index])
                 
                 # object_num增加
                 object_num += 1
@@ -254,14 +255,14 @@ class ImageProcessor:
                 temp_image[old_sy: old_ey, old_sx: old_ex, :]
         
             # 重新计算labels
-            new_label = [[0, 0, 0, 0]] * self.max_objects
+            new_label = [[0, 0, 0, 0, 0]] * self.max_objects
             n = 0
             
             for j in range(len(label)):
                 if sum(label[j]) == 0:
                     break
                         
-                [left, right, top, bottom] = label[j][0:4]
+                [left, right, top, bottom, index] = label[j]
                     
                 if resized_w > nw:
                     new_left = (1.0 * left * nw + dx) / resized_w
@@ -283,18 +284,18 @@ class ImageProcessor:
                 new_bottom = max(0.0, min(new_bottom, 1.0 - 1e-6))
                 
                 if new_right > new_left and new_bottom > new_top:
-                    new_label[n] = [new_left, new_right, new_top, new_bottom]
+                    new_label[n] = [new_left, new_right, new_top, new_bottom, index]
                     n += 1
         else:
             new_image = cv2.resize(image, (resized_h, resized_w))
             
-            new_label = [[0, 0, 0, 0]] * self.max_objects
+            new_label = [[0, 0, 0, 0, 0]] * self.max_objects
             n = 0
             for j in range(len(label)):
                 if sum(label[j]) == 0:
                     break
                         
-                [left, right, top, bottom] = label[j][0:4]
+                [left, right, top, bottom, index] = label[j]
                 new_left = left
                 new_right = right
                 new_top = top
@@ -306,7 +307,7 @@ class ImageProcessor:
                 new_bottom = max(0.0, min(new_bottom, 1.0 - 1e-6))
                 
                 if new_right > new_left and new_bottom > new_top:
-                    new_label[n] = [new_left, new_right, new_top, new_bottom]
+                    new_label[n] = [new_left, new_right, new_top, new_bottom, index]
                     n += 1
         
         return new_image, new_label

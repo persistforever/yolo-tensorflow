@@ -41,7 +41,7 @@ class TinyYolo():
             name='images')
         self.box_labels = tf.placeholder(
             dtype=tf.float32, shape=[
-                self.batch_size, self.max_objects, 4], 
+                self.batch_size, self.max_objects, 5], 
             name='box_labels')
         self.object_nums = tf.placeholder(
             dtype=tf.int32, shape=[self.batch_size, ],
@@ -135,7 +135,7 @@ class TinyYolo():
             batch_normal=True, weight_decay=5e-4, name='conv8')
         conv_layer9 = ConvLayer(
             input_shape=(self.batch_size, int(self.image_size/64), int(self.image_size/64), 1024), 
-            n_size=1, n_filter=self.n_boxes*5, stride=1, activation='sigmoid',
+            n_size=1, n_filter=self.n_boxes*(5+self.n_classes), stride=1, activation='sigmoid',
             batch_normal=False, weight_decay=5e-4, name='conv9')
         
         # 数据流
@@ -173,7 +173,7 @@ class TinyYolo():
     def calculate_loss(self, logits):
         logits = tf.reshape(
             logits, shape=[self.batch_size, self.cell_size, self.cell_size, 
-                           self.n_boxes, 5])
+                           self.n_boxes, 5+self.n_classes])
         
         # 获取class_pred和box_pred
         self.box_preds = logits
@@ -229,7 +229,7 @@ class TinyYolo():
         noobject_label = tf.zeros(
             shape=(self.cell_size, self.cell_size, self.n_boxes, 1),
             dtype=tf.float32)
-        noobject_pred = self.box_preds[example,:,:,:,4:]
+        noobject_pred = self.box_preds[example,:,:,:,4:5]
         noobject_loss += tf.nn.l2_loss(
             (noobject_label - noobject_pred) * noobject_mask)
         
@@ -239,7 +239,7 @@ class TinyYolo():
         # 循环每一个object，计算coord_loss, object_loss和class_loss
         results = tf.while_loop(
             cond=self._one_object_loss_cond, 
-            body=self._one_object_loss_body, 
+            body=self._one_object_loss_body,
             loop_vars=[example, tf.constant(0), self.object_nums[example],
                        tf.constant(0.0), tf.constant(0.0), tf.constant(0.0),
                        tf.constant(0.0), tf.constant(0.0)])
@@ -261,8 +261,6 @@ class TinyYolo():
     def _one_object_iou_body(self, example, num, object_num, iou_tensor_whole):
         # 构造box_label
         # 如果cell中有物体，box_label的每一个box为四个坐标，如果cell中没有物体，则均为0
-        cell_x = tf.cast(self.box_labels[example, num, 0] * self.cell_size, dtype='int32')
-        cell_y = tf.cast(self.box_labels[example, num, 1] * self.cell_size, dtype='int32')
         box_label = tf.reshape(self.box_labels[example, num], shape=(1, 1, 1, 4))
         box_label = tf.tile(box_label, [self.cell_size, self.cell_size, self.n_boxes, 4])
         
@@ -270,7 +268,13 @@ class TinyYolo():
         # 尺寸为(cell_size, cell_size, n_boxes, 4)
         box_pred = self.box_preds[example,:,:,:,0:4]
         
+        # 计算iou
+        # 尺寸为(cell_size, cell_size, n_boxes, 1)
         iou_tensor = self.calculate_iou(box_pred, box_label)
+        
+        # 将iou_tensor的最后一位补齐成max_objects，这样构成的iou_tensor_whole尺寸为
+        # (cell_size, cell_size, n_boxes, max_objects)，对最后一位求max，就可以获得
+        # 每一个pred_box对所有object的iou中最大的max_iou
         padding = tf.cast([[0, 0], [0, 0], [0, 0], [num, self.max_objects-num-1]], dtype=tf.int32)
         iou_tensor = tf.pad(iou_tensor, paddings=padding, mode='CONSTANT')
         
@@ -309,39 +313,23 @@ class TinyYolo():
                            [0, 0], [0, 0]], dtype=tf.int32)
         box_label = tf.pad(box_label, paddings=padding, mode='CONSTANT')
         
-        # 构造shift_box_label
-        # 如果cell中有物体，shift_box_label的每一个box则为0, 0, w, h，如果cell中没有物体，则为0
-        pred_x = tf.zeros(shape=(self.cell_size, self.cell_size, self.n_boxes, 1))
-        pred_y = tf.zeros(shape=(self.cell_size, self.cell_size, self.n_boxes, 1))
-        shift_box_label = tf.concat([pred_x, pred_y, box_label[:,:,:,2:4]], axis=3)
+        # 构造box_pred
+        # 尺寸为(cell_size, cell_size, n_boxes, 4)
+        box_pred = self.box_preds[example,:,:,:,0:4]
         
-        # 构造new_box_pred
-        # x和y的pred
-        pred_x = tf.zeros(shape=(self.cell_size, self.cell_size, self.n_boxes, 1))
-        pred_y = tf.zeros(shape=(self.cell_size, self.cell_size, self.n_boxes, 1))
-        # w的pred
-        pred_w = tf.cast([0.73, 0.73, 0.71, 0.76, 0.73], dtype=tf.float32)
-        pred_w = tf.reshape(pred_w, shape=(1, 1, self.n_boxes, 1))
-        pred_w = tf.tile(pred_w, (self.cell_size, self.cell_size, 1, 1))
-        # h的pred
-        pred_h = tf.cast([0.12, 0.23, 0.17, 0.65, 0.11], dtype=tf.float32)
-        pred_h = tf.reshape(pred_h, shape=(1, 1, self.n_boxes, 1))
-        pred_h = tf.tile(pred_h, (self.cell_size, self.cell_size, 1, 1))
-        pseudo_box_pred = tf.concat([pred_x, pred_y, pred_w, pred_h], axis=3)
-        
-        # 计算shift_box_label和new_box_pred的iou，选出最大的iou来计算
-        pseudo_iou_tensor = self.calculate_iou(pseudo_box_pred, shift_box_label)
-        iou_tensor_max = tf.reduce_max(pseudo_iou_tensor, 2, keep_dims=True)
+        # 计算box_label和box_pred的iou，选出最大的iou来计算
+        iou_tensor = self.calculate_iou(box_pred, box_label)
+        iou_tensor_max = tf.reduce_max(iou_tensor, 2, keep_dims=True)
         iou_tensor_mask = tf.cast(
-            (pseudo_iou_tensor >= iou_tensor_max), dtype=tf.float32) * object_mask
+            (iou_tensor >= iou_tensor_max), dtype=tf.float32) * object_mask
         
         # 计算coord_loss
         # coord_pred为box_pred的值，尺寸为(cell_size, cell_size, n_box, 1)
         # 每一个cell中，有object，并且iou最大的那个box的coord_label为真实的label，其余为0，
         # coord_label尺寸为(cell_size, cell_size, n_box, 1)
-        coord_label = box_label[:,:,:,0:4] * iou_tensor_mask
-        coord_pred = self.box_preds[example,:,:,:,0:4] * iou_tensor_mask
-        coord_loss += tf.nn.l2_loss(coord_label[:,:,:,0:4] - coord_pred[:,:,:,0:4])
+        coord_label = box_label[:,:,:,0:4]
+        coord_pred = self.box_preds[example,:,:,:,0:4]
+        coord_loss += tf.nn.l2_loss((coord_label - coord_pred) * iou_tensor_mask)
         
         # 计算iou_value
         # 每一个cell中，有object，并且iou最大的那个对应的iou
@@ -360,15 +348,24 @@ class TinyYolo():
         # object_pred为box_pred的值，尺寸为(cell_size, cell_size, n_box, 1)
         # 每一个cell中，有object，并且iou最大的那个box的object_label为iou，其余为0，
         # object_label尺寸为(cell_size, cell_size, n_box, 1)
-        object_label = tf.ones(
-            shape=(self.cell_size, self.cell_size, self.n_boxes, 1)) * iou_tensor_mask
-        object_pred = self.box_preds[example,:,:,:,4:5] * iou_tensor_mask
-        object_loss += tf.nn.l2_loss(object_label - object_pred)
+        object_label = tf.ones(shape=(self.cell_size, self.cell_size, self.n_boxes, 1))
+        object_pred = self.box_preds[example,:,:,:,4:5]
+        object_loss += tf.nn.l2_loss((object_label - object_pred) * iou_tensor_mask)
         
         # 计算object_value
         # 每一个cell中，有object，并且iou最大的那个对应的box_pred中的confidence
         object_value += tf.reduce_sum(
             self.box_preds[example,:,:,:,4:5] * iou_tensor_mask, axis=[0,1,2,3])
+        
+        # 计算class_true
+        class_index = self.box_labels[example,num,4]
+        class_label = tf.ones((1, 1, self.n_boxes, 1), dtype=tf.float32)
+        padding = tf.cast([[cell_y, self.cell_size-cell_y-1], 
+                           [cell_x, self.cell_size-cell_x-1],
+                           [0, 0], [class_index, self.n_classes-class_index-1]], dtype=tf.int32)
+        class_label = tf.reshape(
+            tf.pad(class_label, paddings=padding, mode='CONSTANT'),
+            shape=(self.cell_size, self.cell_size, self.n_boxes, self.n_classes))
         
         num += 1
         
