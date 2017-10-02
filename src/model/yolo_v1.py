@@ -18,7 +18,7 @@ class TinyYolo():
     
     def __init__(self, n_channel, n_classes, image_size, max_objects_per_image,
                  cell_size, box_per_cell, object_scale, noobject_scale,
-                 coord_scale, batch_size, noobject_thresh=0.6,
+                 coord_scale, class_scale, batch_size, noobject_thresh=0.6,
                  recall_thresh=0.5):
         # 设置参数
         self.n_classes = n_classes
@@ -30,6 +30,7 @@ class TinyYolo():
         self.object_scale = float(object_scale)
         self.noobject_scale = float(noobject_scale)
         self.coord_scale = float(coord_scale)
+        self.class_scale = float(class_scale)
         self.batch_size = batch_size
         self.noobject_thresh = noobject_thresh
         self.recall_thresh = recall_thresh
@@ -271,7 +272,7 @@ class TinyYolo():
     def _one_object_iou_body(self, example, num, object_num, iou_tensor_whole):
         # 构造box_label
         # 如果cell中有物体，box_label的每一个box为四个坐标，如果cell中没有物体，则均为0
-        box_label = tf.reshape(self.box_labels[example, num], shape=(1, 1, 1, 4))
+        box_label = tf.reshape(self.box_labels[example, num, 0:4], shape=(1, 1, 1, 4))
         box_label = tf.tile(box_label, [self.cell_size, self.cell_size, self.n_boxes, 4])
         
         # 构造box_pred
@@ -315,7 +316,7 @@ class TinyYolo():
         
         # 构造box_label
         # 如果cell中有物体，box_label的每一个box则为四个坐标，如果cell中没有物体，则为0
-        box_label = tf.cast(self.box_labels[example,num], dtype=tf.float32)
+        box_label = tf.cast(self.box_labels[example,num,0:4], dtype=tf.float32)
         box_label = tf.reshape(box_label, shape=(1, 1, 1, 4))
         box_label = tf.tile(box_label, [1, 1, self.n_boxes, 4])
         padding = tf.cast([[cell_y, self.cell_size-cell_y-1], 
@@ -368,7 +369,7 @@ class TinyYolo():
             self.box_preds[example,:,:,:,4:5] * iou_tensor_mask, axis=[0,1,2,3])
         
         # 计算class_true
-        class_index = self.box_labels[example,num,4]
+        class_index = tf.cast(self.box_labels[example,num,4], dtype=tf.int32)
         class_label = tf.ones((1, 1, self.n_boxes, 1), dtype=tf.float32)
         padding = tf.cast([[cell_y, self.cell_size-cell_y-1], 
                            [cell_x, self.cell_size-cell_x-1],
@@ -378,7 +379,7 @@ class TinyYolo():
             shape=(self.cell_size, self.cell_size, self.n_boxes, self.n_classes))
         class_pred = self.box_preds[example,:,:,:,5:]
         class_loss += tf.nn.l2_loss((class_label - class_pred) * iou_tensor_mask)
-        class_value += tf.reduce_sum(class_label * class_pred, axis=[0,1,2,3])
+        class_value += tf.reduce_sum(class_label * class_pred, axis=[0,1,2,3]) / self.n_boxes
         
         num += 1
         
@@ -444,9 +445,6 @@ class TinyYolo():
             batch_box_labels, batch_object_nums = \
                 processor.process_batch_labels(batch_labels)
             
-            end_time = time.time()
-            print(end_time - start_time)
-            
             [_, avg_loss, coord_loss, object_loss, noobject_loss, class_loss,
              iou_value, object_value, anyobject_value, recall_value, class_value] = \
                 self.sess.run(
@@ -468,10 +466,9 @@ class TinyYolo():
             train_recall_value += recall_value
             train_class_value += class_value
                 
-            end_time = time.time()
-            print(end_time - start_time)
-            
             process_images += batch_size
+            
+            end_time = time.time()
             speed = 1.0 * batch_size / (end_time - start_time)
                 
             # 每1轮训练观测一次train_loss    
