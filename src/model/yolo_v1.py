@@ -261,10 +261,9 @@ class TinyYolo():
     def _one_object_iou_body(self, example, num, object_num, iou_tensor_whole):
         # 构造box_label
         # 如果cell中有物体，box_label的每一个box为四个坐标，如果cell中没有物体，则均为0
-        cell_x = self.box_labels[example, num, 0]
-        cell_y = self.box_labels[example, num, 1]
-        box_label = tf.cast(self.box_labels[example,num,2:6], dtype=tf.float32)
-        box_label = tf.reshape(box_label, shape=(1, 1, 1, 4))
+        cell_x = tf.cast(self.box_labels[example, num, 0] * self.cell_size, dtype='int32')
+        cell_y = tf.cast(self.box_labels[example, num, 1] * self.cell_size, dtype='int32')
+        box_label = tf.reshape(self.box_labels[example, num], shape=(1, 1, 1, 4))
         box_label = tf.tile(box_label, [self.cell_size, self.cell_size, self.n_boxes, 4])
         
         # 构造box_pred
@@ -290,8 +289,8 @@ class TinyYolo():
                               iou_value, object_value, recall_value):
         # 构造object_mask
         # 如果cell中有物体，object_mask则为1，如果cell中没有物体，则为0
-        cell_x = self.box_labels[example, num, 0]
-        cell_y = self.box_labels[example, num, 1]
+        cell_x = tf.cast(self.box_labels[example, num, 0] * self.cell_size, dtype='int32')
+        cell_y = tf.cast(self.box_labels[example, num, 1] * self.cell_size, dtype='int32')
         object_mask = tf.ones(
             shape=(1, 1), dtype=tf.float32)
         padding = tf.cast([[cell_y, self.cell_size-cell_y-1], 
@@ -302,7 +301,7 @@ class TinyYolo():
         
         # 构造box_label
         # 如果cell中有物体，box_label的每一个box则为四个坐标，如果cell中没有物体，则为0
-        box_label = tf.cast(self.box_labels[example,num,2:6], dtype=tf.float32)
+        box_label = tf.cast(self.box_labels[example,num], dtype=tf.float32)
         box_label = tf.reshape(box_label, shape=(1, 1, 1, 4))
         box_label = tf.tile(box_label, [1, 1, self.n_boxes, 4])
         padding = tf.cast([[cell_y, self.cell_size-cell_y-1], 
@@ -420,24 +419,22 @@ class TinyYolo():
         train_iou_value, train_object_value, \
             train_anyobject_value, train_recall_value = 0.0, 0.0, 0.0, 0.0 
         
-        for n_iter in range(1, 2):
+        for n_iter in range(1, n_iters+1):
             # 训练一个batch，计算从准备数据到训练结束的时间
             start_time = time.time()
             
             # 获取数据并进行数据增强
             batch_image_paths, batch_labels = processor.get_random_batch(
                 processor.trainsets, batch_size)
-            # batch_images, batch_labels = 
-            processor.data_augmentation(
+            batch_images, batch_labels = processor.data_augmentation(
                 batch_image_paths, batch_labels, mode='train',
                 flip=True, whiten=True, resize=True, jitter=0.2)
-            # batch_box_labels, batch_object_nums = \
-            #     processor.process_batch_labels(batch_labels)
-            # print(batch_images.shape, batch_labels.shape)
+            batch_box_labels, batch_object_nums = \
+                processor.process_batch_labels(batch_labels)
             
             end_time = time.time()
             print(end_time - start_time)
-            """
+            
             [_, avg_loss, coord_loss, object_loss, noobject_loss,
              iou_value, object_value, anyobject_value, recall_value] = self.sess.run(
                 fetches=[self.optimizer, self.avg_loss,
@@ -531,7 +528,7 @@ class TinyYolo():
             if n_iter % 10000 == 0:
                 saver_path = self.saver.save(
                     self.sess, os.path.join(backup_path, 'model.ckpt'))
-            """
+            
         self.sess.close()
                 
     def test(self, processor, backup_path, batch_size=128):

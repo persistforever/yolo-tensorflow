@@ -114,7 +114,7 @@ class ImageProcessor:
         
         # true_label and mask in 包围框标记
         box_label = numpy.zeros(
-            shape=(self.max_objects, 6),
+            shape=(self.max_objects, 4),
             dtype='float32')
         
         object_num = numpy.zeros(
@@ -161,42 +161,9 @@ class ImageProcessor:
     
     def data_augmentation(self, image_paths, labels, mode='train', 
                           resize=False, jitter=0.2, flip=False, whiten=False):
-        dataset_queue = mp.Queue(maxsize=self.batch_size)
-        new_dataset_queue = mp.Queue(maxsize=self.batch_size)
-        
-        for i in range(len(image_paths)):
-            dataset_queue.put([image_paths[i], labels[i]])
-            
-        process_list = []
-        for i in range(self.n_processes):
-            process = mp.Process(
-                target=self.data_augmentation_consumer,
-                args=(dataset_queue, new_dataset_queue,
-                      mode, resize, jitter, flip, whiten))
-            process_list.append(process)
-        for process in process_list:
-            process.start()
-        # for process in process_list:
-        #     process.join()
+        new_images, new_labels = [], []
 
-        # print(new_dataset_queue.qsize())
-        
-        # new_images, new_labels = [], []
-        """
-        while not new_dataset_queue.empty():
-            image, label = new_dataset_queue.get()
-            new_images.append(image)
-            new_labels.append(label)
-        """ 
-        # return numpy.array(new_images, dtype='uint8'), numpy.array(new_labels, dtype='float32')
-        
-    def data_augmentation_consumer(self, dataset_queue, new_dataset_queue,
-                                   mode, resize, jitter, flip, whiten):
-        while not dataset_queue.empty():
-            # print(dataset_queue.qsize(), new_dataset_queue.qsize())
-
-            [image_path, label] = dataset_queue.get()
-            # print(image_path, label)
+        for image_path, label in zip(image_paths, labels):
             image = cv2.imread(image_path)
             # 图像尺寸变换
             if resize:
@@ -209,9 +176,10 @@ class ImageProcessor:
             if whiten:
                 image = self.image_whitening(image)
                 
-            # new_dataset_queue.put([image, label])
-
-        print('FINISH')
+            new_images.append(image)
+            new_labels.append(label)
+         
+        return numpy.array(new_images, dtype='uint8'), numpy.array(new_labels, dtype='float32')
     
     def image_flip(self, image, label):
         # 图像翻转
