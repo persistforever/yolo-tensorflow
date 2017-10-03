@@ -139,7 +139,7 @@ class TinyYolo():
             batch_normal=True, weight_decay=5e-4, name='conv8')
         conv_layer9 = ConvLayer(
             input_shape=(self.batch_size, int(self.image_size/64), int(self.image_size/64), 1024), 
-            n_size=1, n_filter=self.n_boxes*(5+self.n_classes), stride=1, activation='sigmoid',
+            n_size=1, n_filter=self.n_boxes*(5+self.n_classes), stride=1, activation='none',
             batch_normal=False, weight_decay=5e-4, name='conv9')
         
         # 数据流
@@ -175,9 +175,8 @@ class TinyYolo():
         return logits
     
     def calculate_loss(self, logits):
-        logits = tf.reshape(
-            logits, shape=[self.batch_size, self.cell_size, self.cell_size, 
-                           self.n_boxes, 5+self.n_classes])
+        logits = tf.reshape(logits, shape=[self.batch_size, self.cell_size, self.cell_size, self.n_boxes, 5+self.n_classes])
+        logits = tf.concat([tf.sigmoid(logits[:,:,:,:,0:5]), tf.nn.softmax(logits[:,:,:,:,5:])], axis=4)
         
         # 获取class_pred和box_pred
         self.box_preds = logits
@@ -381,7 +380,7 @@ class TinyYolo():
             shape=(self.cell_size, self.cell_size, self.n_boxes, self.n_classes))
         class_pred = self.box_preds[example,:,:,:,5:]
         class_loss += tf.nn.l2_loss((class_label - class_pred) * iou_tensor_mask)
-        class_value += tf.reduce_sum(class_label * class_pred, axis=[0,1,2,3]) / self.n_boxes
+        class_value += tf.reduce_sum(class_label * class_pred * iou_tensor_mask, axis=[0,1,2,3])
         
         num += 1
         

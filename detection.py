@@ -31,7 +31,7 @@ def train():
         recall_thresh=0.5, pred_thresh=0.5, nms_thresh=0.4)
     
     tiny_yolo.train(
-        processor=image_processor, backup_path=os.path.join(storedir, 'backup', 'voc-v1'),
+        processor=image_processor, backup_path=os.path.join(storedir, 'backup', 'voc-v2'),
         n_iters=500000, batch_size=64)
     
 def test():
@@ -54,4 +54,4 @@ def test():
         output_dir=os.path.join(storedir, 'logs', 'voc-v1', 'predictions'), batch_size=64)
     
 
-test()    
+train()

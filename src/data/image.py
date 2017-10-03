@@ -185,7 +185,7 @@ class ImageProcessor:
          
         return new_images, new_labels
     
-    def image_flip(self, image, label):
+    def image_flip(self, image, label, mode='train'):
         # 图像翻转
         if mode == 'train':
             old_image = image
