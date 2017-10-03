@@ -307,7 +307,7 @@ class ImageProcessor:
             dy = int((resized_h - new_h) / 2.0)
             
             sx, ex = dx, dx + new_w
-            sy, ey = dy, dy + new_y
+            sy, ey = dy, dy + new_h
             
             new_image = numpy.zeros(shape=(resized_h, resized_w, 3)) + 128
             new_image[sy:ey, sx:ex] = temp_image
