@@ -80,3 +80,16 @@ for k in range(max_objects):
   class_loss += l2_loss((class_true - class_pred) * object_mask)
 ```
 
+
+
+### 2. 模型测试
+
+测试模块的任务是，给定任意的一张图片，根据训练好的模型预测出所有$p(class)$高于阈值thresh的物体框。具体步骤如下，
+
+1.  **图片预处理**：对于一张尺寸为(orig_w, orig_h, 3)的图片，需要resize成尺寸为(resized_w, resized_h, 3)的图片然后输入到网络中。因此，首先将图片保持原始比例进行缩放，然后初始化尺寸为(resized_w, resized_h, 3)的灰色画布，将缩放后的图片放置在画布的正中央。具体步骤如下图所示。
+
+    ![resize_test](others/pictures/resize_test.png)
+
+2.  **模型预测**：将尺寸为(resized_w, resized_h, 3)的图片输入到模型，然后输出模型的predict变量，predict变量为一个尺寸为(batch_size, cell_size, cell_size, n_boxes, 5+n_classes)的tensor，表示了每个cell中，每个box预测出的物体框位置信息、置信度信息以及类别信息。置信度信息即$p(object)$，类别信息即$p(class|object)$，将二者相乘得到$p(class)$，如果$p(class) > thresh_{predict}$，则认为该box预测中有物体并且对应的类别为$p(class)$最大的类别。这样，模型就可以输出boxes和probs分别表示预测的物体的位置和概率。
+
+3.  **物体框后处理**：对于所有预测出的物体框，如果有两个物体框预测的类别相同，并且$IOU > thresh_{combine}$，那么就将$p(class)$较小的那个框移除，这样获得的预测物体框为最终的预测结果。

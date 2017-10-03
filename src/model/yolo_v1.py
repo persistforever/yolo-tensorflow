@@ -19,7 +19,7 @@ class TinyYolo():
     def __init__(self, n_channel, n_classes, image_size, max_objects_per_image,
                  cell_size, box_per_cell, object_scale, noobject_scale,
                  coord_scale, class_scale, batch_size, noobject_thresh=0.6,
-                 recall_thresh=0.5):
+                 recall_thresh=0.5, pred_thresh=0.5, nms_thresh=0.4):
         # 设置参数
         self.n_classes = n_classes
         self.image_size = image_size
@@ -34,6 +34,8 @@ class TinyYolo():
         self.batch_size = batch_size
         self.noobject_thresh = noobject_thresh
         self.recall_thresh = recall_thresh
+        self.pred_thresh = pred_thresh
+        self.nms_thresh = nms_thresh
         
         # 输入变量
         self.images = tf.placeholder(
@@ -281,7 +283,7 @@ class TinyYolo():
         
         # 计算iou
         # 尺寸为(cell_size, cell_size, n_boxes, 1)
-        iou_tensor = self.calculate_iou(box_pred, box_label)
+        iou_tensor = self.calculate_iou_tf(box_pred, box_label)
         
         # 将iou_tensor的最后一位补齐成max_objects，这样构成的iou_tensor_whole尺寸为
         # (cell_size, cell_size, n_boxes, max_objects)，对最后一位求max，就可以获得
@@ -329,7 +331,7 @@ class TinyYolo():
         box_pred = self.box_preds[example,:,:,:,0:4]
         
         # 计算box_label和box_pred的iou，选出最大的iou来计算
-        iou_tensor = self.calculate_iou(box_pred, box_label)
+        iou_tensor = self.calculate_iou_tf(box_pred, box_label)
         iou_tensor_max = tf.reduce_max(iou_tensor, 2, keep_dims=True)
         iou_tensor_mask = tf.cast(
             (iou_tensor >= iou_tensor_max), dtype=tf.float32) * object_mask
@@ -345,7 +347,7 @@ class TinyYolo():
         # 计算iou_value
         # 每一个cell中，有object，并且iou最大的那个对应的iou
         coord_pred = self.box_preds[example,:,:,:,0:4]
-        true_iou_tensor = self.calculate_iou(coord_pred, box_label)
+        true_iou_tensor = self.calculate_iou_tf(coord_pred, box_label)
         iou_value += tf.reduce_sum(
             true_iou_tensor * iou_tensor_mask, axis=[0,1,2,3])
             
@@ -386,7 +388,7 @@ class TinyYolo():
         return example, num, object_num, coord_loss, object_loss, class_loss, \
             iou_value, object_value, recall_value, class_value
               
-    def calculate_iou(self, box_pred, box_label):
+    def calculate_iou_tf(self, box_pred, box_label):
         box1 = tf.stack([
             box_pred[:,:,:,0] - box_pred[:,:,:,2] / 2.0,
             box_pred[:,:,:,1] - box_pred[:,:,:,3] / 2.0,
@@ -410,7 +412,28 @@ class TinyYolo():
         box1_area = (box1[:,:,:,2] - box1[:,:,:,0]) * (box1[:,:,:,3] - box1[:,:,:,1])
         box2_area = (box2[:,:,:,2] - box2[:,:,:,0]) * (box2[:,:,:,3] - box2[:,:,:,1])
         iou = inter_area / (box1_area + box2_area - inter_area + 1e-6)
+        
         return tf.reshape(iou, shape=[self.cell_size, self.cell_size, self.n_boxes, 1])
+    
+    def calculate_iou_py(self, box_pred, box_label):
+        box1 = [box_pred[0] - box_pred[2] / 2.0,
+                box_pred[1] - box_pred[3] / 2.0,
+                box_pred[0] + box_pred[2] / 2.0,
+                box_pred[1] + box_pred[3] / 2.0]
+        box2 = [box_label[0] - box_label[2] / 2.0,
+                box_label[1] - box_label[3] / 2.0,
+                box_label[0] + box_label[2] / 2.0,
+                box_label[1] + box_label[3] / 2.0]
+        left = max(box1[0], box2[0])
+        top = max(box1[1], box2[1])
+        right = min(box1[2], box2[2])
+        bottom = min(box1[3], box2[3])
+        inter_area = (right - left) * (bottom - top)
+        box1_area = (box1[2] - box1[0]) * (box1[3] - box1[1])
+        box2_area = (box2[2] - box2[0]) * (box2[3] - box2[1])
+        iou = inter_area / (box1_area + box2_area - inter_area + 1e-6) if inter_area >= 0 else 0.0
+        
+        return iou
         
     def train(self, processor, backup_path, n_iters=500000, batch_size=128):
         # 构建会话
@@ -430,7 +453,7 @@ class TinyYolo():
             0.0, 0.0, 0.0, 0.0, 0.0
         train_iou_value, train_object_value, \
             train_anyobject_value, train_recall_value, train_class_value = \
-            0.0, 0.0, 0.0, 0.0, 0.0 
+            0.0, 0.0, 0.0, 0.0, 0.0
         
         for n_iter in range(1, n_iters+1):
             # 训练一个batch，计算从准备数据到训练结束的时间
@@ -517,49 +540,60 @@ class TinyYolo():
             # 获取数据并进行数据增强
             batch_image_paths, batch_labels = processor.get_index_batch(
                 processor.testsets, i, batch_size)
-            batch_images, batch_labels = processor.data_augmentation(
+            batch_images, _ = processor.data_augmentation(
                 batch_image_paths, batch_labels, mode='test',
                 flip=False, whiten=True, resize=True)
-            _, _, batch_box_labels, batch_object_nums = \
-                processor.process_batch_labels(batch_labels)
             
             [logits] = self.sess.run(
                 fetches=[self.logits], 
                 feed_dict={self.images: batch_images,
-                           self.box_labels: batch_box_labels,
-                           self.object_nums: batch_object_nums,
                            self.keep_prob: 1.0})
             
             box_preds = numpy.reshape(
                 logits, (self.batch_size, self.cell_size, self.cell_size, 
-                         self.n_boxes, 5))
+                         self.n_boxes, 5+self.n_classes))
         
             for j in range(batch_images.shape[0]):
                 image_path = batch_image_paths[j]
                 image = cv2.imread(image_path)
                 # 画真实的框
                 for l in range(self.max_objects):
-                    [left, right, top, bottom] = batch_labels[j, l, 0:4]
+                    [left, right, top, bottom] = batch_labels[j,l,0:4]
                     left = int(left * image.shape[1])
                     right = int(right * image.shape[1])
                     top = int(top * image.shape[0])
                     bottom = int(bottom * image.shape[0])
                     cv2.rectangle(image, (left, top), (right, bottom), 
                                   (255, 99, 71), 2)
-                
-                # 画预测的框
+                    
+                # 获得预测的preds
+                preds = []
                 for x in range(self.cell_size):
                     for y in range(self.cell_size):
                         for n in range(self.n_boxes):
-                            box = box_preds[j, x, y, n]
-                            if box[4] >= 5e-4:
-                                print(box)
-                                left = int((box[0] - box[2] / 2.0) * image.shape[1])
-                                right = int((box[0] + box[2] / 2.0) * image.shape[1])
-                                top = int((box[1] - box[3] / 2.0) * image.shape[0])
-                                bottom = int((box[1] + box[3] / 2.0) * image.shape[0])
-                                cv2.rectangle(image, (left, top), (right, bottom), 
-                                              (238, 130, 238), 2)
+                            box = box_preds[j,x,y,n,0:4]
+                            prob = box_preds[j,x,y,n,4] * max(box_preds[j,x,y,n,5:])
+                            index = numpy.argmax(box_preds[j,x,y,n,5:])
+                            if prob >= self.pred_thresh:
+                                preds.append([box, index, prob])
+                
+                # 排序并去除box
+                preds = sorted(preds, key=lambda x: x[2], reverse=True)
+                for x in range(len(preds)):
+                    for y in range(i+1, len(pred)):
+                        iou = self.calculate_iou_py(preds[x][0], preds[y][0])
+                        if preds[x][1] == preds[y][1] and iou > self.nms_thresh:
+                            preds[y][2] = 0.0
+                
+                # 画预测的框
+                for k in range(len(preds)):
+                    if preds[k][2] > self.pred_thresh:
+                        box = preds[k][0]
+                        left = int((box[0] - box[2] / 2.0) * image.shape[1])
+                        right = int((box[0] + box[2] / 2.0) * image.shape[1])
+                        top = int((box[1] - box[3] / 2.0) * image.shape[0])
+                        bottom = int((box[1] + box[3] / 2.0) * image.shape[0])
+                        cv2.rectangle(image, (left, top), (right, bottom), (238, 130, 238), 2)
                                 
                 plt.imshow(image)
                 plt.show()

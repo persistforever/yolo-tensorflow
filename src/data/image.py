@@ -172,32 +172,38 @@ class ImageProcessor:
                     image, label, jitter=jitter, mode=mode)
             # 图像翻转
             if flip:
-                image, label = self.image_flip(image, label)
+                image, label = self.image_flip(image, label, mode=mode)
             # 图像白化
             if whiten:
                 image = self.image_whitening(image)
                 
             new_images.append(image)
             new_labels.append(label)
+        
+        new_images = numpy.array(new_images, dtype='uint8')
+        new_labels = numpy.array(new_labels, dtype='float32')
          
-        return numpy.array(new_images, dtype='uint8'), numpy.array(new_labels, dtype='float32')
+        return new_images, new_labels
     
     def image_flip(self, image, label):
         # 图像翻转
-        old_image = image
-        if numpy.random.random() < 0.5:
-            new_image = cv2.flip(old_image, 1)
+        if mode == 'train':
+            old_image = image
+            if numpy.random.random() < 0.5:
+                new_image = cv2.flip(old_image, 1)
+            else:
+                new_image = old_image
+            
+            # 重新计算box label
+            for j in range(len(label)):
+                if sum(label[j]) == 0:
+                    break
+                right = 1.0 - label[j][0]
+                left = 1.0 - label[j][1]
+                label[j][0] = left
+                label[j][1] = right
         else:
-            new_image = old_image
-        
-        # 重新计算box label
-        for j in range(len(label)):
-            if sum(label[j]) == 0:
-                break
-            right = 1.0 - label[j][0]
-            left = 1.0 - label[j][1]
-            label[j][0] = left
-            label[j][1] = right
+            new_image = image
         
         return new_image, label
     
@@ -211,9 +217,9 @@ class ImageProcessor:
     def image_resize(self, image, label, jitter=0.2, mode='train'):
         resized_w, resized_h = int(self.image_size), int(self.image_size)
         orig_w, orig_h = image.shape[1], image.shape[0]
-        dw, dh = image.shape[1] * jitter, image.shape[0] * jitter
         
         if mode == 'train':
+            dw, dh = image.shape[1] * jitter, image.shape[0] * jitter
             
             # 随机宽高比
             new_ar = 1.0 * (orig_w + random.randint(-int(dw), int(dw))) / \
@@ -287,28 +293,26 @@ class ImageProcessor:
                     new_label[n] = [new_left, new_right, new_top, new_bottom, index]
                     n += 1
         else:
-            new_image = cv2.resize(image, (resized_h, resized_w))
+            new_w, new_h = orig_w, orig_h
+            if resized_w / orig_w  < resized_h / orig_h:
+                new_w = int(resized_w)
+                new_h = int(resized_h * new_w / resized_w)
+            else:
+                new_h = int(resized_h)
+                new_w = int(resized_w * new_h / resized_h)
             
-            new_label = [[0, 0, 0, 0, 0]] * self.max_objects
-            n = 0
-            for j in range(len(label)):
-                if sum(label[j]) == 0:
-                    break
-                        
-                [left, right, top, bottom, index] = label[j]
-                new_left = left
-                new_right = right
-                new_top = top
-                new_bottom = bottom
-                    
-                new_left = min(max(0.0, new_left), 1.0 - 1e-6)
-                new_right = max(0.0, min(new_right, 1.0 - 1e-6))
-                new_top = min(max(0.0, new_top), 1.0 - 1e-6)
-                new_bottom = max(0.0, min(new_bottom, 1.0 - 1e-6))
-                
-                if new_right > new_left and new_bottom > new_top:
-                    new_label[n] = [new_left, new_right, new_top, new_bottom, index]
-                    n += 1
+            temp_image = cv2.resize(image, dsize=(new_w, new_h))
+            
+            dx = int((resized_w - new_w) / 2.0)
+            dy = int((resized_h - new_h) / 2.0)
+            
+            sx, ex = dx, dx + new_w
+            sy, ey = dy, dy + new_y
+            
+            new_image = numpy.zeros(shape=(resized_h, resized_w, 3)) + 128
+            new_image[sy:ey, sx:ex] = temp_image
+            
+            new_label = label
         
         return new_image, new_label
     
