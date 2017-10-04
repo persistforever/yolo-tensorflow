@@ -173,8 +173,10 @@ class TinyYolo():
         sys.stdout.flush()
         # 网络输出
         
-        logits = tf.reshape(logits, shape=[self.batch_size, self.cell_size, self.cell_size, self.n_boxes, 5+self.n_classes])
-        logits = tf.concat([tf.sigmoid(logits[:,:,:,:,0:5]), tf.nn.softmax(logits[:,:,:,:,5:])], axis=4)
+        logits = tf.reshape(logits, shape=[
+            self.batch_size, self.cell_size, self.cell_size, self.n_boxes, 5+self.n_classes])
+        logits = tf.concat(
+            [tf.sigmoid(logits[:,:,:,:,0:5]), tf.nn.softmax(logits[:,:,:,:,5:])], axis=4)
         
         return logits
     

@@ -65,12 +65,12 @@ def curve_smooth(infos_dict, batch_size=1):
 
 	return new_infos_dict
 
-def plot_curve(infos_dict1):
+def plot_curve(infos_dict1, infos_dict2):
 	fig = plt.figure(figsize=(10, 5))
 
 	plt.subplot(131)
 	p1 = plt.plot(infos_dict1['train_eval']['iter'], infos_dict1['train_eval']['iou'], '.-', color='#66CDAA')
-	# p2 = plt.plot(infos_dict2['train_eval']['iter'], infos_dict2['train_eval']['iou'], '.-', color='#1E90FF')
+	p2 = plt.plot(infos_dict2['train_eval']['iter'], infos_dict2['train_eval']['iou'], '.-', color='#1E90FF')
 	# p3 = plt.plot(infos_dict3['train_eval']['iter'], infos_dict3['train_eval']['iou'], '.-', color='#FF6347')
 	# p4 = plt.plot(infos_dict4['train_eval']['iter'], infos_dict4['train_eval']['iou'], '.-', color='#FFB90F')
 	# p5 = plt.plot(infos_dict5['train_eval']['iter'], infos_dict5['train_eval']['iou'], '.-', color='#8B658B')
@@ -84,7 +84,7 @@ def plot_curve(infos_dict1):
 
 	plt.subplot(132)
 	p1 = plt.plot(infos_dict1['train_eval']['iter'], infos_dict1['train_eval']['object'], '.-', color='#66CDAA')
-	# p2 = plt.plot(infos_dict2['train_eval']['iter'], infos_dict2['train_eval']['object'], '.-', color='#1E90FF')
+	p2 = plt.plot(infos_dict2['train_eval']['iter'], infos_dict2['train_eval']['object'], '.-', color='#1E90FF')
 	# p3 = plt.plot(infos_dict3['train_eval']['iter'], infos_dict3['train_eval']['object'], '.-', color='#FF6347')
 	# p4 = plt.plot(infos_dict4['train_eval']['iter'], infos_dict4['train_eval']['object'], '.-', color='#FFB90F')
 	# p5 = plt.plot(infos_dict5['train_eval']['iter'], infos_dict5['train_eval']['object'], '.-', color='#8B658B')
@@ -98,7 +98,7 @@ def plot_curve(infos_dict1):
 
 	plt.subplot(133)
 	p1 = plt.plot(infos_dict1['train_eval']['iter'], infos_dict1['train_eval']['class'], '.-', color='#66CDAA')
-	# p2 = plt.plot(infos_dict2['train_eval']['iter'], infos_dict2['train_eval']['object'], '.-', color='#1E90FF')
+	p2 = plt.plot(infos_dict2['train_eval']['iter'], infos_dict2['train_eval']['class'], '.-', color='#1E90FF')
 	# p3 = plt.plot(infos_dict3['train_eval']['iter'], infos_dict3['train_eval']['object'], '.-', color='#FF6347')
 	# p4 = plt.plot(infos_dict4['train_eval']['iter'], infos_dict4['train_eval']['object'], '.-', color='#FFB90F')
 	# p5 = plt.plot(infos_dict5['train_eval']['iter'], infos_dict5['train_eval']['object'], '.-', color='#8B658B')
@@ -115,7 +115,9 @@ def plot_curve(infos_dict1):
 
 
 infos_dict1 = load_log('E:\\Github\\yolo-tensorflow\\logs\\voc-v1\\train-v1.txt')
+infos_dict2 = load_log('E:\\Github\\yolo-tensorflow\\logs\\voc-v1\\train-v2.txt')
 
 infos_dict1 = curve_smooth(infos_dict1, batch_size=100)
+infos_dict2 = curve_smooth(infos_dict2, batch_size=100)
 
-plot_curve(infos_dict1)
+plot_curve(infos_dict1, infos_dict2)
