@@ -172,12 +172,13 @@ class TinyYolo():
         print()
         sys.stdout.flush()
         # 网络输出
-        return logits
-    
-    def calculate_loss(self, logits):
+        
         logits = tf.reshape(logits, shape=[self.batch_size, self.cell_size, self.cell_size, self.n_boxes, 5+self.n_classes])
         logits = tf.concat([tf.sigmoid(logits[:,:,:,:,0:5]), tf.nn.softmax(logits[:,:,:,:,5:])], axis=4)
         
+        return logits
+    
+    def calculate_loss(self, logits):
         # 获取class_pred和box_pred
         self.box_preds = logits
         
@@ -568,7 +569,7 @@ class TinyYolo():
             # 排序并去除box
             preds = sorted(preds, key=lambda x: x[2], reverse=True)
             for x in range(len(preds)):
-                for y in range(i+1, len(pred)):
+                for y in range(x+1, len(preds)):
                     iou = self.calculate_iou_py(preds[x][0], preds[y][0])
                     if preds[x][1] == preds[y][1] and iou > self.nms_thresh:
                         preds[y][2] = 0.0
@@ -577,13 +578,13 @@ class TinyYolo():
             for k in range(len(preds)):
                 if preds[k][2] > self.pred_thresh:
                     box = preds[k][0]
-                    left = int((box[0] - box[2] / 2.0) * image.shape[1])
-                    right = int((box[0] + box[2] / 2.0) * image.shape[1])
-                    top = int((box[1] - box[3] / 2.0) * image.shape[0])
-                    bottom = int((box[1] + box[3] / 2.0) * image.shape[0])
+                    left = int(min(max(0.0, (box[0] - box[2] / 2.0)), 0.9999) * image.shape[1])
+                    right = int(min(max(0.0, (box[0] + box[2] / 2.0)), 0.9999) * image.shape[1])
+                    top = int(min(max(0.0, (box[1] - box[3] / 2.0)), 0.9999) * image.shape[0])
+                    bottom = int(min(max(0.0, (box[1] + box[3] / 2.0)), 0.9999) * image.shape[0])
                     cv2.rectangle(image, (left, top), (right, bottom), (238, 130, 238), 2)
             
-            plt.imsave(output_path, image, cmap='gray')
+            plt.imsave(output_path, image)
             
     def debug(self, processor):
         # 处理数据
