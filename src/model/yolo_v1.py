@@ -470,6 +470,9 @@ class TinyYolo():
             batch_box_labels, batch_object_nums = \
                 processor.process_batch_labels(batch_labels)
             
+            end_time = time.time()
+            print(end_time - start_time)
+            
             [_, avg_loss, coord_loss, object_loss, noobject_loss, class_loss,
              iou_value, object_value, anyobject_value, recall_value, class_value] = \
                 self.sess.run(
@@ -494,6 +497,7 @@ class TinyYolo():
             process_images += batch_size
             
             end_time = time.time()
+            print(end_time - start_time)
             speed = 1.0 * batch_size / (end_time - start_time)
                 
             # 每1轮训练观测一次train_loss    
@@ -547,7 +551,7 @@ class TinyYolo():
             fetches=[self.logits], 
             feed_dict={self.images: batch_images,
                        self.keep_prob: 1.0})
-        
+            
         box_preds = numpy.reshape(
             logits, (self.batch_size, self.cell_size, self.cell_size, 
                      self.n_boxes, 5+self.n_classes))
