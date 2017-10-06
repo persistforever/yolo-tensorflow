@@ -457,8 +457,6 @@ class TinyYolo():
             train_anyobject_value, train_recall_value, train_class_value = \
             0.0, 0.0, 0.0, 0.0, 0.0
         
-        start_time = time.time()
-        
         for n_iter in range(1, n_iters+1):
             # 训练一个batch，计算从准备数据到训练结束的时间
             start_time = time.time()
@@ -490,7 +488,6 @@ class TinyYolo():
             process_images += batch_size
             
             end_time = time.time()
-            print(end_time - start_time)
             speed = 1.0 * batch_size / (end_time - start_time)
                 
             # 每1轮训练观测一次train_loss    
