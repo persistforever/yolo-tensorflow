@@ -89,6 +89,18 @@ class ImageProcessor:
             datasets.append([image_path, label])
         
         return datasets
+
+    def dataset_producer(self, dataset):
+        while True:
+            # 获取数据并进行数据增强
+            batch_image_paths, batch_labels = self.get_random_batch(
+                self.trainsets, self.batch_size)
+            batch_images, batch_labels = self.data_augmentation(
+                batch_image_paths, batch_labels, mode='train',
+                flip=True, whiten=True, resize=True, jitter=0.2)
+            batch_box_labels, batch_object_nums = \
+                self.process_batch_labels(batch_labels)
+            dataset.put([batch_images, batch_box_labels, batch_object_nums])
     
     def get_random_batch(self, dataset, batch_size):
         batch_image_paths, batch_labels = [], []
@@ -111,92 +123,12 @@ class ImageProcessor:
             
         return batch_image_paths, batch_labels
     
-    def process_label(self, label):
-        
-        # true_label and mask in 包围框标记
-        box_label = numpy.zeros(
-            shape=(self.max_objects, 5),
-            dtype='float32')
-        
-        object_num = numpy.zeros(
-            shape=(), dtype='int32')
-        
-        for j in range(self.max_objects):
-            
-            [left, right, top, bottom, index] = label[j]
-            
-            center_x = (left + right) / 2.0
-            center_y = (top + bottom) / 2.0
-            w = right - left
-            h = bottom - top
-            
-            if left != 0.0 and right != 0.0 and top != 0.0 and bottom != 0.0:
-                # 计算包围框标记
-                center_cell_x = int(math.floor(self.cell_size * center_x))
-                center_cell_y = int(math.floor(self.cell_size * center_y))
-                box_label[j, :] = numpy.array([center_x, center_y, w, h, index])
-                
-                # object_num增加
-                object_num += 1
-                            
-        return box_label, object_num
-    
-    def process_batch_labels(self, batch_labels):
-        batch_box_labels, batch_object_nums = [], []
-            
-        for i in range(len(batch_labels)):
-            box_label, object_num = self.process_label(batch_labels[i])
-            batch_box_labels.append(box_label)
-            batch_object_nums.append(object_num)
-        
-        batch_box_labels = numpy.array(batch_box_labels, dtype='float32')
-        batch_object_nums = numpy.array(batch_object_nums, dtype='int32')
-        
-        return batch_box_labels, batch_object_nums
-        
-    def _shuffle_datasets(self, images, labels):
-        index = list(range(images.shape[0]))
-        random.shuffle(index)
-        
-        return images[index], labels[index]
-    
     def data_augmentation(self, image_paths, labels, mode='train', 
                           resize=False, jitter=0.2, flip=False, whiten=False):
         new_images, new_labels = [], []
-        dataset = mp.Queue(maxsize=self.batch_size)
-        new_dataset = mp.Queue(maxsize=self.batch_size)
 
         for image_path, label in zip(image_paths, labels):
-            dataset.put([image_path, label])
-
-        process_list = []
-        for i in range(self.n_processes):
-            process = mp.Process(target=self.data_augmentation_consumer, 
-                args=(dataset, new_dataset, mode, resize, jitter, flip, whiten))
-            process_list.append(process)
-
-        for process in process_list:
-            process.start()
-
-        for i in range(self.batch_size):
-            [image, label] = new_dataset.get()
-            new_images.append(image)
-            new_labels.append(label)
-
-        for process in process_list:
-            process.join()
-
-        new_images = numpy.array(new_images, dtype='uint8')
-        new_labels = numpy.array(new_labels, dtype='float32')
-         
-        return new_images, new_labels
-
-    def data_augmentation_consumer(self, dataset, new_dataset, mode='train', 
-                                    resize=False, jitter=0.2, flip=False, whiten=False):
-        for i in range(int(self.batch_size/self.n_processes)):
-            [image_path, label] = dataset.get()
             image = cv2.imread(image_path)
-
             # 图像尺寸变换
             if resize:
                 image, label = self.image_resize(
@@ -208,7 +140,13 @@ class ImageProcessor:
             if whiten:
                 image = self.image_whitening(image)
                 
-            new_dataset.put([image, label])
+            new_images.append(image)
+            new_labels.append(label)
+        
+        new_images = numpy.array(new_images, dtype='uint8')
+        new_labels = numpy.array(new_labels, dtype='float32')
+         
+        return new_images, new_labels
     
     def image_flip(self, image, label, mode='train'):
         # 图像翻转
@@ -368,15 +306,52 @@ class ImageProcessor:
             images[i] = new_image
         
         return images
-
-    def dataset_producer(self, dataset):
-        while True:
-            # 获取数据并进行数据增强
-            batch_image_paths, batch_labels = self.get_random_batch(
-                self.trainsets, self.batch_size)
-            batch_images, batch_labels = self.data_augmentation(
-                batch_image_paths, batch_labels, mode='train',
-                flip=True, whiten=True, resize=True, jitter=0.2)
-            batch_box_labels, batch_object_nums = \
-                self.process_batch_labels(batch_labels)
-            dataset.put([batch_images, batch_box_labels, batch_object_nums])
+    
+    def process_label(self, label):
+        
+        # true_label and mask in 包围框标记
+        box_label = numpy.zeros(
+            shape=(self.max_objects, 5),
+            dtype='float32')
+        
+        object_num = numpy.zeros(
+            shape=(), dtype='int32')
+        
+        for j in range(self.max_objects):
+            
+            [left, right, top, bottom, index] = label[j]
+            
+            center_x = (left + right) / 2.0
+            center_y = (top + bottom) / 2.0
+            w = right - left
+            h = bottom - top
+            
+            if left != 0.0 and right != 0.0 and top != 0.0 and bottom != 0.0:
+                # 计算包围框标记
+                center_cell_x = int(math.floor(self.cell_size * center_x))
+                center_cell_y = int(math.floor(self.cell_size * center_y))
+                box_label[j, :] = numpy.array([center_x, center_y, w, h, index])
+                
+                # object_num增加
+                object_num += 1
+                            
+        return box_label, object_num
+    
+    def process_batch_labels(self, batch_labels):
+        batch_box_labels, batch_object_nums = [], []
+            
+        for i in range(len(batch_labels)):
+            box_label, object_num = self.process_label(batch_labels[i])
+            batch_box_labels.append(box_label)
+            batch_object_nums.append(object_num)
+        
+        batch_box_labels = numpy.array(batch_box_labels, dtype='float32')
+        batch_object_nums = numpy.array(batch_object_nums, dtype='int32')
+        
+        return batch_box_labels, batch_object_nums
+        
+    def _shuffle_datasets(self, images, labels):
+        index = list(range(images.shape[0]))
+        random.shuffle(index)
+        
+        return images[index], labels[index]
