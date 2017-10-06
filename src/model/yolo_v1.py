@@ -437,7 +437,7 @@ class TinyYolo():
         
         return iou
         
-    def train(self, processor, backup_path, n_iters=500000, batch_size=128):
+    def train(self, dataset, backup_path, n_iters=500000, batch_size=128):
         # 构建会话
         gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.95)
         self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
@@ -457,22 +457,15 @@ class TinyYolo():
             train_anyobject_value, train_recall_value, train_class_value = \
             0.0, 0.0, 0.0, 0.0, 0.0
         
+        start_time = time.time()
+        
         for n_iter in range(1, n_iters+1):
             # 训练一个batch，计算从准备数据到训练结束的时间
             start_time = time.time()
-            
-            # 获取数据并进行数据增强
-            batch_image_paths, batch_labels = processor.get_random_batch(
-                processor.trainsets, batch_size)
-            batch_images, batch_labels = processor.data_augmentation(
-                batch_image_paths, batch_labels, mode='train',
-                flip=True, whiten=True, resize=True, jitter=0.2)
-            batch_box_labels, batch_object_nums = \
-                processor.process_batch_labels(batch_labels)
-            
-            end_time = time.time()
-            print(end_time - start_time)
-            
+
+            # 获取数据
+            [batch_images, batch_box_labels, batch_object_nums] = dataset.get()
+
             [_, avg_loss, coord_loss, object_loss, noobject_loss, class_loss,
              iou_value, object_value, anyobject_value, recall_value, class_value] = \
                 self.sess.run(
@@ -521,8 +514,8 @@ class TinyYolo():
             train_iou_value, train_object_value, train_anyobject_value, \
                 train_recall_value, train_class_value = 0.0, 0.0, 0.0, 0.0, 0.0
             
-            # 每5000轮保存一次模型
-            if n_iter % 5000 == 0:
+            # 每10000轮保存一次模型
+            if n_iter % 10000 == 0:
                 saver_path = self.saver.save(
                     self.sess, os.path.join(backup_path, 'model.ckpt'))
             

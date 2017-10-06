@@ -368,3 +368,15 @@ class ImageProcessor:
             images[i] = new_image
         
         return images
+
+    def dataset_producer(self, dataset):
+        while True:
+            # 获取数据并进行数据增强
+            batch_image_paths, batch_labels = self.get_random_batch(
+                self.trainsets, self.batch_size)
+            batch_images, batch_labels = self.data_augmentation(
+                batch_image_paths, batch_labels, mode='train',
+                flip=True, whiten=True, resize=True, jitter=0.2)
+            batch_box_labels, batch_object_nums = \
+                self.process_batch_labels(batch_labels)
+            dataset.put([batch_images, batch_box_labels, batch_object_nums])
