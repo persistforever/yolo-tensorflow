@@ -488,14 +488,14 @@ class TinyYolo():
             process_images += batch_size
             
             end_time = time.time()
-            speed = 1.0 * batch_size / (end_time - start_time)
+            spend = end_time - start_time
                 
             # 每1轮训练观测一次train_loss    
             print('{TRAIN} [%d], train_loss: %.6f, coord_loss: %.6f, '
                   'object_loss: %.6f, nobject_loss: %.6f, class_loss: %.6f, '
-                  'image_nums: %d, speed: %.2f images/s' % (
+                  'image_nums: %d, time: %.2f' % (
                 n_iter, train_avg_loss, train_coord_loss, train_object_loss, 
-                train_noobject_loss, train_class_loss, process_images, speed))
+                train_noobject_loss, train_class_loss, process_images, spend))
             sys.stdout.flush()
             
             train_avg_loss, train_coord_loss, train_object_loss, \
