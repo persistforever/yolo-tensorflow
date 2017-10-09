@@ -316,7 +316,7 @@ class ImageProcessor:
             shape=(self.cell_size, self.cell_size, self.max_objects, self.n_classes),
             dtype='float32')
         object_mask = numpy.zeros(
-            shape=(self.cell_size, self.cell_size, self.max_objects, 1),
+            shape=(self.cell_size, self.cell_size, self.max_objects),
             dtype='float32')
         object_nums = numpy.zeros(
             shape=(self.cell_size, self.cell_size),
@@ -338,7 +338,7 @@ class ImageProcessor:
                 center_cell_y = int(math.floor(self.cell_size * center_y))
                 coord_true[center_cell_y, center_cell_x, 
                            object_nums[center_cell_y, center_cell_x]] = \
-                           numpy.array([center_x, center_y, w, h, index])
+                           numpy.array([center_x, center_y, w, h])
                 object_mask[center_cell_y, center_cell_x, 
                             object_nums[center_cell_y, center_cell_x]] = 1.0
                 object_nums[center_cell_y, center_cell_x] += 1
@@ -355,8 +355,9 @@ class ImageProcessor:
             
         for i in range(len(batch_labels)):
             coord_true, class_true, object_mask = self.process_label(batch_labels[i])
-            batch_box_labels.append(box_label)
-            batch_object_nums.append(object_num)
+            batch_coord_true.append(coord_true)
+            batch_class_true.append(class_true)
+            batch_object_mask.append(object_mask)
         
         batch_coord_true = numpy.array(batch_coord_true, dtype='float32')
         batch_class_true = numpy.array(batch_class_true, dtype='float32')

@@ -17,12 +17,12 @@ elif 'Linux' in platform.platform():
 
 
 def train():
-    from src.data.image_mp_v1 import ImageProcessor
-    from src.model.yolo_v1 import TinyYolo
+    from src.data.image_mp_v2 import ImageProcessor
+    from src.model.yolo_v2 import TinyYolo
     
     image_processor = ImageProcessor(
         os.path.join(datadir, 'datasets', 'voc-v2'),
-        image_size=448, max_objects_per_image=30, cell_size=7, n_classes=1,
+        image_size=448, max_objects_per_image=30, cell_size=7, n_classes=20,
         batch_size=64)
     
     tiny_yolo = TinyYolo(
@@ -50,7 +50,7 @@ def test():
     
     image_processor = ImageProcessor(
         os.path.join(datadir, 'datasets', 'voc-v2'),
-        image_size=448, max_objects_per_image=30, cell_size=7, n_classes=1,
+        image_size=448, max_objects_per_image=30, cell_size=7, n_classes=20,
         n_processes=1, batch_size=64)
     
     tiny_yolo = TinyYolo(
@@ -70,4 +70,4 @@ def debug():
     testor.test_calculate_loss()
     
 
-debug()
+train()

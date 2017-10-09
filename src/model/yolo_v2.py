@@ -54,8 +54,7 @@ class TinyYolo():
             dtype=tf.float32, shape=[
                 self.batch_size, self.cell_size, self.cell_size, self.max_objects], 
             name='object_mask')
-        self.keep_prob = tf.placeholder(dtype=tf.float32, name='keep_prob')
-        
+        self.keep_prob = tf.placeholder(dtype=tf.float32, name='keep_prob')        
         self.global_step = tf.Variable(0, dtype=tf.int32, name='global_step')
         
         # 待输出的中间变量
@@ -68,7 +67,6 @@ class TinyYolo():
         # 目标函数和优化器
         tf.add_to_collection('losses', self.coord_loss)
         tf.add_to_collection('losses', self.object_loss)
-        tf.add_to_collection('losses', self.noobject_loss)
         tf.add_to_collection('losses', self.class_loss)
         self.avg_loss = tf.add_n(tf.get_collection('losses'))
         
@@ -215,48 +213,55 @@ class TinyYolo():
         
         # 获得coord_label，预测的coord_pred应该接近coord_label，尺寸为(1,2,2,2,4)
         coord_label = tf.reduce_max(iou_tensor_mask * coord_true_iter, axis=4)
-        coord_loss = self.coord_scale * tf.nn.l2_loss(coord_pred, coord_label) / (
-            tf.sum(self.object_mask, axis=[0,1,2,3]))
+        coord_loss = self.coord_scale * tf.nn.l2_loss(coord_pred - coord_label) / (
+            tf.reduce_sum(self.object_mask, axis=[0,1,2,3]))
         
         # 获得conf_label，预测的conf_pred应该接近conf_label，尺寸为(1,2,2,2,1)
         conf_label = tf.reduce_max(iou_tensor_mask * tf.ones(shape=(
             self.batch_size, self.cell_size, self.cell_size, 
             self.n_boxes, self.max_objects, 1)), axis=4)
-        conf_loss = self.object_scale * tf.nn.l2_loss(conf_pred, conf_label) / (
-            tf.sum(self.object_mask, axis=[0,1,2,3]))
+        conf_loss = self.object_scale * tf.nn.l2_loss(conf_pred - conf_label) / (
+            tf.reduce_sum(self.object_mask, axis=[0,1,2,3]))
         
         # 获得class_label，预测的class_pred应该接近class_label，尺寸为(1,2,2,2,10)
         class_label = tf.reduce_max(iou_tensor_mask * class_true_iter, axis=4)
-        class_loss = self.class_scale * tf.nn.l2_loss(class_pred, class_label) / (
-            tf.sum(self.object_mask, axis=[0,1,2,3]))
+        class_loss = self.class_scale * tf.nn.l2_loss(class_pred - class_label) / (
+            tf.reduce_sum(self.object_mask, axis=[0,1,2,3]))
         
         # 获得iou_value，iou最大位置的IOU值之和
         iou_value = tf.reduce_sum(
             iou_tensor * iou_tensor_mask, axis=[0,1,2,3,4]) / (
-                tf.sum(self.object_mask, axis=[0,1,2,3]))
+                tf.reduce_sum(self.object_mask, axis=[0,1,2,3]))
             
         # 获得object_value，iou最大位置的confidence之和
+        conf_pred_iter = tf.reshape(conf_pred, shape=[
+                self.batch_size, self.cell_size, self.cell_size, self.n_boxes, 1, 1])
+        conf_pred_iter = tf.tile(conf_pred_iter, [1, 1, 1, 1, self.max_objects, 1])
         object_value = tf.reduce_sum(
-            conf_pred * iou_tensor_mask, axis=[0,1,2,3,4]) / (
-                tf.sum(self.object_mask, axis=[0,1,2,3]))
+            conf_pred_iter * iou_tensor_mask, axis=[0,1,2,3,4]) / (
+                tf.reduce_sum(self.object_mask, axis=[0,1,2,3]))
             
         # 获得noobject_value，iou最大位置取反后的confidence之和
         inv_iou_tensor_mask = tf.ones(shape=(
             self.batch_size, self.cell_size, self.cell_size, self.n_boxes, 
             self.max_objects, 1)) - iou_tensor_mask
-        whole = tf.sum(tf.ones(shape=(
+        whole = tf.reduce_sum(tf.ones(shape=(
             self.batch_size, self.cell_size, self.cell_size, self.n_boxes, 1)), axis=[0,1,2,3,4])
         noobject_value = tf.reduce_sum(
-            conf_pred * inv_iou_tensor_mask, axis=[0,1,2,3,4]) / (
-                whole - tf.sum(self.object_mask, axis=[0,1,2,3]))
+            conf_pred_iter * inv_iou_tensor_mask, axis=[0,1,2,3,4]) / (
+                whole - tf.reduce_sum(self.object_mask, axis=[0,1,2,3]))
             
-        recall_value = 0.0
+        recall_value = tf.zeros((1,))
+        tf.reduce_sum(recall_value, axis=0)
             
         # 获得class_value，iou最大位置的class最大值
         class_max = tf.reduce_max(class_pred * class_label, axis=4)
+        class_max_iter = tf.reshape(class_max, shape=[
+                self.batch_size, self.cell_size, self.cell_size, self.n_boxes, 1, 1])
+        class_max_iter = tf.tile(class_max_iter, [1, 1, 1, 1, self.max_objects, 1])
         class_value = tf.reduce_sum(
-            class_max * iou_tensor_mask, axis=[0,1,2,3,4]) /(
-                tf.sum(self.object_mask, axis=[0,1,2,3]))
+            class_max_iter * iou_tensor_mask, axis=[0,1,2,3,4]) /(
+                tf.reduce_sum(self.object_mask, axis=[0,1,2,3]))
             
         return coord_loss, conf_loss, conf_loss, class_loss, \
             iou_value, object_value, noobject_value, recall_value, class_value
@@ -335,6 +340,7 @@ class TinyYolo():
 
             # 获取数据
             [batch_images, batch_coord_true, batch_class_true, batch_object_mask] = dataset.get()
+            print(batch_images.shape, batch_coord_true.shape, batch_class_true.shape, batch_object_mask.shape)
 
             [_, avg_loss, coord_loss, object_loss, noobject_loss, class_loss,
              iou_value, object_value, anyobject_value, recall_value, class_value] = \
