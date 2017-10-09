@@ -16,13 +16,12 @@ import multiprocessing as mp
 class ImageProcessor:
     
     def __init__(self, directory, image_size, max_objects_per_image, cell_size,
-                 n_classes, batch_size, n_processes):
+                 n_classes, batch_size):
         # 参数赋值
         self.image_size = image_size
         self.max_objects = max_objects_per_image
         self.cell_size = cell_size
         self.n_classes = n_classes
-        self.n_processes = n_processes
         self.batch_size = batch_size
         
         self.load_images_labels(directory)
@@ -97,7 +96,7 @@ class ImageProcessor:
                 self.trainsets, self.batch_size)
             batch_images, batch_labels = self.data_augmentation(
                 batch_image_paths, batch_labels, mode='train',
-                flip=True, whiten=True, resize=True, jitter=0.2)
+                flip=True, whiten=False, resize=True, jitter=0.2)
             batch_box_labels, batch_object_nums = \
                 self.process_batch_labels(batch_labels)
             dataset.put([batch_images, batch_box_labels, batch_object_nums])

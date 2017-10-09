@@ -23,7 +23,7 @@ def train():
     image_processor = ImageProcessor(
         os.path.join(datadir, 'datasets', 'voc-v2'),
         image_size=448, max_objects_per_image=30, cell_size=7, n_classes=1,
-        n_processes=1, batch_size=64)
+        batch_size=64)
     
     tiny_yolo = TinyYolo(
         n_channel=3, n_classes=20, image_size=448, max_objects_per_image=30,
@@ -33,10 +33,15 @@ def train():
    
     # 设置数据池，image_processor负责生产dataset，tiny_yolo负责消费dataset
     datasets = mp.Queue(maxsize=3)
-    producer = mp.Process(target=image_processor.dataset_producer, args=(datasets,))
+    producers = []
+    for i in range(2):
+        producer = mp.Process(target=image_processor.dataset_producer, args=(datasets,))
+        producers.append(producer)
     consumer = mp.Process(target=tiny_yolo.train, args=(
         datasets, os.path.join(storedir, 'backup', 'voc-v2'), 500000, 64))
-    producer.start()
+    
+    for producer in producers:
+        producer.start()
     consumer.start()
     
 def test():
