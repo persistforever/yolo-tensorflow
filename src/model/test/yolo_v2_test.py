@@ -6,13 +6,105 @@ import os
 import time
 import numpy
 import matplotlib.pyplot as plt
-import cv2
 import tensorflow as tf
 from src.data.image import ImageProcessor
 from src.model.yolo_v2 import TinyYolo
 
 
 class TinyYoloTestor:
+    
+    def test_calculate_loss(self):
+        self.batch_size = 1
+        self.cell_size = 2
+        self.n_boxes = 2
+        self.max_objects = 3
+        
+        coord_pred = numpy.zeros((1, 2, 2, 2, 4))
+        coord_pred[0,0,0,0,:] = [0.4, 0.4, 0.1, 0.1]
+        coord_pred[0,0,0,1,:] = [0.1, 0.1, 0.1, 0.1]
+        coord_pred[0,0,1,0,:] = [0.75, 0.25, 0.1, 0.1]
+        coord_pred[0,0,1,1,:] = [0.7, 0.2, 0.1, 0.1]
+        coord_pred[0,1,0,0,:] = [0.3, 0.8, 0.1, 0.1]
+        coord_pred[0,1,0,1,:] = [0.25, 0.75, 0.1, 0.1]
+        coord_pred[0,1,1,0,:] = [0.75, 0.75, 0.1, 0.1]
+        coord_pred[0,1,1,1,:] = [0.7, 0.8, 0.1, 0.1]
+        
+        coord_true = numpy.zeros((1, 2, 2, 3, 4))
+        coord_true[0,0,0,0,:] = [0.1, 0.1, 0.1, 0.1]
+        coord_true[0,0,0,1,:] = [0.4, 0.4, 0.1, 0.1]
+        coord_true[0,0,1,0,:] = [0.75, 0.25, 0.1, 0.1]
+        coord_true[0,1,0,0,:] = [0.25, 0.75, 0.1, 0.1]
+        coord_true[0,1,1,0,:] = [0.75, 0.75, 0.1, 0.1]
+        
+        object_mask = numpy.zeros((1, 2, 2, 3))
+        object_mask[0,0,0,0] = 1
+        object_mask[0,0,0,1] = 1
+        object_mask[0,0,1,0] = 1
+        object_mask[0,1,0,0] = 1
+        object_mask[0,1,1,0] = 1
+        
+        coord_true_tf = tf.placeholder(
+            dtype=tf.float32, shape=[1, 2, 2, 3, 4], name='coord_true_tf')
+        coord_pred_tf = tf.placeholder(
+            dtype=tf.float32, shape=[1, 2, 2, 2, 4], name='coord_pred_tf')
+        object_mask_tf = tf.placeholder(
+            dtype=tf.float32, shape=[1, 2, 2, 3], name='object_mask_tf')
+        
+        coord_pred_iter = tf.tile(
+            tf.reshape(coord_pred_tf, shape=[
+                self.batch_size, self.cell_size, self.cell_size, self.n_boxes, 1, 4]), 
+            [1, 1, 1, 1, self.max_objects, 1])
+        
+        coord_true_iter = tf.reshape(coord_true_tf, shape=[
+                self.batch_size, self.cell_size, self.cell_size, 1, self.max_objects, 4])
+        coord_true_iter = tf.tile(coord_true_iter, [1, 1, 1, self.n_boxes, 1, 1])
+        
+        iou_tensor = self.calculate_iou_tf(coord_pred_iter, coord_true_iter)
+        iou_tensor_max = tf.reduce_max(iou_tensor, 3, keep_dims=True) 
+        iou_tensor_mask = tf.cast(
+            (iou_tensor >= iou_tensor_max), dtype=tf.float32) * tf.reshape(
+                object_mask_tf, shape=(
+                    self.batch_size, self.cell_size, self.cell_size, 1, self.max_objects, 1))
+        
+        coord_label = tf.reduce_max(iou_tensor_mask * coord_true_iter, axis=4)
+        conf_label = tf.reduce_max(iou_tensor_mask * tf.ones(shape=(
+            self.batch_size, self.cell_size, self.cell_size, 
+            self.n_boxes, self.max_objects, 1)), axis=4)
+            
+        sess = tf.Session()
+        [output] = sess.run(
+            fetches=[conf_label],
+            feed_dict={coord_true_tf: coord_true, coord_pred_tf: coord_pred,
+                       object_mask_tf: object_mask})
+        print(output)
+              
+    def calculate_iou_tf(self, box_pred, box_true):
+        box1 = tf.stack([
+            box_pred[:,:,:,:,:,0] - box_pred[:,:,:,:,:,2] / 2.0,
+            box_pred[:,:,:,:,:,1] - box_pred[:,:,:,:,:,3] / 2.0,
+            box_pred[:,:,:,:,:,0] + box_pred[:,:,:,:,:,2] / 2.0,
+            box_pred[:,:,:,:,:,1] + box_pred[:,:,:,:,:,3] / 2.0])
+        box1 = tf.transpose(box1, perm=[1, 2, 3, 4, 5, 0])
+        box2 = tf.stack([
+            box_true[:,:,:,:,:,0] - box_true[:,:,:,:,:,2] / 2.0,
+            box_true[:,:,:,:,:,1] - box_true[:,:,:,:,:,3] / 2.0,
+            box_true[:,:,:,:,:,0] + box_true[:,:,:,:,:,2] / 2.0,
+            box_true[:,:,:,:,:,1] + box_true[:,:,:,:,:,3] / 2.0])
+        box2 = tf.transpose(box2, perm=[1, 2, 3, 4, 5, 0])
+        
+        left_top = tf.maximum(box1[:,:,:,:,:,0:2], box2[:,:,:,:,:,0:2])
+        right_bottom = tf.minimum(box1[:,:,:,:,:,2:4], box2[:,:,:,:,:,2:4])
+        intersection = right_bottom - left_top
+        inter_area = intersection[:,:,:,:,:,0] * intersection[:,:,:,:,:,1]
+        mask = tf.cast(intersection[:,:,:,:,:,0] > 0, tf.float32) * \
+            tf.cast(intersection[:,:,:,:,:,1] > 0, tf.float32)
+        inter_area = inter_area * mask
+        box1_area = (box1[:,:,:,:,:,2]-box1[:,:,:,:,:,0]) * (box1[:,:,:,:,:,3]-box1[:,:,:,:,:,1])
+        box2_area = (box2[:,:,:,:,:,2]-box2[:,:,:,:,:,0]) * (box2[:,:,:,:,:,3]-box2[:,:,:,:,:,1])
+        iou = inter_area / (box1_area + box2_area - inter_area + 1e-6)
+        
+        return tf.reshape(iou, shape=[
+            self.batch_size, self.cell_size, self.cell_size, self.n_boxes, self.max_objects, 1])
     
     def test_get_box_pred(self):
             

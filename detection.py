@@ -17,7 +17,7 @@ elif 'Linux' in platform.platform():
 
 
 def train():
-    from src.data.image_mp import ImageProcessor
+    from src.data.image_mp_v1 import ImageProcessor
     from src.model.yolo_v1 import TinyYolo
     
     image_processor = ImageProcessor(
@@ -63,5 +63,11 @@ def test():
         processor=image_processor, backup_dir=os.path.join(storedir, 'backup', 'voc-v2'),
         output_dir=os.path.join(storedir, 'logs', 'voc-v2', 'predictions'), batch_size=64)
     
+def debug():
+    from src.model.test.yolo_v2_test import TinyYoloTestor
+    
+    testor = TinyYoloTestor()
+    testor.test_calculate_loss()
+    
 
-train()
+debug()
