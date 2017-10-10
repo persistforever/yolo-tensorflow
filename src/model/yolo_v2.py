@@ -67,6 +67,7 @@ class TinyYolo():
         # 目标函数和优化器
         tf.add_to_collection('losses', self.coord_loss)
         tf.add_to_collection('losses', self.object_loss)
+        tf.add_to_collection('losses', self.noobject_loss)
         tf.add_to_collection('losses', self.class_loss)
         self.avg_loss = tf.add_n(tf.get_collection('losses'))
         
@@ -245,7 +246,7 @@ class TinyYolo():
         # 获得noobject_value，iou最大位置取反后的confidence之和
         noobject_value = tf.reduce_sum(
             conf_pred * inv_iou_tensor_pred_mask, axis=[0,1,2,3]) / (
-                whole - tf.reduce_sum(inv_iou_tensor_pred_mask, axis=[0,1,2,3]))
+                tf.reduce_sum(inv_iou_tensor_pred_mask, axis=[0,1,2,3]))
         
         # 获得class_label，预测的class_pred应该接近class_label，尺寸为(1,2,2,2,10)
         class_label = tf.reduce_max(iou_tensor_mask * class_true_iter, axis=4)
@@ -253,13 +254,13 @@ class TinyYolo():
             (class_pred - class_label) * iou_tensor_pred_mask) / (
             tf.reduce_sum(self.object_mask, axis=[0,1,2,3]))
             
-        recall_value = tf.zeros((1,))
-        tf.reduce_sum(recall_value, axis=0)
-            
         # 获得class_value，iou最大位置的class最大值
         class_value = tf.reduce_sum(
-            class_pred * iou_tensor_pred_mask, axis=[0,1,2,3]) /(
+            class_pred * iou_tensor_pred_mask, axis=[0,1,2,3,4]) /(
                 tf.reduce_sum(self.object_mask, axis=[0,1,2,3]))
+            
+        recall_value = tf.ones((1,))
+        tf.reduce_sum(recall_value, axis=0)
             
         return coord_loss, object_loss, noobject_loss, class_loss, \
             iou_value, object_value, noobject_value, recall_value, class_value
@@ -336,7 +337,6 @@ class TinyYolo():
         for n_iter in range(1, n_iters+1):
             # 获取数据
             [batch_images, batch_coord_true, batch_class_true, batch_object_mask] = dataset.get()
-            print(batch_images.shape, batch_coord_true.shape, batch_class_true.shape, batch_object_mask.shape)
 
             [_, avg_loss, coord_loss, object_loss, noobject_loss, class_loss,
              iou_value, object_value, anyobject_value, recall_value, class_value] = \
