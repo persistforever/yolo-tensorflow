@@ -334,10 +334,8 @@ class TinyYolo():
             train_anyobject_value, train_recall_value, train_class_value = \
             0.0, 0.0, 0.0, 0.0, 0.0
         
+        start_time = time.time()
         for n_iter in range(1, n_iters+1):
-            # 训练一个batch，计算从准备数据到训练结束的时间
-            start_time = time.time()
-
             # 获取数据
             [batch_images, batch_coord_true, batch_class_true, batch_object_mask] = dataset.get()
             print(batch_images.shape, batch_coord_true.shape, batch_class_true.shape, batch_object_mask.shape)
