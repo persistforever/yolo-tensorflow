@@ -143,7 +143,7 @@ class TinyYoloTestor:
             tf.reduce_sum(object_mask_tf, axis=[0,1,2,3]))
             
         class_value = tf.reduce_sum(
-            class_pred_tf * class_label * iou_tensor_pred_mask, axis=[0,1,2,3,4]) /(
+            class_pred_tf * class_label * iou_tensor_pred_mask, axis=[0,1,2,3,4]) / (
                 tf.reduce_sum(object_mask_tf, axis=[0,1,2,3]))
             
         sess = tf.Session()

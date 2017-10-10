@@ -70,4 +70,4 @@ def debug():
     testor.test_calculate_loss()
     
 
-debug()
+train()
