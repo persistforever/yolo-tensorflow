@@ -18,6 +18,7 @@ class TinyYoloTestor:
         self.cell_size = 2
         self.n_boxes = 2
         self.max_objects = 3
+        self.n_classes = 5
         
         coord_pred = numpy.zeros((1, 2, 2, 2, 4))
         coord_pred[0,0,0,0,:] = [0.4, 0.4, 0.1, 0.1]
@@ -38,12 +39,33 @@ class TinyYoloTestor:
         conf_pred[0,1,0,1,0] = 0.9
         conf_pred[0,1,1,0,0] = 1.0
         
+        class_pred = numpy.zeros((1, 2, 2, 2, 5))
+        class_pred[0,0,0,0,0] = 0.9
+        class_pred[0,0,0,0,1] = 0.1
+        class_pred[0,0,0,1,1] = 1.0
+        class_pred[0,0,1,0,4] = 0.8
+        class_pred[0,0,1,0,3] = 0.1
+        class_pred[0,0,1,0,2] = 0.1
+        class_pred[0,1,0,1,2] = 1.0
+        class_pred[0,1,1,0,3] = 0.8
+        class_pred[0,1,1,0,0] = 0.05
+        class_pred[0,1,1,0,1] = 0.05
+        class_pred[0,1,1,0,2] = 0.05
+        class_pred[0,1,1,0,4] = 0.05
+        
         coord_true = numpy.zeros((1, 2, 2, 3, 4))
         coord_true[0,0,0,0,:] = [0.1, 0.1, 0.1, 0.1]
         coord_true[0,0,0,1,:] = [0.4, 0.4, 0.1, 0.1]
         coord_true[0,0,1,0,:] = [0.75, 0.25, 0.1, 0.1]
         coord_true[0,1,0,0,:] = [0.25, 0.75, 0.1, 0.1]
         coord_true[0,1,1,0,:] = [0.75, 0.75, 0.1, 0.1]
+        
+        class_true = numpy.zeros((1, 2, 2, 3, 5))
+        class_true[0,0,0,0,1] = 1.0
+        class_true[0,0,0,1,0] = 1.0
+        class_true[0,0,1,0,4] = 1.0
+        class_true[0,1,0,0,2] = 1.0
+        class_true[0,1,1,0,3] = 1.0
         
         object_mask = numpy.zeros((1, 2, 2, 3))
         object_mask[0,0,0,0] = 1
@@ -58,6 +80,10 @@ class TinyYoloTestor:
             dtype=tf.float32, shape=[1, 2, 2, 2, 4], name='coord_pred_tf')
         conf_pred_tf = tf.placeholder(
             dtype=tf.float32, shape=[1, 2, 2, 2, 1], name='conf_pred_tf')
+        class_true_tf = tf.placeholder(
+            dtype=tf.float32, shape=[1, 2, 2, 3, 5], name='class_true_tf')
+        class_pred_tf = tf.placeholder(
+            dtype=tf.float32, shape=[1, 2, 2, 2, 5], name='class_pred_tf')
         object_mask_tf = tf.placeholder(
             dtype=tf.float32, shape=[1, 2, 2, 3], name='object_mask_tf')
         
@@ -108,11 +134,25 @@ class TinyYoloTestor:
             conf_pred_tf * inv_iou_tensor_pred_mask, axis=[0,1,2,3]) / (
                 tf.reduce_sum(inv_iou_tensor_pred_mask, axis=[0,1,2,3]))
             
+        class_true_iter = tf.reshape(class_true_tf, shape=[
+            self.batch_size, self.cell_size, self.cell_size, 1, self.max_objects, self.n_classes])
+        class_true_iter = tf.tile(class_true_iter, [1, 1, 1, self.n_boxes, 1, 1])
+        class_label = tf.reduce_max(iou_tensor_mask * class_true_iter, axis=4)
+        class_loss = tf.nn.l2_loss(
+            (class_pred_tf - class_label) * iou_tensor_pred_mask) / (
+            tf.reduce_sum(object_mask_tf, axis=[0,1,2,3]))
+            
+        class_value = tf.reduce_sum(
+            class_pred_tf * class_label * iou_tensor_pred_mask, axis=[0,1,2,3,4]) /(
+                tf.reduce_sum(object_mask_tf, axis=[0,1,2,3]))
+            
         sess = tf.Session()
         [output] = sess.run(
-            fetches=[noobject_value],
+            fetches=[class_value],
             feed_dict={coord_true_tf: coord_true, coord_pred_tf: coord_pred,
-                       conf_pred_tf: conf_pred, object_mask_tf: object_mask})
+                       conf_pred_tf: conf_pred, 
+                       class_true_tf: class_true, class_pred_tf: class_pred, 
+                       object_mask_tf: object_mask})
         print(output)
               
     def calculate_iou_tf(self, box_pred, box_true):

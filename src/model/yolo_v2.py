@@ -256,7 +256,7 @@ class TinyYolo():
             
         # 获得class_value，iou最大位置的class最大值
         class_value = tf.reduce_sum(
-            class_pred * iou_tensor_pred_mask, axis=[0,1,2,3,4]) /(
+            class_pred * class_label * iou_tensor_pred_mask, axis=[0,1,2,3,4]) /(
                 tf.reduce_sum(self.object_mask, axis=[0,1,2,3]))
             
         recall_value = tf.ones((1,))
