@@ -342,11 +342,8 @@ class ImageProcessor:
                 object_mask[center_cell_y, center_cell_x, 
                             object_nums[center_cell_y, center_cell_x]] = 1.0
                 object_nums[center_cell_y, center_cell_x] += 1
-                class_vector = numpy.zeros((self.n_classes, ))
-                class_vector[index] = 1.0
                 class_true[center_cell_y, center_cell_x, 
-                           object_nums[center_cell_y, center_cell_x]] = \
-                           class_vector
+                           object_nums[center_cell_y, center_cell_x], index] = 1.0
                             
         return coord_true, class_true, object_mask
     
