@@ -29,6 +29,15 @@ class TinyYoloTestor:
         coord_pred[0,1,1,0,:] = [0.75, 0.75, 0.1, 0.1]
         coord_pred[0,1,1,1,:] = [0.7, 0.8, 0.1, 0.1]
         
+        conf_pred = numpy.zeros((1, 2, 2, 2, 1))
+        conf_pred[0,0,0,0,0] = 1.0
+        conf_pred[0,0,0,1,0] = 1.0
+        conf_pred[0,0,1,0,0] = 1.0
+        conf_pred[0,0,1,1,0] = 0.2
+        conf_pred[0,1,0,0,0] = 0.1
+        conf_pred[0,1,0,1,0] = 0.9
+        conf_pred[0,1,1,0,0] = 1.0
+        
         coord_true = numpy.zeros((1, 2, 2, 3, 4))
         coord_true[0,0,0,0,:] = [0.1, 0.1, 0.1, 0.1]
         coord_true[0,0,0,1,:] = [0.4, 0.4, 0.1, 0.1]
@@ -47,6 +56,8 @@ class TinyYoloTestor:
             dtype=tf.float32, shape=[1, 2, 2, 3, 4], name='coord_true_tf')
         coord_pred_tf = tf.placeholder(
             dtype=tf.float32, shape=[1, 2, 2, 2, 4], name='coord_pred_tf')
+        conf_pred_tf = tf.placeholder(
+            dtype=tf.float32, shape=[1, 2, 2, 2, 1], name='conf_pred_tf')
         object_mask_tf = tf.placeholder(
             dtype=tf.float32, shape=[1, 2, 2, 3], name='object_mask_tf')
         
@@ -65,17 +76,43 @@ class TinyYoloTestor:
             (iou_tensor >= iou_tensor_max), dtype=tf.float32) * tf.reshape(
                 object_mask_tf, shape=(
                     self.batch_size, self.cell_size, self.cell_size, 1, self.max_objects, 1))
+        iou_tensor_pred_mask = tf.reduce_sum(iou_tensor_mask, axis=4)
         
         coord_label = tf.reduce_max(iou_tensor_mask * coord_true_iter, axis=4)
+        coord_loss = tf.nn.l2_loss((coord_pred_tf - coord_label) * iou_tensor_pred_mask) / (
+            tf.reduce_sum(object_mask_tf, axis=[0,1,2,3]))
+        
+        iou_value = tf.reduce_sum(
+            tf.reduce_max(iou_tensor, axis=4) * iou_tensor_pred_mask, axis=[0,1,2,3]) / (
+                tf.reduce_sum(object_mask_tf, axis=[0,1,2,3]))
+            
         conf_label = tf.reduce_max(iou_tensor_mask * tf.ones(shape=(
             self.batch_size, self.cell_size, self.cell_size, 
             self.n_boxes, self.max_objects, 1)), axis=4)
+        object_loss = tf.nn.l2_loss(
+            (conf_pred_tf - conf_label) * iou_tensor_pred_mask) / (
+            tf.reduce_sum(object_mask_tf, axis=[0,1,2,3]))
+            
+        object_value = tf.reduce_sum(
+            conf_pred_tf * iou_tensor_pred_mask, axis=[0,1,2,3]) / (
+                tf.reduce_sum(object_mask_tf, axis=[0,1,2,3]))
+        
+        inv_iou_tensor_pred_mask = tf.ones(shape=(
+            self.batch_size, self.cell_size, self.cell_size, 
+            self.n_boxes, 1)) - iou_tensor_pred_mask
+        noobject_loss = tf.nn.l2_loss(
+            (conf_pred_tf - conf_label) * inv_iou_tensor_pred_mask) / (
+            tf.reduce_sum(object_mask_tf, axis=[0,1,2,3]))
+            
+        noobject_value = tf.reduce_sum(
+            conf_pred_tf * inv_iou_tensor_pred_mask, axis=[0,1,2,3]) / (
+                tf.reduce_sum(inv_iou_tensor_pred_mask, axis=[0,1,2,3]))
             
         sess = tf.Session()
         [output] = sess.run(
-            fetches=[conf_label],
+            fetches=[noobject_value],
             feed_dict={coord_true_tf: coord_true, coord_pred_tf: coord_pred,
-                       object_mask_tf: object_mask})
+                       conf_pred_tf: conf_pred, object_mask_tf: object_mask})
         print(output)
               
     def calculate_iou_tf(self, box_pred, box_true):
