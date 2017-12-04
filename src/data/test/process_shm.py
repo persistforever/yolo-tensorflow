@@ -22,6 +22,7 @@ put_index = Value('i', 0)
 get_index = Value('i', 0)
 put_lock = Lock()
 
+# consumer module: using trainable data to train model
 def consume():
     time.sleep(30)
     for i in range(n_iter):
@@ -41,6 +42,7 @@ def consume():
 
         time.sleep(0.5)
 
+# producer module: using origin data to generate trainable data
 def produce():
     while True:
         st = time.time()

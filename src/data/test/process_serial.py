@@ -6,11 +6,13 @@ import cv2
 
 n_iter = 40
 n_processes = 4
-batch_size = 32
+batch_size = 64
 
+# consumer module: using trainable data to train model
 def consume(data):
     time.sleep(0.5)
 
+# producer module: using origin data to generate trainable data
 def produce():
     st = time.time()
     w, h = random.randint(500, 600), random.randint(800,900)

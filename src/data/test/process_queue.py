@@ -6,10 +6,11 @@ import cv2
 
 n_iter = 40
 n_processes = 4
-batch_size = 32
+batch_size = 64
 
+# consumer module: using trainable data to train model
 def consume(queue):
-    time.sleep(5)
+    time.sleep(30)
     avg_time = 0.0
     for j in range(n_iter):
         st = time.time()
@@ -20,6 +21,7 @@ def consume(queue):
         time.sleep(0.5)
     print('average get data time: %.4f' % (1.0 * avg_time / n_iter))
 
+# producer module: using origin data to generate trainable data
 def produce(queue):
     for i in range(n_iter / n_processes):
         st = time.time()
