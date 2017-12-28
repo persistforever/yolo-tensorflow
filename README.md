@@ -4,9 +4,10 @@
 
 本项目中的数据使用VOC-2012数据集，数据集获取的链接是http://cvlab.postech.ac.kr/~mooyeol/pascal_voc_2012/VOCtrainval_11-May-2012.tar
 
-首先在项目根目录下创建一个目录，名为datasets，然后cd到该目录下，执行命令`wget http://cvlab.postech.ac.kr/~mooyeol/pascal_voc_2012/VOCtrainval_11-May-2012.tar`，然后等待数据下载结束后，执行命令`tar -xvf VOCtrainval_11-May-2012.tar `进行文件的解压，便获得了数据集。
-
-然后执行脚本`python -m src.tools.datasets `对数据进行处理，处理成可供模型训练的数据，这些数据可以在目录datasets/voc下看到。
+1. 首先在项目根目录下创建一个目录，名为datasets
+2. cd到该目录下，执行命令`wget http://cvlab.postech.ac.kr/~mooyeol/pascal_voc_2012/VOCtrainval_11-May-2012.tar`
+3. 等待数据下载结束后，执行命令`tar -xvf VOCtrainval_11-May-2012.tar `进行文件的解压，便获得了数据集。
+4. 执行脚本`python -m src.tools.datasets `对数据进行处理，处理成可供模型训练的数据，这些数据可以在目录datasets/voc下看到。
 
 如此，便完成了数据准备阶段，可以进行模型训练了。
 
