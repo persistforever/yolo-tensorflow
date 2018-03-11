@@ -4,14 +4,14 @@ import numpy
 import math
 import tensorflow as tf
 import random
-import src.layer.utils as utils
-from src.layer.batch_normal_layer import BatchNormalLayer
+import pdfinsight.ai.yolo_tf.src.layer.utils as utils
+from pdfinsight.ai.yolo_tf.src.layer.batch_normal_layer import BatchNormalLayer
 
 
-class ConvLayer:
+class DeconvLayer:
     
     def __init__(self, y_size, x_size, y_stride, x_stride, n_filter, activation='relu',
-                 batch_normal=False, weight_decay=None, name='conv',
+                 batch_size=1, batch_normal=False, weight_decay=None, name='deconv',
                  input_shape=None, prev_layer=None):
         # params
         self.y_size = y_size
@@ -20,16 +20,17 @@ class ConvLayer:
         self.x_stride = x_stride
         self.n_filter = n_filter
         self.activation = activation
+        self.batch_size = batch_size
         self.batch_normal = batch_normal
         self.weight_decay = weight_decay
         self.name = name
-        self.ltype = 'conv'
+        self.ltype = 'deconv'
         if prev_layer:
             self.prev_layer = prev_layer
             self.input_shape = prev_layer.output_shape
         elif input_shape:
             self.prev_layer = None
-            self.input_shape = input_shape
+            self.input_shape = output_shape
         else:
             raise('ERROR: prev_layer or input_shape cannot be None!')
         
@@ -58,7 +59,7 @@ class ConvLayer:
             numpy.random.seed(0)
             scale = math.sqrt(2.0 / (self.y_size * self.x_size * self.input_shape[2]))
             init_value = scale * numpy.random.normal(size=[
-                self.y_size, self.x_size, self.input_shape[2], self.n_filter], loc=0.0, scale=1.0)
+                self.y_size, self.x_size, self.n_filter, self.input_shape[2]], loc=0.0, scale=1.0)
             self.weight = tf.Variable(init_value, dtype=tf.float32, name='weight')
             
             # batch normalization 技术的参数
@@ -74,12 +75,12 @@ class ConvLayer:
         # 打印网络权重、输入、输出信息
         # calculate input_shape and output_shape
         self.output_shape = [
-            int(self.input_shape[0]/self.y_stride),
-            int(self.input_shape[1]/self.x_stride), 
+            int(self.input_shape[0]*self.y_stride),
+            int(self.input_shape[1]*self.x_stride), 
             self.n_filter]
         print('%-10s\t%-25s\t%-20s\t%-20s\t%s' % (
             self.name, 
-            '((%d, %d) / (%d, %d) * %d)' % (
+            '((%d, %d) * (%d, %d) * %d)' % (
                 self.y_size, self.x_size, self.y_stride, self.x_stride, self.n_filter),
             '(%d, %d, %d)' % (
                 self.input_shape[0], self.input_shape[1], self.input_shape[2]),
@@ -93,9 +94,10 @@ class ConvLayer:
     def get_output(self, input, is_training=True):
         with tf.name_scope('%s_cal' % (self.name)) as scope:
             # hidden states
-            self.conv = tf.nn.conv2d(
-                input=input, filter=self.weight, 
-                strides=[1, self.y_stride, self.x_stride, 1], padding='SAME', name='cal_conv')
+            self.conv = tf.nn.conv2d_transpose(
+                value=input, filter=self.weight, 
+                output_shape=tf.cast([self.batch_size] + self.output_shape, dtype=tf.int32),
+                strides=[1, self.y_stride, self.x_stride, 1], padding='VALID', name='cal_conv')
             
             # batch normalization 技术
             if self.batch_normal:
@@ -126,10 +128,6 @@ class ConvLayer:
         output = tf.maximum(self.leaky_scale * input, input, name='leaky_relu')
         
         return output
-
-    @tf.RegisterGradient("CustomClipGrad")
-    def _clip_grad(unused_op, grad):
-        return tf.clip_by_value(grad, -1, 1)
 
     def random_normal(self, shape, mean=0.0, stddev=1.0):
         epsilon = 1e-5
