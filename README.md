@@ -1,10 +1,21 @@
-# tensorflow版本的YOLO-v1
+# tensorflow版本的YOLO-v2
+
+## 1. 数据获取
+
+本项目中的数据使用VOC-2012数据集，数据集获取的链接是http://cvlab.postech.ac.kr/~mooyeol/pascal_voc_2012/VOCtrainval_11-May-2012.tar
+
+1. 首先在项目根目录下创建一个目录，名为datasets
+2. cd到该目录下，执行命令`wget http://cvlab.postech.ac.kr/~mooyeol/pascal_voc_2012/VOCtrainval_11-May-2012.tar`
+3. 等待数据下载结束后，执行命令`tar -xvf VOCtrainval_11-May-2012.tar `进行文件的解压，便获得了数据集。
+4. 执行脚本`python -m src.tools.datasets `对数据进行处理，处理成可供模型训练的数据，这些数据可以在目录datasets/voc下看到。
+
+如此，便完成了数据准备阶段，可以进行模型训练了。
 
 
 
-## 1. 模型介绍
+## 2. 模型介绍
 
-### 1.1. 数据预处理
+### 2.1. 数据预处理
 
 对于图片的预处理大致分为3步，分别为resize，flip和whiten。并且在图片预处理的resize和flip步骤中，需要对标签（真实物体框的位置）进行变换。具体步骤如下，
 
@@ -20,7 +31,7 @@
 
 
 
-### 1.2 网络结构
+### 2.2 网络结构
 
 YOLO的网络结构是多层深度卷积神经网络来提取图片特征信息，然后回归出物体框的坐标信息、置信度信息以及类别信息，具体网络结构如下。
 
@@ -41,7 +52,7 @@ YOLO的网络结构是多层深度卷积神经网络来提取图片特征信息�
 
 
 
-### 1.3. 目标函数
+### 2.3. 目标函数
 
 #### anyobject loss
 
@@ -119,7 +130,7 @@ for k in range(max_objects):
 
 
 
-### 1.4. 模型测试
+### 2.4. 模型测试
 
 测试模块的任务是，给定任意的一张图片，根据训练好的模型预测出所有$p(class)$高于阈值thresh的物体框。具体步骤如下，
 
