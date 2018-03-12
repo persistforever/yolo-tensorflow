@@ -38,7 +38,7 @@ class Processor:
         self.image_x_size = image_x_size
         self.image_y_size = image_y_size
         self.max_objects = max_objects
-        self.n_classes = n_classes
+        self.n_classes = n_classes + 1
         self.cell_x_size = cell_x_size
         self.cell_y_size = cell_y_size
         self.batch_size = batch_size
@@ -51,14 +51,16 @@ class Processor:
         self.image_size = (self.batch_size, self.image_y_size, self.image_x_size, 3)
         self.coord_true_size = (self.batch_size, self.cell_y_size, self.cell_x_size, self.max_objects, 4)
         self.object_mask_size = (self.batch_size, self.cell_y_size, self.cell_x_size, self.max_objects)
+        self.class_true_size = (self.batch_size, self.cell_y_size, self.cell_x_size, self.max_objects, n_classes)
         self.unpos_coord_true_size = (self.batch_size, self.max_objects, 4)
         self.unpos_object_mask_size = (self.batch_size, self.max_objects)
         self.object_nums_size = (self.batch_size, self.cell_y_size, self.cell_x_size)
         
         self.dataset_size = sum([numpy.prod(t) for t in [
             self.index_size, self.image_size, self.coord_true_size,
-            self.object_mask_size, self.unpos_coord_true_size, 
-            self.unpos_object_mask_size, self.object_nums_size]])
+            self.object_mask_size, self.class_true_size, 
+            self.unpos_coord_true_size, self.unpos_object_mask_size, 
+            self.object_nums_size]])
         
         
     def init_datasets(self, mode, train_image_paths_file=None,
@@ -152,8 +154,8 @@ class Processor:
             batch_images = numpy.array(batch_images, dtype='float32')
             
             # 数据增强
-            batch_coord_true, batch_object_mask, batch_unpos_coord_true, \
-                batch_unpos_object_mask, batch_object_nums = \
+            batch_coord_true, batch_object_mask, batch_class_true, \
+                batch_unpos_coord_true, batch_unpos_object_mask, batch_object_nums = \
                 self.convert_batch_labels(batch_labels)
             
             # 改变尺寸存入shared_memory
@@ -161,12 +163,13 @@ class Processor:
             batch_images = batch_images.flatten()
             batch_coord_true = batch_coord_true.flatten()
             batch_object_mask = batch_object_mask.flatten()
+            batch_class_true = batch_class_true.flatten()
             batch_unpos_coord_true =  batch_unpos_coord_true.flatten()
             batch_unpos_object_mask = batch_unpos_object_mask.flatten()
             batch_object_nums = batch_object_nums.flatten()
             
             dataset = numpy.concatenate([
-                batch_indexs, batch_images, batch_coord_true, batch_object_mask, 
+                batch_indexs, batch_images, batch_coord_true, batch_object_mask, batch_class_true,
                 batch_unpos_coord_true, batch_unpos_object_mask, batch_object_nums], axis=0)
             self.shared_memory.put(dataset)
             
@@ -214,26 +217,28 @@ class Processor:
         """
         将一个batch的label从list转化成numpy.array
         """
-        batch_coord_true, batch_object_mask, batch_unpos_coord_true, \
-            batch_unpos_object_mask, batch_object_nums = [], [], [], [], []
+        batch_coord_true, batch_object_mask, batch_class_true, batch_unpos_coord_true, \
+            batch_unpos_object_mask, batch_object_nums = [], [], [], [], [], []
             
         for i in range(len(batch_labels)):
-            coord_true, object_mask, unpos_coord_true, unpos_object_mask, object_nums = \
+            coord_true, object_mask, class_true, unpos_coord_true, unpos_object_mask, object_nums = \
                 self._process_label(batch_labels[i])
             batch_coord_true.append(coord_true)
             batch_object_mask.append(object_mask)
+            batch_class_true.append(class_true)
             batch_unpos_coord_true.append(unpos_coord_true)
             batch_unpos_object_mask.append(unpos_object_mask)
             batch_object_nums.append(object_nums)
         
         batch_coord_true = numpy.array(batch_coord_true, dtype='float32')
         batch_object_mask = numpy.array(batch_object_mask, dtype='float32')
+        batch_class_true = numpy.array(batch_class_true, dtype='float32')
         batch_unpos_coord_true = numpy.array(batch_unpos_coord_true, dtype='float32')
         batch_unpos_object_mask = numpy.array(batch_unpos_object_mask, dtype='float32')
         batch_object_nums = numpy.array(batch_object_nums, dtype='float32')
         
-        return batch_coord_true, batch_object_mask, batch_unpos_coord_true, \
-            batch_unpos_object_mask, batch_object_nums
+        return batch_coord_true, batch_object_mask, batch_class_true, \
+            batch_unpos_coord_true, batch_unpos_object_mask, batch_object_nums
 
     def _process_label(self, label):
         """
@@ -244,6 +249,9 @@ class Processor:
             dtype='float32')
         object_mask = numpy.zeros(
             shape=(self.cell_y_size, self.cell_x_size, self.max_objects),
+            dtype='float32')
+        class_true = numpy.zeros(
+            shape=(self.cell_y_size, self.cell_x_size, self.max_objects, self.n_classes),
             dtype='float32')
         unpos_coord_true = numpy.zeros(
             shape=(self.max_objects, 8),
@@ -269,7 +277,7 @@ class Processor:
                 offr = (out_x + out_w / 2.0) - (in_x + in_w / 2.0)
                 offb = (out_y + out_h / 2.0) - (out_y + out_h / 2.0)
                 coord_true[center_cell_y, center_cell_x, 
-                    object_nums[center_cell_y, center_cell_x]:] = numpy.array(
+                    object_nums[center_cell_y, center_cell_x],:] = numpy.array(
                     [in_x, in_y, in_w, in_h])
                 object_mask[center_cell_y, center_cell_x,
                     object_nums[center_cell_y, center_cell_x]] = 1.0
@@ -279,7 +287,11 @@ class Processor:
                 unpos_coord_true[j,:] = numpy.array([in_x, in_y, in_w, in_h])
                 unpos_object_mask[j] = 1.0
                 
-        return coord_true, object_mask, unpos_coord_true, unpos_object_mask, object_nums
+                class_true[center_cell_y, center_cell_x, 
+                    object_nums[center_cell_y, center_cell_x], index] = 1.0
+                
+        return coord_true, object_mask, class_true, \
+            unpos_coord_true, unpos_object_mask, object_nums
 
     def _load_image_paths_from_file(self, image_paths_file):
         """

@@ -32,7 +32,8 @@ class Network:
         batch_size, 
         object_scale, 
         noobject_scale, 
-        coord_scale, 
+        coord_scale,
+        class_scale,
         noobject_thresh=0.6, 
         recall_thresh=0.5, 
         pred_thresh=0.5, 
@@ -56,6 +57,7 @@ class Network:
         self.object_scale = float(object_scale)
         self.noobject_scale = float(noobject_scale)
         self.coord_scale = float(coord_scale)
+        self.class_scale = float(class_scale)
         self.noobject_thresh = noobject_thresh
         self.recall_thresh = recall_thresh
         self.pred_thresh = pred_thresh
@@ -66,23 +68,23 @@ class Network:
 
         # 全局变量
         grid_x = numpy.array(range(0, self.cell_x_size), dtype='float32')
-        grid_x = numpy.reshape(grid_x, newshape=(1, 1, self.cell_x_size, self.n_boxes, 1))
-        grid_x = numpy.tile(grid_x, (self.batch_size, self.cell_y_size, 1, 1, 1))
+        grid_x = numpy.reshape(grid_x, newshape=(1, 1, self.cell_x_size, 1, 1))
+        grid_x = numpy.tile(grid_x, (self.batch_size, self.cell_y_size, self.n_boxes, 1, 1))
         self.grid_x = tf.constant(grid_x, dtype=tf.float32)
        
         grid_y = numpy.array(range(0, self.cell_y_size), dtype='float32')
-        grid_y = numpy.reshape(grid_y, newshape=(1, self.cell_y_size, 1, self.n_boxes, 1))
-        grid_y = numpy.tile(grid_y, (self.batch_size, 1, self.cell_x_size, 1, 1))
+        grid_y = numpy.reshape(grid_y, newshape=(1, self.cell_y_size, 1, 1, 1))
+        grid_y = numpy.tile(grid_y, (self.batch_size, 1, self.cell_x_size, self.n_boxes, 1))
         self.grid_y = tf.constant(grid_y, dtype=tf.float32)
         
-        prior_w = numpy.array([0.5], dtype='float32')
-        prior_w = numpy.reshape(prior_w, newshape=(1, 1, 1, self.n_boxes, 1))
-        prior_w = numpy.tile(prior_w, (self.batch_size, self.cell_y_size, self.cell_x_size, 1, 1))
+        prior_w = numpy.array([1.0, 0.8, 0.6, 0.4, 0.2], dtype='float32')
+        prior_w = numpy.reshape(prior_w, newshape=(1, 1, 1, 1, 5))
+        prior_w = numpy.tile(prior_w, (self.batch_size, self.cell_y_size, self.cell_x_size, self.n_boxes, 5))
         self.prior_w = tf.constant(prior_w, dtype=tf.float32)
         
-        prior_h = numpy.array([0.5], dtype='float32')
-        prior_h = numpy.reshape(prior_h, newshape=(1, 1, 1, self.n_boxes, 1))
-        prior_h = numpy.tile(prior_h, (self.batch_size, self.cell_y_size, self.cell_x_size, 1, 1))
+        prior_h = numpy.array([0.2, 0.4, 0.6, 0.8, 1.0], dtype='float32')
+        prior_h = numpy.reshape(prior_h, newshape=(1, 1, 1, 1, 5))
+        prior_h = numpy.tile(prior_h, (self.batch_size, self.cell_y_size, self.cell_x_size, self.n_boxes, 5))
         self.prior_h = tf.constant(prior_h, dtype=tf.float32)
         
         # 网络结构
@@ -93,7 +95,7 @@ class Network:
             batch_normal=True, weight_decay=self.weight_decay_scale, name='conv1',
             input_shape=(self.image_y_size, self.image_x_size, self.n_channel))
         self.pool_layer1 = PoolLayer(
-            x_size=3, y_size=2, x_stride=3, y_stride=2, mode=self.pool_mode, resp_normal=False, 
+            x_size=2, y_size=2, x_stride=2, y_stride=2, mode=self.pool_mode, resp_normal=False, 
             name='pool1', prev_layer=self.conv_layer1)
         
         self.conv_layer2 = ConvLayer(
@@ -108,7 +110,7 @@ class Network:
             x_stride=1, y_stride=1, n_filter=16, activation='leaky_relu', 
             batch_normal=True, weight_decay=self.weight_decay_scale, name='conv4', prev_layer=self.conv_layer3)
         self.pool_layer2 = PoolLayer(
-            x_size=3, y_size=2, x_stride=3, y_stride=2, mode=self.pool_mode, resp_normal=False, 
+            x_size=2, y_size=2, x_stride=2, y_stride=2, mode=self.pool_mode, resp_normal=False, 
             name='pool2', prev_layer=self.conv_layer4)
         
         self.conv_layer5 = ConvLayer(
@@ -123,7 +125,7 @@ class Network:
             x_stride=1, y_stride=1, n_filter=32, activation='leaky_relu', 
             batch_normal=True, weight_decay=self.weight_decay_scale, name='conv7', prev_layer=self.conv_layer6) 
         self.pool_layer3 = PoolLayer(
-            x_size=4, y_size=2, x_stride=4, y_stride=2, mode=self.pool_mode, resp_normal=False, 
+            x_size=2, y_size=2, x_stride=2, y_stride=2, mode=self.pool_mode, resp_normal=False, 
             name='pool3', prev_layer=self.conv_layer7)
         
         self.conv_layer8 = ConvLayer(
@@ -137,71 +139,72 @@ class Network:
             x_size=self.conv_x_size, y_size=self.conv_y_size, 
             x_stride=1, y_stride=1, n_filter=64, activation='leaky_relu', 
             batch_normal=True, weight_decay=self.weight_decay_scale, name='conv10', prev_layer=self.conv_layer9) 
-        self.conv_layer11 = ConvLayer(
-            x_size=1, y_size=1, x_stride=1, y_stride=1, n_filter=32, activation='leaky_relu', 
-            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv11', prev_layer=self.conv_layer10) 
-        self.conv_layer12 = ConvLayer(
-            x_size=self.conv_x_size, y_size=self.conv_y_size, 
-            x_stride=1, y_stride=1, n_filter=64, activation='leaky_relu', 
-            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv12', prev_layer=self.conv_layer11) 
         self.pool_layer4 = PoolLayer(
-            x_size=4, y_size=2, x_stride=4, y_stride=2, mode=self.pool_mode, resp_normal=False, 
-            name='pool4', prev_layer=self.conv_layer12)
+            x_size=2, y_size=2, x_stride=2, y_stride=2, mode=self.pool_mode, resp_normal=False, 
+            name='pool4', prev_layer=self.conv_layer10)
         
+        self.conv_layer11 = ConvLayer(
+            x_size=self.conv_x_size, y_size=self.conv_y_size, 
+            x_stride=1, y_stride=1, n_filter=128, activation='leaky_relu', 
+            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv11', prev_layer=self.pool_layer4) 
+        self.conv_layer12 = ConvLayer(
+            x_size=1, y_size=1, x_stride=1, y_stride=1, n_filter=64, activation='leaky_relu', 
+            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv12', prev_layer=self.conv_layer11) 
         self.conv_layer13 = ConvLayer(
             x_size=self.conv_x_size, y_size=self.conv_y_size, 
             x_stride=1, y_stride=1, n_filter=128, activation='leaky_relu', 
-            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv13', prev_layer=self.pool_layer4) 
+            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv13', prev_layer=self.conv_layer12) 
+        self.pool_layer5 = PoolLayer(
+            x_size=2, y_size=2, x_stride=2, y_stride=2, mode=self.pool_mode, resp_normal=False, 
+            name='pool5', prev_layer=self.conv_layer13)
+        
         self.conv_layer14 = ConvLayer(
-            x_size=1, y_size=1, x_stride=1, y_stride=1, n_filter=64, activation='leaky_relu', 
-            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv14', prev_layer=self.conv_layer13) 
-        self.conv_layer15 = ConvLayer(
             x_size=self.conv_x_size, y_size=self.conv_y_size, 
-            x_stride=1, y_stride=1, n_filter=128, activation='leaky_relu', 
+            x_stride=1, y_stride=1, n_filter=256, activation='leaky_relu', 
+            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv14', prev_layer=self.pool_layer5) 
+        self.conv_layer15 = ConvLayer(
+            x_size=1, y_size=1, x_stride=1, y_stride=1, n_filter=128, activation='leaky_relu', 
             batch_normal=True, weight_decay=self.weight_decay_scale, name='conv15', prev_layer=self.conv_layer14) 
         self.conv_layer16 = ConvLayer(
-            x_size=1, y_size=1, x_stride=1, y_stride=1, n_filter=64, activation='leaky_relu', 
-            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv16', prev_layer=self.conv_layer15)
+            x_size=self.conv_x_size, y_size=self.conv_y_size, 
+            x_stride=1, y_stride=1, n_filter=256, activation='leaky_relu', 
+            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv16', prev_layer=self.conv_layer15) 
+        self.pool_layer6 = PoolLayer(
+            x_size=2, y_size=2, x_stride=2, y_stride=2, mode=self.pool_mode, resp_normal=False, 
+            name='pool6', prev_layer=self.conv_layer16)
+        
         self.conv_layer17 = ConvLayer(
             x_size=self.conv_x_size, y_size=self.conv_y_size, 
-            x_stride=1, y_stride=1, n_filter=128, activation='leaky_relu', 
-            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv17', prev_layer=self.conv_layer16) 
-        self.pool_layer5 = PoolLayer(
-            x_size=4, y_size=4, x_stride=4, y_stride=4, mode=self.pool_mode, resp_normal=False, 
-            name='pool5', prev_layer=self.conv_layer17)
-        
+            x_stride=1, y_stride=1, n_filter=512, activation='leaky_relu', 
+            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv17', prev_layer=self.pool_layer6) 
         self.conv_layer18 = ConvLayer(
             x_size=self.conv_x_size, y_size=self.conv_y_size, 
-            x_stride=1, y_stride=1, n_filter=256, activation='leaky_relu', 
-            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv18', prev_layer=self.pool_layer5) 
+            x_stride=1, y_stride=1, n_filter=512, activation='leaky_relu', 
+            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv18', prev_layer=self.conv_layer17) 
         self.conv_layer19 = ConvLayer(
-            x_size=self.conv_x_size, y_size=self.conv_y_size, 
-            x_stride=1, y_stride=1, n_filter=256, activation='leaky_relu', 
-            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv19', prev_layer=self.conv_layer18) 
-        self.conv_layer20 = ConvLayer(
             x_size=1, y_size=1, x_stride=1, y_stride=1, 
-            n_filter=self.n_boxes*(1+self.n_coord), activation='none',
-            batch_normal=False, weight_decay=self.weight_decay_scale, name='conv20', prev_layer=self.conv_layer19)
+            n_filter=self.n_boxes*(1+self.n_coord+self.n_classes), activation='none',
+            batch_normal=False, weight_decay=self.weight_decay_scale, name='conv19', prev_layer=self.conv_layer18)
         
         self.layers = [
             self.conv_layer1, self.pool_layer1, 
             self.conv_layer2, self.conv_layer3, self.conv_layer4, self.pool_layer2, 
             self.conv_layer5, self.conv_layer6, self.conv_layer7, self.pool_layer3,
-            self.conv_layer8, self.conv_layer9, self.conv_layer10, 
-            self.conv_layer11, self.conv_layer12, self.pool_layer4,
-            self.conv_layer13, self.conv_layer14, self.conv_layer15, 
-            self.conv_layer16, self.conv_layer17, self.pool_layer5,
-            self.conv_layer18, self.conv_layer19, self.conv_layer20]
+            self.conv_layer8, self.conv_layer9, self.conv_layer10, self.pool_layer4,
+            self.conv_layer11, self.conv_layer12, self.conv_layer13, self.pool_layer5,
+            self.conv_layer14, self.conv_layer15, self.conv_layer16, self.pool_layer6,
+            self.conv_layer17, self.conv_layer18, self.conv_layer19]
 
         self.calculation = sum([layer.calculation for layer in self.layers])
         print('calculation: %.2fM\n' % (self.calculation / 1024.0 / 1024.0))
 
-    def get_loss(self, images, coord_true, object_mask, unpos_coord_true, unpos_object_mask, 
-        object_nums, global_step, name):
+    def get_loss(self, images, coord_true, object_mask, class_true, 
+        unpos_coord_true, unpos_object_mask, object_nums, global_step, name):
         
         self.images = tf.stop_gradient(images)
         self.coord_true = coord_true
         self.object_mask = object_mask
+        self.class_true = class_true
         self.unpos_coord_true = unpos_coord_true
         self.unpos_object_mask = unpos_object_mask
         self.object_nums = object_nums
@@ -244,9 +247,11 @@ class Network:
             logits = hidden_state
             
             # 网络输出 
-            logits = tf.reshape(logits, shape=[
-                self.batch_size, self.cell_y_size, self.cell_x_size, self.n_boxes, self.n_coord+1])
-            logits = tf.sigmoid(logits)
+            logits1 = tf.sigmoid(tf.reshape(logits[:,:,:,:,0:5], shape=[
+                self.batch_size, self.cell_y_size, self.cell_x_size, self.n_boxes, self.n_coord+1]))
+            logits2 = tf.softmax(tf.reshape(logits[:,:,:,:,5:], shape=[
+                self.batch_size, self.cell_y_size, self.cell_x_size, self.n_boxes, self.n_classes]))
+            logits = tf.concat([logits1, logits2], axis=4)
         
         return logits
     
@@ -255,7 +260,7 @@ class Network:
             # 获取class_pred和box_pred
             conf_pred = logits[:,:,:,:,0:1]
             coord_pred = logits[:,:,:,:,1:5]
-            outer_pred = logits[:,:,:,:,5:9]
+            class_pred = logits[:,:,:,:,5:5+n_classes]
 
             with tf.name_scope('data'):
                 # 获得扩展后的coord_pred和coord_true
@@ -267,6 +272,9 @@ class Network:
                 coord_true_iter = tf.reshape(self.coord_true[:,:,:,:,0:4], shape=[
                     self.batch_size, self.cell_y_size, self.cell_x_size, 1, self.max_objects, 4])
                 coord_true_iter = tf.tile(coord_true_iter, [1, 1, 1, self.n_boxes, 1, 1])
+                class_true_iter = tf.reshape(self.class_true[:,:,:,:,0:n_classes], shape=[
+                    self.batch_size, self.cell_y_size, self.cell_x_size, 1, self.max_objects, n_classes])
+                class_true_iter = tf.reshape(class_true_iter, [1, 1, 1, self.n_boxes, 1, 1])
                 
                 # 获得扩展后的unpos_coord_true
                 unpos_coord_true_iter = tf.reshape(self.unpos_coord_true[:,:,0:4], shape=[
@@ -286,7 +294,7 @@ class Network:
                 
                 # 获得pseudo_coord_pred，将x和y改成0，w和h变为base
                 pseudo_xy = tf.zeros(shape=(
-                    self.batch_size, self.cell_y_size, self.cell_x_size, self.n_boxes, 2))  
+                    self.batch_size, self.cell_y_size, self.cell_x_size, self.n_boxes, 2)) 
                 pseudo_coord_pred = tf.concat([pseudo_xy, self.prior_w, self.prior_h], axis=4)
                 pseudo_coord_pred_iter = tf.reshape(pseudo_coord_pred, shape=(
                     self.batch_size, self.cell_y_size, self.cell_x_size, self.n_boxes, 1, 4))
@@ -326,9 +334,7 @@ class Network:
                 zeros_label = tf.zeros(shape=(
                     self.batch_size, self.cell_y_size, self.cell_x_size, self.n_boxes, 1))
                 noobject_output = (zeros_label - conf_pred) * tf.stop_gradient(noobject_mask)
-                instance_loss = tf.reduce_sum(noobject_output ** 2, axis=[1,2,3,4])
-                noobject_loss = self.noobject_scale * 0.5 * tf.reduce_sum(
-                    instance_loss * self.coef_vector)
+                noobject_loss = self.noobject_scale * tf.nn.l2_loss(noobject_output)
 
                 # 计算noobject_value
                 noobject_value = tf.reduce_sum(
@@ -340,9 +346,7 @@ class Network:
                 ones_label = tf.ones(shape=(
                     self.batch_size, self.cell_y_size, self.cell_x_size, self.n_boxes, 1))
                 object_output = (ones_label - conf_pred) * tf.stop_gradient(iou_tensor_pred_mask)
-                instance_loss = tf.reduce_sum(object_output ** 2, axis=[1,2,3,4])
-                object_loss = self.object_scale * 0.5 * tf.reduce_sum(
-                    instance_loss * self.coef_vector)
+                object_loss = self.object_scale * tf.nn.l2_loss(object_output) ** 2
 
                 # 计算object_value
                 conf_pred_iter = tf.tile(tf.reshape(conf_pred, shape=[
@@ -363,18 +367,24 @@ class Network:
                 coord_label = tf.reduce_max(coord_label_mask * coord_true_iter, axis=4)
                 coord_label = tf.stop_gradient(self.get_inverse_position(coord_label))
                 coord_output = (coord_label - coord_pred) * tf.stop_gradient(iou_tensor_pred_mask)
-                instance_loss = tf.reduce_sum(coord_output ** 2, axis=[1,2,3,4])
-                coord_loss = self.coord_scale * 0.5 * tf.reduce_sum(
-                    instance_loss * self.coef_vector)
+                coord_loss = self.coord_scale * tf.nn.l2_loss(coord_output)
 
                 # 计算iou_value
                 iou_value = tf.reduce_sum(
                     iou_tensor * iou_tensor_mask, axis=[0,1,2,3,4]) / (
                         tf.reduce_sum(self.object_mask, axis=[0,1,2,3]))
-            
-            loss = (noobject_loss + object_loss + coord_loss) / (tf.reduce_sum(self.coef_vector) + 1e-6)
 
-            return loss, noobject_loss, object_loss, coord_loss, iou_value, object_value, noobject_value
+            with tf.name_scope('class'):
+                # 计算class_loss和class_value
+                class_label = tf.reduce_max(coord_label_mask * class_true_iter, axis=4)
+                class_label = tf.stopgradient(class_label)
+                class_output = (class_label - class_pred) * tf.stop_gradient(iou_tensor_pred_mask)
+                class_loss = self.class_scale * tf.nn.l2_loss(class_output)
+            
+            loss = noobject_loss + object_loss + coord_loss + class_loss
+
+            return loss, noobject_loss, object_loss, coord_loss, class_loss, \
+                iou_value, object_value, noobject_value
     
     def get_direct_position(self, coord_pred):
         """

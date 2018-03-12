@@ -13,9 +13,9 @@ import matplotlib.pyplot as plt
 from ctypes import c_double, cast, POINTER
 import cv2
 import tensorflow as tf
-from pdfinsight.ai.yolo_tf.src.layer.conv_layer import ConvLayer
-from pdfinsight.ai.yolo_tf.src.layer.pool_layer import PoolLayer
-import pdfinsight.ai.yolo_tf.src.tools.utils as utils
+from src.layer.conv_layer import ConvLayer
+from src.layer.pool_layer import PoolLayer
+import src.tools.utils as utils
 
 
 class Model():
@@ -26,7 +26,8 @@ class Model():
         image_x_size, 
         image_y_size, 
         cell_x_size, 
-        cell_y_size, 
+        cell_y_size,
+        n_classes,
         box_per_cell, 
         batch_size, 
         buffer_size, 
@@ -42,6 +43,7 @@ class Model():
         self.max_objects = max_objects
         self.cell_x_size = cell_x_size
         self.cell_y_size = cell_y_size
+        self.n_classes = n_classes + 1
         self.n_boxes = box_per_cell
         self.batch_size = batch_size
         self.buffer_size = buffer_size
@@ -49,48 +51,51 @@ class Model():
         self.update_function = update_function
         self.learning_rate = learning_rate
         self.is_lr_decay = is_lr_decay
-        self.n_coord = 8 if self.is_duplex else 4
         
         self.index_size = (self.batch_size)
         self.image_size = (self.batch_size, self.image_y_size, self.image_x_size, self.n_channel)
         self.coord_true_size = (self.batch_size, self.cell_y_size, self.cell_x_size, self.max_objects, 8)
         self.object_mask_size = (self.batch_size, self.cell_y_size, self.cell_x_size, self.max_objects)
+        self.class_true_size = (self.batch_size, self.cell_y_size, self.cell_x_size, self.max_objects, self.n_classes)
         self.unpos_coord_true_size = (self.batch_size, self.max_objects, 8)
         self.unpos_object_mask_size = (self.batch_size, self.max_objects)
         self.object_nums_size = (self.batch_size, self.cell_y_size, self.cell_x_size)
         
-        self.place_holders = []
-        for i in range(self.n_gpus):
-            # 输入变量
-            self.images = tf.placeholder(
-                dtype=tf.int32, 
-                shape=[int(self.batch_size/self.n_gpus), self.image_y_size, self.image_x_size, 1], 
-                name='images')
-            self.coord_true = tf.placeholder(
-                dtype=tf.float32, 
-                shape=[int(self.batch_size/self.n_gpus), self.cell_y_size, self.cell_x_size, self.max_objects, 8], 
-                name='coord_true')
-            self.object_mask = tf.placeholder(
-                dtype=tf.float32, 
-                shape=[int(self.batch_size/self.n_gpus), self.cell_y_size, self.cell_x_size, self.max_objects], 
-                name='object_mask')
-            self.unpos_coord_true = tf.placeholder(
-                dtype=tf.float32,
-                shape=[int(self.batch_size/self.n_gpus), self.max_objects, 8],
-                name='unpos_coord_true')
-            self.unpos_object_mask = tf.placeholder(
-                dtype=tf.float32,
-                shape=[int(self.batch_size/self.n_gpus), self.max_objects],
-                name='unpos_object_mask')
-            self.object_nums = tf.placeholder(
-                dtype=tf.int32,
-                shape=[int(self.batch_size/self.n_gpus), self.cell_y_size, self.cell_x_size],
-                name='object_nums')
-            
-            self.place_holders.append({
-                'images': self.images, 'coord_true': self.coord_true, 
-                'object_mask': self.object_mask, 'unpos_coord_true': self.unpos_coord_true, 
-                'unpos_object_mask': self.unpos_object_mask, 'object_nums': self.object_nums})
+        # 输入变量
+        self.images = tf.placeholder(
+            dtype=tf.int32, 
+            shape=[self.batch_size, self.image_y_size, self.image_x_size, 1], 
+            name='images')
+        self.coord_true = tf.placeholder(
+            dtype=tf.float32, 
+            shape=[self.batch_size, self.cell_y_size, self.cell_x_size, self.max_objects, 8], 
+            name='coord_true')
+        self.object_mask = tf.placeholder(
+            dtype=tf.float32, 
+            shape=[self.batch_size, self.cell_y_size, self.cell_x_size, self.max_objects], 
+            name='object_mask')
+        self.class_true = tf.placeholder(
+            dtype=tf.float32,
+            shape=[self.batch_size, self.cell_y_size, self.cell_x_size, self.max_objects, self.n_classes],
+            name='class_true')
+        self.unpos_coord_true = tf.placeholder(
+            dtype=tf.float32,
+            shape=[self.batch_size, self.max_objects, 8],
+            name='unpos_coord_true')
+        self.unpos_object_mask = tf.placeholder(
+            dtype=tf.float32,
+            shape=[self.batch_size, self.max_objects],
+            name='unpos_object_mask')
+        self.object_nums = tf.placeholder(
+            dtype=tf.int32,
+            shape=[self.batch_size, self.cell_y_size, self.cell_x_size],
+            name='object_nums')
+        self.place_holders = {
+            'images': self.images, 'coord_true': self.coord_true, 
+            'object_mask': self.object_mask, 'class_true': self.class_true,
+            'unpos_coord_true': self.unpos_coord_true, 'unpos_object_mask': self.unpos_object_mask, 
+            'object_nums': self.object_nums}
+        
         self.global_step = tf.Variable(0, dtype=tf.float32, name='global_step')
 
     def train_init(self, network, backup_dir):
@@ -115,12 +120,13 @@ class Model():
             self.avg_loss, self.coord_loss, self.noobject_loss, self.object_loss, \
                 self.weight_decay_loss, self.iou_value, self.object_value, self.noobject_value = \
                     self.network.get_loss(
-                        self.place_holders[0]['images'],
-                        self.place_holders[0]['coord_true'], 
-                        self.place_holders[0]['object_mask'],
-                        self.place_holders[0]['unpos_coord_true'],
-                        self.place_holders[0]['unpos_object_mask'],
-                        self.place_holders[0]['object_nums'],
+                        self.place_holders['images'],
+                        self.place_holders['coord_true'], 
+                        self.place_holders['object_mask'],
+                        self.place_holders['class_true'],
+                        self.place_holders['unpos_coord_true'],
+                        self.place_holders['unpos_object_mask'],
+                        self.place_holders['object_nums'],
                         self.global_step, 'gpu0')
 
         # 然后求误差并更新参数
@@ -133,7 +139,7 @@ class Model():
             var_list=tf.global_variables(), write_version=tf.train.SaverDef.V2, max_to_keep=500)
         # 模型初始化
         self.sess.run(tf.global_variables_initializer())
-        self.valid_logits = self.network.get_inference(self.place_holders[0]['images'], 
+        self.valid_logits = self.network.get_inference(self.place_holders['images']) 
         
     def train(self, processor, network, backup_dir, logs_dir, n_iters=500000):
         sub_dir = 'adaption' if self.is_adaption else 'basic'
@@ -174,6 +180,10 @@ class Model():
                 data[accum_size: accum_size+numpy.prod(self.object_mask_size)], self.object_mask_size)
             accum_size += numpy.prod(self.object_mask_size)
 
+            batch_class_true = numpy.reshape(
+                data[accum_size: accum_size+numpy.prod(self.class_true_size)], self.class_true_size)
+            accum_size += numpy.prod(self.class_true_size)
+
             batch_unpos_coord_true = numpy.reshape(
                 data[accum_size: accum_size+numpy.prod(self.unpos_coord_true_size)], 
                 self.unpos_coord_true_size)
@@ -192,28 +202,29 @@ class Model():
             data_time = et - st
 
             st = time.time()
-            sub_batch_size = int(self.batch_size / self.n_gpus)
             feed_dict = {}
             
             # 生成feed_dict
-            for i in range(self.n_gpus):
-                feed_dict[self.place_holders[i]['images']] = \
-                    batch_fore_images[i*sub_batch_size:(i+1)*sub_batch_size,:,:,:]
-                
-                feed_dict[self.place_holders[i]['coord_true']] = \
-                    batch_coord_true[i*sub_batch_size:(i+1)*sub_batch_size,:,:,:,:]
-                
-                feed_dict[self.place_holders[i]['object_mask']] = \
-                    batch_object_mask[i*sub_batch_size:(i+1)*sub_batch_size,:,:,:]
-                
-                feed_dict[self.place_holders[i]['unpos_coord_true']] = \
-                    batch_unpos_coord_true[i*sub_batch_size:(i+1)*sub_batch_size,:,:]
+            feed_dict[self.place_holders['images']] = \
+                batch_fore_images[i*sub_batch_size:(i+1)*sub_batch_size,:,:,:]
+            
+            feed_dict[self.place_holders['coord_true']] = \
+                batch_coord_true[i*sub_batch_size:(i+1)*sub_batch_size,:,:,:,:]
+            
+            feed_dict[self.place_holders['object_mask']] = \
+                batch_object_mask[i*sub_batch_size:(i+1)*sub_batch_size,:,:,:]
 
-                feed_dict[self.place_holders[i]['unpos_object_mask']] = \
-                    batch_unpos_object_mask[i*sub_batch_size:(i+1)*sub_batch_size,:]
+            feed_dict[self.place_holders['coord_true']] = \
+                batch_coord_true[i*sub_batch_size:(i+1)*sub_batch_size,:,:,:]
+            
+            feed_dict[self.place_holders['unpos_coord_true']] = \
+                batch_unpos_coord_true[i*sub_batch_size:(i+1)*sub_batch_size,:,:]
 
-                feed_dict[self.place_holders[i]['object_nums']] = \
-                    batch_object_nums[i*sub_batch_size:(i+1)*sub_batch_size,:,:]
+            feed_dict[self.place_holders['unpos_object_mask']] = \
+                batch_unpos_object_mask[i*sub_batch_size:(i+1)*sub_batch_size,:]
+
+            feed_dict[self.place_holders['object_nums']] = \
+                batch_object_nums[i*sub_batch_size:(i+1)*sub_batch_size,:,:]
                 
             et = time.time()
             feed_time = et - st
@@ -263,25 +274,9 @@ class Model():
                 precision_array, recall_array, f1_array, overlap = self.valid_model(
                     processor, model_path, logs_dir, mode='valid_basic')
                 print('[%d] valid '
-                    'p@0.4: %.6f, r@0.4: %.6f, f1@0.4: %.6f, '
-                    'p@0.5: %.6f, r@0.5: %.6f, f1@0.5: %.6f, '
-                    'p@0.6: %.6f, r@0.6: %.6f, f1@0.6: %.6f, '
-                    'p@0.7: %.6f, r@0.7: %.6f, f1@0.7: %.6f, '
-                    'p@0.8: %.6f, r@0.8: %.6f, f1@0.8: %.6f, '
-                    'p@0.9: %.6f, r@0.9: %.6f, f1@0.9: %.6f, '
-                    'tp@1.0: %.6f, tr@1.0: %.6f, tf1@1.0: %.6f, '
-                    'wp@1.0: %.6f, wr@1.0: %.6f, wf1@1.0: %.6f, '
-                    'overlap: %.6f\n' % (
-                    n_iter, precision_array[0], recall_array[0], f1_array[0], 
-                    precision_array[1], recall_array[1], f1_array[1],
-                    precision_array[2], recall_array[2], f1_array[2],
-                    precision_array[3], recall_array[3], f1_array[3],
-                    precision_array[4], recall_array[4], f1_array[4],
-                    precision_array[5], recall_array[5], f1_array[5],
-                    precision_array[6], recall_array[6], f1_array[6],
-                    precision_array[7], recall_array[7], f1_array[7],
-                    overlap))
-                valid_value = f1_array[6]
+                    'p@0.5: %.6f, r@0.5: %.6f, f1@0.5: %.6f\n' % (
+                    n_iter, precision_array[4], recall_array[4], f1_array[4]))
+                valid_value = f1_array[4]
 
                 if train_value >= max_train_value:
                     max_train_value = train_value
@@ -289,7 +284,7 @@ class Model():
             
             # 每固定轮数保存一次模型
             if n_iter % 5000 == 0:
-                model_path = os.path.join(backup_dir, sub_dir, 'model_%d.ckpt' % (n_iter))
+                model_path = os.path.join(backup_dir, 'model_%d.ckpt' % (n_iter))
                 self.saver.save(self.sess, model_path)
             
             sys.stdout.flush()
@@ -302,19 +297,15 @@ class Model():
         self.sess = tf.Session(config=tf.ConfigProto(
             gpu_options=gpu_options, allow_soft_placement=True))
         self.network = network
-        self.valid_logits = self.network.get_inference(
-            self.place_holders[0]['fore_images'], 
-            self.place_holders[0]['line_images'],
-            self.place_holders[0]['back_images'])
+        self.valid_logits = self.network.get_inference(self.place_holders['images'])
         
     def valid_all_models(self, processor, network, backup_dir, logs_dir, n_iters=100000):
-        sub_dir = 'adaption' if self.is_adaption else 'basic'
         
         # 验证backup_dir中的每一个模型
         for n_iter in range(n_iters):
             if (n_iter <= 1000 and n_iter % 200 == 0) or (1000 < n_iter <= 10000 and n_iter % 2000 == 0) \
                 or (n_iter > 10000 and n_iter % 20000 == 0):
-                model_path = os.path.join(backup_dir, sub_dir, 'model_%d.ckpt' % (n_iter))
+                model_path = os.path.join(backup_dir, 'model_%d.ckpt' % (n_iter))
                 # 读取模型
                 self.valid_saver = tf.train.Saver(write_version=tf.train.SaverDef.V2)
                 assert(os.path.exists(model_path+'.index'))
@@ -323,32 +314,13 @@ class Model():
                 
                 precision_array, recall_array, f1_array, overlap = self.valid_model(
                     processor, model_path, logs_dir, mode='valid')
-                print('[%d] p@0.4: %.6f, r@0.4: %.6f, f1@0.4: %.6f, '
-                    'p@0.5: %.6f, r@0.5: %.6f, f1@0.5: %.6f, '
-                    'p@0.6: %.6f, r@0.6: %.6f, f1@0.6: %.6f, '
-                    'p@0.7: %.6f, r@0.7: %.6f, f1@0.7: %.6f, '
-                    'p@0.8: %.6f, r@0.8: %.6f, f1@0.8: %.6f, '
-                    'p@0.9: %.6f, r@0.9: %.6f, f1@0.9: %.6f, '
-                    'p@1.0: %.6f, r@1.0: %.6f, f1@1.0: %.6f, '
-                    'overlap: %.6f\n' % (
-                    n_iter, precision_array[0], recall_array[0], f1_array[0], 
-                    precision_array[1], recall_array[1], f1_array[1],
-                    precision_array[2], recall_array[2], f1_array[2],
-                    precision_array[3], recall_array[3], f1_array[3],
-                    precision_array[4], recall_array[4], f1_array[4],
-                    precision_array[5], recall_array[5], f1_array[5],
-                    precision_array[6], recall_array[6], f1_array[6],
-                    overlap))
+                print('[%d] p@0.5: %.6f, r@0.5: %.6f, f1@0.5: %.6f\n' % (
+                    precision_array[4], recall_array[4], f1_array[4]))
                 sys.stdout.flush()
 
     def valid_model(self, processor, model_path, output_dir, mode='valid'):
-        n_ious = 8
-        preds_denominator = 0
-        trues_denominator = 0
-        right_array = [0.0] * n_ious
-        overlap_numerator = 0
-        overlap_denominator = 0
-        self.batch_size = int(self.batch_size / self.n_gpus)
+        n_ious = 10
+        right_array = numpy.zeros((n_ious, ), dtype='int32')
 
         for i in range(int(processor.n_valid / self.batch_size) - 1):
             # 获取数据并进行数据增强
@@ -361,66 +333,42 @@ class Model():
                 feed_dict={self.place_holders[0]['images']: batch_images})
             
             # 获得预测的框
-            preds_boxes = self.get_pred_boxes(logits, batch_datasets, self.batch_size)
-            for boxes in preds_boxes:
+            pred_objects = self.get_pred_boxes(logits, batch_datasets, self.batch_size)
+            for boxes in pred_objects:
                 preds_denominator += len(boxes)
 
             # 获得真实的框
-            trues_boxes = self.get_true_boxes(batch_datasets, self.batch_size)
-            for boxes in trues_boxes:
+            true_objects = self.get_true_boxes(batch_datasets, self.batch_size)
+            for boxes in true_objects:
                 trues_denominator += len(boxes)
 
             # 获得预测的框和真实的框的对应pair
-            pairs_boxes_text = self.get_pair_boxes(trues_boxes_text, preds_boxes_text)
-            pairs_boxes_word = self.get_pair_boxes(trues_boxes_word, preds_boxes_word)
-
-            if mode == 'valid_basic' and i == 0 and self.is_observe:
-                self.write_valid_images(
-                    batch_datasets, pairs_boxes_text, preds_boxes_text, trues_boxes_text, output_dir)
+            pair_objects = self.get_pair_boxes(true_objects, pred_objects)
 
             # 计算每个真实框对应的IOU最大的预测框
             for j in range(self.batch_size):
-                docid = batch_datasets[j]['docid']
-                pageid = batch_datasets[j]['pageid']
-                texts = batch_datasets[j]['content']['processed_texts']
-                shape = batch_datasets[j]['content']['resized_size']
-
-                for p, t, best_iou in pairs_boxes_text[j]:
-                    if self.judge_pred_true_matched(preds_boxes_text[j][p], trues_boxes_text[j][t], texts):
-                        right_array[6] += 1
+                for p, t, best_iou in pair_objects[j]:
                     if best_iou >= 0.9:
-                        right_array[5] += 1
-                    if best_iou >= 0.8:
-                        right_array[4] += 1
-                    if best_iou >= 0.7:
-                        right_array[3] += 1
-                    if best_iou >= 0.6:
-                        right_array[2] += 1
-                    if best_iou >= 0.5:
-                        right_array[1] += 1
-                    if best_iou >= 0.4:
                         right_array[0] += 1
-                
-                for p, t, best_iou in pairs_boxes_word[j]:
-                    if self.judge_pred_true_matched(preds_boxes_text[j][p], trues_boxes_text[j][t], 
-                        texts, is_text=False):
+                    if best_iou >= 0.8:
+                        right_array[1] += 1
+                    if best_iou >= 0.7:
+                        right_array[2] += 1
+                    if best_iou >= 0.6:
+                        right_array[3] += 1
+                    if best_iou >= 0.5:
+                        right_array[4] += 1
+                    if best_iou >= 0.4:
+                        right_array[5] += 1
+                    if best_iou >= 0.3:
+                        right_array[6] += 1
+                    if best_iou >= 0.2:
                         right_array[7] += 1
-
-            # 计算每两个预测框之间的overlap面积
-            overlap_one_numerator = 0
-            overlap_one_denominator = 0
-            for j in range(self.batch_size):
-                for a in range(len(preds_boxes_text[j])):
-                    for b in range(a+1, len(preds_boxes_text[j])):
-                        iou = self.calculate_iou_py(preds_boxes_text[j][a], preds_boxes_text[j][b], mode='ltrb')
-                        overlap_one_numerator += iou
-                        overlap_one_denominator += 1
-            overlap = 1.0 * overlap_one_numerator / overlap_one_denominator \
-                if overlap_one_denominator != 0 else 0.0
-            overlap_numerator += overlap
-            overlap_denominator += 1
-
-        self.batch_size = int(self.batch_size * self.n_gpus)
+                    if best_iou >= 0.1:
+                        right_array[8] += 1
+                    if best_iou >= 0.0:
+                        right_array[9] += 1
+                
         precision_array = [0.0] * n_ious
         recall_array = [0.0] * n_ious
         f1_array = [0.0] * n_ious
@@ -474,22 +422,25 @@ class Model():
         print('Test Finish!')
     
     def get_pred_boxes(self, logits, batch_datasets, batch_size, is_text=True):
-        box_preds = numpy.reshape(logits, (
-            batch_size, self.cell_y_size, self.cell_x_size, 1+self.n_coord))
-        new_box_preds = self.get_direct_position_py(box_preds[:,:,:,1:5])
+        conf_preds = numpy.reshape(logits[:,:,:,:,0:1], shape=(
+            batch_size, self.cell_y_size, self.cell_x_size, self.n_boxes, 1))
+        box_preds = self.get_direct_position_py(numpy.reshape(logits[:,:,:,:,1:5], shape=(
+            batch_size, self.cell_y_size, self.cell_x_size, self.n_boxes, 4)))
+        class_preds = numpy.reshape(logits[:,:,:,:,5:], shape=(
+            batch_size, self.cell_y_size, self.cell_x_size, self.n_boxes, self.n_classes))
        
-        pred_boxes = []
+        pred_objects = []
         for j in range(batch_size):
-            shape = batch_datasets[j]['content']['resized_size']
-
             # 获得预测的preds
             preds = []
             for x in range(self.cell_x_size):
                 for y in range(self.cell_y_size):
-                    prob = box_preds[j,y,x,0]
-                    box = new_box_preds[j,y,x,0:4]
-                    if prob >= self.network.pred_thresh:
-                        preds.append([box, prob])
+                    for n in range(self.n_boxes):
+                        prob = conf_preds[j,y,x,n,0]
+                        box = box_preds[j,y,x,n,0:4]
+                        index = numpy.argmax(class_preds[j,y,x,n,:])
+                        if prob >= self.network.pred_thresh:
+                            preds.append([box, prob, index])
             
             # 排序并去除多余的box
             preds = sorted(preds, key=lambda x: x[1], reverse=True)
@@ -506,50 +457,53 @@ class Model():
             for k in range(len(preds)):
                 if preds[k][1] >= self.network.pred_thresh:
                     [x, y, w, h] = preds[k][0]
+                    index = preds[k][2]
                     left = int(round(min(max(0.0, x - w / 2.0), 0.9999) * self.image_x_size))
                     top = int(round(min(max(0.0, y - h / 2.0), 0.9999) * self.image_y_size))
                     right = int(round(min(max(0.0, x + w / 2.0), 0.9999) * self.image_x_size))
                     bottom = int(round(min(max(0.0, y + h / 2.0), 0.9999) * self.image_y_size))
 
-                    boxes.append([left, top, right, bottom, preds[k][1]])
+                    boxes.append({'box': [left, top, right, bottom],
+                        'prob': preds[k][1], 'class': int(index)})
             
-            pred_boxes.append(boxes)
+            pred_objects.append(boxes)
         
-        return pred_boxes
+        return pred_objects
     
     def get_true_boxes(self, batch_datasets, batch_size, is_text=True):
-        trues_boxes = []
+        true_objects = []
         
         for j in range(batch_size):
-            tables = batch_datasets[j]['labels']
+            labels = batch_datasets[j]['labels']
 
             true_boxes = []
-            for table in tables:
-                [x, y, w, h] = table
+            for index, x, y, w, h in tables:
                 left = int(round(min(max(0.0, x - w / 2.0), 0.9999) * self.image_x_size))
                 top = int(round(min(max(0.0, y - h / 2.0), 0.9999) * self.image_y_size))
                 right = int(round(min(max(0.0, x + w / 2.0), 0.9999) * self.image_x_size))
                 bottom = int(round(min(max(0.0, y + h / 2.0), 0.9999) * self.image_y_size))
                 
-                true_boxes.append([left, top, right, bottom])
+                true_boxes.append({'box': [left, top, right, bottom],
+                    'prob': 1.0, 'class': int(index)})
 
-            trues_boxes.append(true_boxes)
+            true_objects.append(true_boxes)
 
-        return trues_boxes
+        return true_objects
 
-    def get_pair_boxes(self, trues_boxes, preds_boxes):
+    def get_pair_boxes(self, true_objects, pred_objects):
         """
         获取每个预测框对应的真实框的pair对
         """
-        pairs_boxes = []
+        pair_objects = []
         for i in range(self.batch_size):
             pred_pair_dict = {}
             pair_boxes = []
             for t in range(len(trues_boxes[i])):
                 best_n, best_iou = -1, 0.4
                 for p in range(len(preds_boxes[i])):
-                    iou = self.calculate_iou_py(preds_boxes[i][p], trues_boxes[i][t], mode='ltrb')
-                    if iou >= best_iou:
+                    iou = self.calculate_iou_py(pred_objects[i][p]['box'], true_objects[i][t]['box'], mode='ltrb')
+                    is_class_right = pred_objects[i][p]['class'] == true_objects[i][t]['class']
+                    if iou >= best_iou and is_class_right:
                         best_iou = iou
                         best_n = p
                 if best_n != -1:
@@ -559,9 +513,9 @@ class Model():
             for p in pred_pair_dict:
                 [best_n, best_iou] = max(pred_pair_dict[p], key=lambda x: x[1])
                 pair_boxes.append([p, best_n, best_iou])
-            pairs_boxes.append(pair_boxes)
+            pair_objects.append(pair_boxes)
 
-        return pairs_boxes
+        return pair_objects
 
     def get_direct_position_py(self, coord_pred):
         # 计算bx
