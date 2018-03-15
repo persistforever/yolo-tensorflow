@@ -51,7 +51,7 @@ class Processor:
         self.image_size = (self.batch_size, self.image_y_size, self.image_x_size, 3)
         self.coord_true_size = (self.batch_size, self.cell_y_size, self.cell_x_size, self.max_objects, 4)
         self.object_mask_size = (self.batch_size, self.cell_y_size, self.cell_x_size, self.max_objects)
-        self.class_true_size = (self.batch_size, self.cell_y_size, self.cell_x_size, self.max_objects, n_classes)
+        self.class_true_size = (self.batch_size, self.cell_y_size, self.cell_x_size, self.max_objects, self.n_classes)
         self.unpos_coord_true_size = (self.batch_size, self.max_objects, 4)
         self.unpos_object_mask_size = (self.batch_size, self.max_objects)
         self.object_nums_size = (self.batch_size, self.cell_y_size, self.cell_x_size)
@@ -149,10 +149,10 @@ class Processor:
         while True:
             batch_indexs, batch_images, batch_labels = \
                 self.get_random_batch(self.trainsets, self.batch_size)
-            
+     
             batch_indexs = numpy.array(batch_indexs, dtype='float32')
             batch_images = self.convert_batch_images(batch_images)
-            batch_images = numpy.array(batch_images, dtype='float32')
+            batch_images = numpy.array(batch_images / 255.0, dtype='float32')
             
             # 数据增强
             batch_coord_true, batch_object_mask, batch_class_true, \
@@ -204,7 +204,7 @@ class Processor:
         elif mode == 'valid':
             dictionary = self.validsets
         elif mode == 'test':
-            dictionary = self.deploysets
+            dictionary = self.testsets
 
         batch_images, batch_datasets = [], []
         for index in indexs:
@@ -212,7 +212,7 @@ class Processor:
             batch_datasets.append(dictionary[index])
         
         batch_images = self.convert_batch_images(batch_images)
-        batch_images = numpy.array(batch_images, dtype='float32')
+        batch_images = numpy.array(batch_images / 255.0, dtype='float32')
         return batch_images, batch_datasets
 
     def convert_batch_images(self, batch_images):
@@ -223,20 +223,22 @@ class Processor:
 
         for image in batch_images:
             orig_h, orig_w = image.shape[0], image.shape[1]
-            canvas_image = numpy.zeros((self.image_y_size, self.image_x_size, 3), dtype='int32') + 255
+            canvas_image = numpy.zeros((self.image_y_size, self.image_x_size, 3), dtype='uint8') + 128
             if 1.0 * orig_h / orig_w >= 1.0 * self.image_y_size / self.image_x_size:
-                new_h = self.image_y_size
-                new_w = orig_h / self.image_y_size * self.image_x_size
+                new_h = int(round(self.image_y_size))
+                new_w = int(round(1.0 * orig_w / orig_h * new_h))
+                resized_image = cv2.resize(image, (new_w, new_h))
                 start_x = int((self.image_x_size - new_w) / 2.0)
-                canvas_image[:, start_x: start_x+new_w, :] = image
+                canvas_image[:, start_x: start_x+new_w, :] = resized_image
             else:
-                new_h = self.image_x_size
-                new_w = orig_w / self.image_x_size * self.image_y_size
+                new_w = int(round(self.image_x_size))
+                new_h = int(round(1.0 * orig_h / orig_w * new_w))
+                resized_image = cv2.resize(image, (new_w, new_h))
                 start_y = int((self.image_y_size - new_h) / 2.0)
-                canvas_image[start_y: start_y+new_h, :, :] = image
-            print(canvas_image.shape)
+                canvas_image[start_y: start_y+new_h, :, :] = resized_image
             new_batch_images.append(canvas_image)
 
+        new_batch_images = numpy.array(new_batch_images, dtype='float32')
         return new_batch_images
 
     def convert_batch_labels(self, batch_labels):
@@ -271,7 +273,7 @@ class Processor:
         处理所有network部分所需要的label
         """
         coord_true = numpy.zeros(
-            shape=(self.cell_y_size, self.cell_x_size, self.max_objects, 8),
+            shape=(self.cell_y_size, self.cell_x_size, self.max_objects, 4),
             dtype='float32')
         object_mask = numpy.zeros(
             shape=(self.cell_y_size, self.cell_x_size, self.max_objects),
@@ -280,7 +282,7 @@ class Processor:
             shape=(self.cell_y_size, self.cell_x_size, self.max_objects, self.n_classes),
             dtype='float32')
         unpos_coord_true = numpy.zeros(
-            shape=(self.max_objects, 8),
+            shape=(self.max_objects, 4),
             dtype='float32')
         unpos_object_mask = numpy.zeros(
             shape=(self.max_objects, ),
@@ -292,16 +294,13 @@ class Processor:
         for j in range(self.max_objects):
             
             [index, in_x, in_y, in_w, in_h] = label[j]
+            index = int(index)
             
             if not (in_x == 0.0 and in_y == 0.0 and in_w == 0.0 and in_h == 0.0):
                 # 计算包围框标记
                 center_cell_x = min(int(self.cell_x_size * in_x), self.cell_x_size-1)
                 center_cell_y = min(int(self.cell_y_size * in_y), self.cell_y_size-1)
                 
-                offl = (in_x - in_w / 2.0) - (out_x - out_w / 2.0)
-                offt = (in_y - in_h / 2.0) - (out_y - out_h / 2.0)
-                offr = (out_x + out_w / 2.0) - (in_x + in_w / 2.0)
-                offb = (out_y + out_h / 2.0) - (out_y + out_h / 2.0)
                 coord_true[center_cell_y, center_cell_x, 
                     object_nums[center_cell_y, center_cell_x],:] = numpy.array(
                     [in_x, in_y, in_w, in_h])
@@ -368,7 +367,6 @@ class Processor:
 
     def _get_image_from_path(self, image_path):
         image = cv2.imread(image_path)
-        image = numpy.array(image / 255.0, dtype='float32')
         return image
 
 
