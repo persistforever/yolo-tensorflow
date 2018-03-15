@@ -127,7 +127,7 @@ def main(method='train', gpus=''):
         processor.init_datasets(mode='train', 
             train_image_paths_file=train_image_paths_file, 
             test_image_paths_file=test_image_paths_file)
-        """
+        
         # 设置数据池，processor负责生产dataset，model负责消费dataset
         producers = []
         for i in range(option['n_processes']):
@@ -142,10 +142,10 @@ def main(method='train', gpus=''):
         os.environ['CUDA_VISIBLE_DEVICES'] = gpus
         model.train(
             processor, network, 
-            backup_dir=os.path.join(store_dir, 'backup', option['seq']), 
-            logs_dir=os.path.join(store_dir, 'logs', option['seq']), 
+            backup_dir=os.path.join(data_dir, 'backup', option['seq']), 
+            logs_dir=os.path.join(data_dir, 'logs', option['seq']), 
             n_iters=option['n_iter'])
-        """
+        
     elif method == 'test':
         # 测试某一个已经训练好的模型
         test_image_paths_files=[os.path.join(data_dir, 'datasets', option['datas'][-1], 'test_tensor.txt')]

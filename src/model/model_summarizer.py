@@ -142,11 +142,10 @@ class Model():
         self.valid_logits = self.network.get_inference(self.place_holders['images']) 
         
     def train(self, processor, network, backup_dir, logs_dir, n_iters=500000):
-        sub_dir = 'adaption' if self.is_adaption else 'basic'
         self.train_init(network, backup_dir)
         
         # 训练开始前保存1次模型
-        model_path = os.path.join(backup_dir, sub_dir, 'model_0.ckpt')
+        model_path = os.path.join(backup_dir, 'model_0.ckpt')
         self.saver.save(self.sess, model_path)
                 
         # 模型训练
