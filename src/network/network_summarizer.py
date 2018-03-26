@@ -65,7 +65,7 @@ class Network:
         # 全局变量
         grid_x = numpy.array(range(0, self.cell_x_size), dtype='float32')
         grid_x = numpy.reshape(grid_x, newshape=(1, 1, self.cell_x_size, 1, 1))
-        grid_x = numpy.tile(grid_x, (self.batch_size, self.cell_y_size, self.n_boxes, 1, 1))
+        grid_x = numpy.tile(grid_x, (self.batch_size, self.cell_y_size, 1, self.n_boxes, 1))
         self.grid_x = tf.constant(grid_x, dtype=tf.float32)
        
         grid_y = numpy.array(range(0, self.cell_y_size), dtype='float32')
@@ -74,13 +74,13 @@ class Network:
         self.grid_y = tf.constant(grid_y, dtype=tf.float32)
         
         prior_w = numpy.array([1.0, 0.8, 0.6, 0.4, 0.2], dtype='float32')
-        prior_w = numpy.reshape(prior_w, newshape=(1, 1, 1, 1, 5))
-        prior_w = numpy.tile(prior_w, (self.batch_size, self.cell_y_size, self.cell_x_size, self.n_boxes, 5))
+        prior_w = numpy.reshape(prior_w, newshape=(1, 1, 1, self.n_boxes, 1))
+        prior_w = numpy.tile(prior_w, (self.batch_size, self.cell_y_size, self.cell_x_size, 1, 1))
         self.prior_w = tf.constant(prior_w, dtype=tf.float32)
         
         prior_h = numpy.array([0.2, 0.4, 0.6, 0.8, 1.0], dtype='float32')
-        prior_h = numpy.reshape(prior_h, newshape=(1, 1, 1, 1, 5))
-        prior_h = numpy.tile(prior_h, (self.batch_size, self.cell_y_size, self.cell_x_size, self.n_boxes, 5))
+        prior_h = numpy.reshape(prior_h, newshape=(1, 1, 1, self.n_boxes, 1))
+        prior_h = numpy.tile(prior_h, (self.batch_size, self.cell_y_size, self.cell_x_size, 1, 1))
         self.prior_h = tf.constant(prior_h, dtype=tf.float32)
         
         # 网络结构
@@ -189,7 +189,7 @@ class Network:
 
         # 待输出的中间变量
         self.logits = self.inference(self.images, is_training=tf.constant(True))
-        self.loss, self.noobject_loss, self.object_loss, self.coord_loss, \
+        self.loss, self.noobject_loss, self.object_loss, self.coord_loss, self.class_loss, \
             self.iou_value, self.object_value, self.noobject_value = self.calculate_loss(self.logits)
         self.weight_decay_loss = tf.constant(0.0)
         
@@ -206,8 +206,9 @@ class Network:
         self.noobject_loss /= self.batch_size
         self.object_loss /= self.batch_size
         self.coord_loss /= self.batch_size
+        self.class_loss /= self.batch_size
             
-        return self.avg_loss, self.noobject_loss, self.object_loss, self.coord_loss, \
+        return self.avg_loss, self.noobject_loss, self.object_loss, self.coord_loss, self.class_loss, \
             self.weight_decay_loss, self.iou_value, self.object_value, self.noobject_value
 
     def get_inference(self, images):
@@ -224,6 +225,8 @@ class Network:
             logits = hidden_state
             
             # 网络输出 
+            logits = tf.reshape(logits, shape=(
+                self.batch_size, self.cell_y_size, self.cell_x_size, self.n_boxes, 1+self.n_coord+self.n_classes))
             logits1 = tf.sigmoid(tf.reshape(logits[:,:,:,:,0:5], shape=[
                 self.batch_size, self.cell_y_size, self.cell_x_size, self.n_boxes, 5]))
             logits2 = tf.softmax(tf.reshape(logits[:,:,:,:,5:], shape=[
@@ -237,7 +240,7 @@ class Network:
             # 获取class_pred和box_pred
             conf_pred = logits[:,:,:,:,0:1]
             coord_pred = logits[:,:,:,:,1:5]
-            class_pred = logits[:,:,:,:,5:5+n_classes]
+            class_pred = logits[:,:,:,:,5:1+self.n_coord+self.n_classes]
 
             with tf.name_scope('data'):
                 # 获得扩展后的coord_pred和coord_true
@@ -249,9 +252,9 @@ class Network:
                 coord_true_iter = tf.reshape(self.coord_true[:,:,:,:,0:4], shape=[
                     self.batch_size, self.cell_y_size, self.cell_x_size, 1, self.max_objects, 4])
                 coord_true_iter = tf.tile(coord_true_iter, [1, 1, 1, self.n_boxes, 1, 1])
-                class_true_iter = tf.reshape(self.class_true[:,:,:,:,0:n_classes], shape=[
-                    self.batch_size, self.cell_y_size, self.cell_x_size, 1, self.max_objects, n_classes])
-                class_true_iter = tf.reshape(class_true_iter, [1, 1, 1, self.n_boxes, 1, 1])
+                class_true_iter = tf.reshape(self.class_true[:,:,:,:,0:self.n_classes], shape=[
+                    self.batch_size, self.cell_y_size, self.cell_x_size, 1, self.max_objects, self.n_classes])
+                class_true_iter = tf.tile(class_true_iter, [1, 1, 1, self.n_boxes, 1, 1])
                 
                 # 获得扩展后的unpos_coord_true
                 unpos_coord_true_iter = tf.reshape(self.unpos_coord_true[:,:,0:4], shape=[
@@ -295,12 +298,6 @@ class Network:
                 iou_tensor = tf.reshape(iou_tensor, shape=[
                     self.batch_size, self.cell_y_size, self.cell_x_size, self.n_boxes, self.max_objects, 1])
                 
-                # 计算得到外框的outer_true_iter
-                if self.is_duplex:
-                    outer_true_iter = tf.reshape(self.coord_true[:,:,:,:,4:8], shape=[
-                        self.batch_size, self.cell_y_size, self.cell_x_size, 1, self.max_objects, 4])
-                    outer_true_iter = tf.tile(outer_true_iter, [1, 1, 1, self.n_boxes, 1, 1])
-            
             with tf.name_scope('noobject'):
                 # 根据iou_tensor计算得到iou_anyobject_mask
                 noobject_mask = tf.ones(
@@ -354,11 +351,11 @@ class Network:
             with tf.name_scope('class'):
                 # 计算class_loss和class_value
                 class_label = tf.reduce_max(coord_label_mask * class_true_iter, axis=4)
-                class_label = tf.stopgradient(class_label)
+                class_label = tf.stop_gradient(class_label)
                 class_output = (class_label - class_pred) * tf.stop_gradient(iou_tensor_pred_mask)
                 class_loss = self.class_scale * tf.nn.l2_loss(class_output)
             
-            loss = noobject_loss + object_loss + coord_loss + class_loss
+            loss = (noobject_loss + object_loss + coord_loss + class_loss) / self.batch_size
 
             return loss, noobject_loss, object_loss, coord_loss, class_loss, \
                 iou_value, object_value, noobject_value

@@ -36,7 +36,7 @@ def main(method='train', gpus=''):
     option['cell_y_size'] = 7
     option['pool_mode'] = 'max'
     option['n_boxes'] = 5
-    option['n_processes'] = 3
+    option['n_processes'] = 2
     option['max_objects'] = 30
     option['n_iter'] = 200000
     option['buffer_size'] = 5

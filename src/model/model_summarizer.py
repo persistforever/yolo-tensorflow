@@ -54,21 +54,21 @@ class Model():
         
         self.index_size = (self.batch_size)
         self.image_size = (self.batch_size, self.image_y_size, self.image_x_size, self.n_channel)
-        self.coord_true_size = (self.batch_size, self.cell_y_size, self.cell_x_size, self.max_objects, 8)
+        self.coord_true_size = (self.batch_size, self.cell_y_size, self.cell_x_size, self.max_objects, 4)
         self.object_mask_size = (self.batch_size, self.cell_y_size, self.cell_x_size, self.max_objects)
         self.class_true_size = (self.batch_size, self.cell_y_size, self.cell_x_size, self.max_objects, self.n_classes)
-        self.unpos_coord_true_size = (self.batch_size, self.max_objects, 8)
+        self.unpos_coord_true_size = (self.batch_size, self.max_objects, 4)
         self.unpos_object_mask_size = (self.batch_size, self.max_objects)
         self.object_nums_size = (self.batch_size, self.cell_y_size, self.cell_x_size)
         
         # 输入变量
         self.images = tf.placeholder(
-            dtype=tf.int32, 
-            shape=[self.batch_size, self.image_y_size, self.image_x_size, 1], 
+            dtype=tf.float32, 
+            shape=[self.batch_size, self.image_y_size, self.image_x_size, 3], 
             name='images')
         self.coord_true = tf.placeholder(
             dtype=tf.float32, 
-            shape=[self.batch_size, self.cell_y_size, self.cell_x_size, self.max_objects, 8], 
+            shape=[self.batch_size, self.cell_y_size, self.cell_x_size, self.max_objects, 4], 
             name='coord_true')
         self.object_mask = tf.placeholder(
             dtype=tf.float32, 
@@ -80,7 +80,7 @@ class Model():
             name='class_true')
         self.unpos_coord_true = tf.placeholder(
             dtype=tf.float32,
-            shape=[self.batch_size, self.max_objects, 8],
+            shape=[self.batch_size, self.max_objects, 4],
             name='unpos_coord_true')
         self.unpos_object_mask = tf.placeholder(
             dtype=tf.float32,
@@ -117,7 +117,7 @@ class Model():
         self.network = network
         # 先计算loss
         with tf.name_scope('cal_loss_and_eval'):
-            self.avg_loss, self.coord_loss, self.noobject_loss, self.object_loss, \
+            self.avg_loss, self.coord_loss, self.noobject_loss, self.object_loss, self.class_loss, \
                 self.weight_decay_loss, self.iou_value, self.object_value, self.noobject_value = \
                     self.network.get_loss(
                         self.place_holders['images'],
@@ -204,37 +204,25 @@ class Model():
             feed_dict = {}
             
             # 生成feed_dict
-            feed_dict[self.place_holders['images']] = \
-                batch_fore_images[i*sub_batch_size:(i+1)*sub_batch_size,:,:,:]
-            
-            feed_dict[self.place_holders['coord_true']] = \
-                batch_coord_true[i*sub_batch_size:(i+1)*sub_batch_size,:,:,:,:]
-            
-            feed_dict[self.place_holders['object_mask']] = \
-                batch_object_mask[i*sub_batch_size:(i+1)*sub_batch_size,:,:,:]
-
-            feed_dict[self.place_holders['coord_true']] = \
-                batch_coord_true[i*sub_batch_size:(i+1)*sub_batch_size,:,:,:]
-            
-            feed_dict[self.place_holders['unpos_coord_true']] = \
-                batch_unpos_coord_true[i*sub_batch_size:(i+1)*sub_batch_size,:,:]
-
-            feed_dict[self.place_holders['unpos_object_mask']] = \
-                batch_unpos_object_mask[i*sub_batch_size:(i+1)*sub_batch_size,:]
-
-            feed_dict[self.place_holders['object_nums']] = \
-                batch_object_nums[i*sub_batch_size:(i+1)*sub_batch_size,:,:]
+            feed_dict[self.place_holders['images']] = batch_images
+            feed_dict[self.place_holders['coord_true']] = batch_coord_true
+            feed_dict[self.place_holders['object_mask']] = batch_object_mask
+            feed_dict[self.place_holders['class_true']] = batch_class_true
+            feed_dict[self.place_holders['unpos_coord_true']] = batch_unpos_coord_true
+            feed_dict[self.place_holders['unpos_object_mask']] = batch_unpos_object_mask
+            feed_dict[self.place_holders['object_nums']] = batch_object_nums
                 
             et = time.time()
             feed_time = et - st
             
             st = time.time()
-            [_, avg_loss, coord_loss, noobject_loss, object_loss, weight_decay_loss, \
-                iou_value, object_value, noobject_value] = self.sess.run(
+            [_, avg_loss, coord_loss, noobject_loss, object_loss, class_loss, \
+                weight_decay_loss, iou_value, object_value, noobject_value] = self.sess.run(
                     fetches=[
                         self.optimizer_handle, self.avg_loss, self.coord_loss, 
-                        self.noobject_loss, self.object_loss, self.weight_decay_loss,
-                        self.iou_value, self.object_value, self.noobject_value], 
+                        self.noobject_loss, self.object_loss, self.class_loss, 
+                        self.weight_decay_loss, self.iou_value, self.object_value, 
+                        self.noobject_value], 
                     feed_dict=feed_dict)
             et = time.time()
             model_time = et - st
@@ -249,15 +237,14 @@ class Model():
 
             # 每1轮训练观测一次train_loss    
             print('[%d] train loss: %.6f, coord loss: %.6f, noobject loss: %.6f, '
-                'object loss: %.6f, weight loss: %.6f, recon loss: %.6f' % (
-                n_iter, avg_loss, coord_loss, noobject_loss, object_loss, 
-                weight_decay_loss, recon_loss))
+                'object loss: %.6f, class loss: %.6f, weight loss: %.6f' % (
+                n_iter, avg_loss, coord_loss, noobject_loss, object_loss, class_loss,
+                weight_decay_loss))
             sys.stdout.flush()
             
             # 每1轮观测一次训练集evaluation
-            print('[%d] inner IOU: %.6f, outer IOU: %.6f, '
-                'object: %.6f, noobject: %.6f, overlap: %.6f\n' % (
-                n_iter, iou_value, outer_iou_value, object_value, noobject_value, overlap_value))
+            print('[%d] inner IOU: %.6f, object: %.6f, noobject: %.6f\n' % (
+                n_iter, iou_value, object_value, noobject_value))
             sys.stdout.flush()
 
             # 每固定轮数验证一次模型
@@ -328,7 +315,7 @@ class Model():
             
             [logits] = self.sess.run(
                 fetches=[self.valid_logits],
-                feed_dict={self.place_holders[0]['images']: batch_images})
+                feed_dict={self.place_holders['images']: batch_images})
             
             # 获得预测的框
             preds_objects = self.get_pred_boxes(logits, batch_datasets, self.batch_size)
@@ -403,11 +390,11 @@ class Model():
         print('Test Finish!')
     
     def get_pred_boxes(self, logits, batch_datasets, batch_size, is_text=True):
-        conf_preds = numpy.reshape(logits[:,:,:,:,0:1], shape=(
+        conf_preds = numpy.reshape(logits[:,:,:,:,0:1], (
             batch_size, self.cell_y_size, self.cell_x_size, self.n_boxes, 1))
-        box_preds = self.get_direct_position_py(numpy.reshape(logits[:,:,:,:,1:5], shape=(
+        box_preds = self.get_direct_position_py(numpy.reshape(logits[:,:,:,:,1:5], (
             batch_size, self.cell_y_size, self.cell_x_size, self.n_boxes, 4)))
-        class_preds = numpy.reshape(logits[:,:,:,:,5:], shape=(
+        class_preds = numpy.reshape(logits[:,:,:,:,5:], (
             batch_size, self.cell_y_size, self.cell_x_size, self.n_boxes, self.n_classes))
        
         pred_objects = []
@@ -455,10 +442,10 @@ class Model():
         true_objects = []
         
         for j in range(batch_size):
-            labels = batch_datasets[j]['labels']
+            label = batch_datasets[j]['label']
 
             true_boxes = []
-            for index, x, y, w, h in tables:
+            for index, x, y, w, h in label:
                 left = int(round(min(max(0.0, x - w / 2.0), 0.9999) * self.image_x_size))
                 top = int(round(min(max(0.0, y - h / 2.0), 0.9999) * self.image_y_size))
                 right = int(round(min(max(0.0, x + w / 2.0), 0.9999) * self.image_x_size))
@@ -495,18 +482,18 @@ class Model():
 
     def get_direct_position_py(self, coord_pred):
         # 计算bx
-        offset_x = numpy.reshape(range(0, self.cell_x_size), newshape=(1, 1, self.cell_x_size, 1))
-        offset_x = numpy.tile(offset_x, (self.batch_size, self.cell_y_size, 1, 1))
+        offset_x = numpy.reshape(range(0, self.cell_x_size), newshape=(1, 1, self.cell_x_size, 1, 1))
+        offset_x = numpy.tile(offset_x, (self.batch_size, self.cell_y_size, 1, self.n_boxes, 1))
         offset_x = numpy.array(offset_x, dtype='float')
-        x_pred = (coord_pred[:,:,:,0:1] + offset_x) / self.cell_x_size
+        x_pred = (coord_pred[:,:,:,:,0:1] + offset_x) / self.cell_x_size
         
         # 计算by
-        offset_y = numpy.reshape(range(0, self.cell_y_size), newshape=(1, self.cell_y_size, 1, 1))
-        offset_y = numpy.tile(offset_y, (self.batch_size, 1, self.cell_x_size, 1))
+        offset_y = numpy.reshape(range(0, self.cell_y_size), newshape=(1, self.cell_y_size, 1, 1, 1))
+        offset_y = numpy.tile(offset_y, (self.batch_size, 1, self.cell_x_size, self.n_boxes, 1))
         offset_y = numpy.array(offset_y, dtype='float')
-        y_pred = (coord_pred[:,:,:,1:2] + offset_y) / self.cell_y_size
+        y_pred = (coord_pred[:,:,:,:,1:2] + offset_y) / self.cell_y_size
         
-        new_coord_pred = numpy.concatenate([x_pred, y_pred, coord_pred[:,:,:,2:4]], axis=3)
+        new_coord_pred = numpy.concatenate([x_pred, y_pred, coord_pred[:,:,:,:,2:4]], axis=4)
         
         return new_coord_pred
     
