@@ -156,8 +156,8 @@ class Network:
             name='pool6', prev_layer=self.conv_layer15)
         
         self.dense_layer1 = DenseLayer(
-            hidden_dim=1024, activation='leaky_relu', batch_normal=True, weight_decay=self.weight_decay_scale, 
-            name='dense1', prev_layer=self.pool_layer6)
+            hidden_dim=1024, activation='leaky_relu', batch_normal=False, weight_decay=self.weight_decay_scale, 
+            name='dense1', input_shape=[4*4*1024])
         self.dense_layer2 = DenseLayer(
             hidden_dim=self.cell_y_size*self.cell_x_size*self.n_boxes*(5+self.n_classes), 
             activation='none', batch_normal=False, weight_decay=self.weight_decay_scale, 
@@ -220,16 +220,20 @@ class Network:
         with tf.name_scope('inference'):
             # 数据流
             hidden_state = images
-            for layer in self.layers:
+            for layer in self.layers[:-2]:
+                hidden_state = layer.get_output(input=hidden_state, is_training=is_training)
+            print(hidden_state.shape)
+            hidden_state = tf.reshape(hidden_state, (self.batch_size, 4*4*1024))
+            for layer in self.layers[-2:]:
                 hidden_state = layer.get_output(input=hidden_state, is_training=is_training)
             logits = hidden_state
             
             # 网络输出 
             logits = tf.reshape(logits, shape=(
-                self.batch_size, self.cell_y_size, self.cell_x_size, self.n_boxes, 1+self.n_coord+self.n_classes))
+                self.batch_size, self.cell_y_size, self.cell_x_size, self.n_boxes, 5+self.n_classes))
             logits1 = tf.sigmoid(tf.reshape(logits[:,:,:,:,0:5], shape=[
                 self.batch_size, self.cell_y_size, self.cell_x_size, self.n_boxes, 5]))
-            logits2 = tf.softmax(tf.reshape(logits[:,:,:,:,5:], shape=[
+            logits2 = tf.nn.softmax(tf.reshape(logits[:,:,:,:,5:], shape=[
                 self.batch_size, self.cell_y_size, self.cell_x_size, self.n_boxes, self.n_classes]))
             logits = tf.concat([logits1, logits2], axis=4)
         
@@ -240,7 +244,7 @@ class Network:
             # 获取class_pred和box_pred
             conf_pred = logits[:,:,:,:,0:1]
             coord_pred = logits[:,:,:,:,1:5]
-            class_pred = logits[:,:,:,:,5:1+self.n_coord+self.n_classes]
+            class_pred = logits[:,:,:,:,5:5+self.n_classes]
 
             with tf.name_scope('data'):
                 # 获得扩展后的coord_pred和coord_true

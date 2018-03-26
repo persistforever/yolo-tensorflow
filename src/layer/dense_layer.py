@@ -58,7 +58,7 @@ class DenseLayer:
             '(%d)' % (self.output_shape[0])))
         self.calculation = self.output_shape[0] * self.input_shape[0]
         
-    def get_output(self, input):
+    def get_output(self, input, is_training=True):
         
         # hidden states
         intermediate = tf.matmul(input, self.weight)
@@ -66,9 +66,9 @@ class DenseLayer:
         # batch normalization 技术
         if self.batch_normal:
             if self.batch_normal:
-                self.hidden = self.batch_normal_layer.get_output(self.conv, is_training=is_training)
+                self.hidden = self.batch_normal_layer.get_output(intermediate, is_training=is_training)
             else:
-                self.hidden = self.conv + self.bias
+                self.hidden = intermediate + self.bias
         else:
             self.hidden = intermediate + self.bias
             
