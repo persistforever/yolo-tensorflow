@@ -34,8 +34,6 @@ def main(method='train', gpus=''):
     option['n_classes'] = 21
     option['cell_x_size'] = 7
     option['cell_y_size'] = 7
-    option['conv_x_size'] = 3
-    option['conv_y_size'] = 3
     option['pool_mode'] = 'max'
     option['n_boxes'] = 5
     option['n_processes'] = 3
@@ -88,8 +86,6 @@ def main(method='train', gpus=''):
         max_objects = option['max_objects'], 
         cell_x_size = option['cell_x_size'], 
         cell_y_size = option['cell_y_size'], 
-        conv_x_size = option['conv_x_size'], 
-        conv_y_size = option['conv_y_size'],
         pool_mode = option['pool_mode'],
         box_per_cell = option['n_boxes'], 
         batch_size = option['batch_size'],
@@ -127,7 +123,7 @@ def main(method='train', gpus=''):
         processor.init_datasets(mode='train', 
             train_image_paths_file=train_image_paths_file, 
             test_image_paths_file=test_image_paths_file)
-        """
+        
         # 设置数据池，processor负责生产dataset，model负责消费dataset
         producers = []
         for i in range(option['n_processes']):
@@ -142,10 +138,10 @@ def main(method='train', gpus=''):
         os.environ['CUDA_VISIBLE_DEVICES'] = gpus
         model.train(
             processor, network, 
-            backup_dir=os.path.join(store_dir, 'backup', option['seq']), 
-            logs_dir=os.path.join(store_dir, 'logs', option['seq']), 
+            backup_dir=os.path.join(data_dir, 'backup', option['seq']), 
+            logs_dir=os.path.join(data_dir, 'logs', option['seq']), 
             n_iters=option['n_iter'])
-        """
+        
     elif method == 'test':
         # 测试某一个已经训练好的模型
         test_image_paths_files=[os.path.join(data_dir, 'datasets', option['datas'][-1], 'test_tensor.txt')]

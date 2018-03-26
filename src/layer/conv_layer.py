@@ -70,7 +70,6 @@ class ConvLayer:
                     initial_value=tf.constant(0.0, shape=[self.n_filter]),
                     name='bias')
         
-        
         # 打印网络权重、输入、输出信息
         # calculate input_shape and output_shape
         self.output_shape = [

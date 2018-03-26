@@ -13,6 +13,7 @@ import cv2
 import tensorflow as tf
 from src.layer.conv_layer import ConvLayer
 from src.layer.pool_layer import PoolLayer
+from src.layer.dense_layer import DenseLayer
 
 
 class Network:
@@ -25,8 +26,6 @@ class Network:
         max_objects, 
         cell_x_size, 
         cell_y_size, 
-        conv_x_size, 
-        conv_y_size, 
         pool_mode, 
         box_per_cell, 
         batch_size, 
@@ -43,14 +42,12 @@ class Network:
         
         # 设置参数
         self.n_channel = n_channel
-        self.n_classes = n_classes
+        self.n_classes = n_classes + 1
         self.image_x_size = image_x_size
         self.image_y_size = image_y_size
         self.max_objects = max_objects
         self.cell_x_size = cell_x_size
         self.cell_y_size = cell_y_size
-        self.conv_x_size = conv_x_size
-        self.conv_y_size = conv_y_size
         self.pool_mode = pool_mode
         self.n_boxes = box_per_cell
         self.batch_size = batch_size
@@ -64,7 +61,6 @@ class Network:
         self.nms_thresh = nms_thresh
         self.is_weight_decay = is_weight_decay
         self.weight_decay_scale = float(weight_decay_scale)
-        self.n_coord = 4
 
         # 全局变量
         grid_x = numpy.array(range(0, self.cell_x_size), dtype='float32')
@@ -90,8 +86,7 @@ class Network:
         # 网络结构
         print('\n%-10s\t%-25s\t%-20s\t%-20s\t%s' % ('Name', 'Filter', 'Input', 'Output', 'Field')) 
         self.conv_layer1 = ConvLayer(
-            x_size=self.conv_x_size, y_size=self.conv_y_size, 
-            x_stride=1, y_stride=1, n_filter=8, activation='leaky_relu', 
+            x_size=7, y_size=7, x_stride=2, y_stride=2, n_filter=64, activation='leaky_relu', 
             batch_normal=True, weight_decay=self.weight_decay_scale, name='conv1',
             input_shape=(self.image_y_size, self.image_x_size, self.n_channel))
         self.pool_layer1 = PoolLayer(
@@ -99,101 +94,83 @@ class Network:
             name='pool1', prev_layer=self.conv_layer1)
         
         self.conv_layer2 = ConvLayer(
-            x_size=self.conv_x_size, y_size=self.conv_x_size, 
-            x_stride=1, y_stride=1, n_filter=16, activation='leaky_relu', 
+            x_size=3, y_size=3, x_stride=1, y_stride=1, n_filter=192, activation='leaky_relu', 
             batch_normal=True, weight_decay=self.weight_decay_scale, name='conv2', prev_layer=self.pool_layer1) 
-        self.conv_layer3 = ConvLayer(
-            x_size=1, y_size=1, x_stride=1, y_stride=1, n_filter=8, activation='leaky_relu', 
-            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv3', prev_layer=self.conv_layer2) 
-        self.conv_layer4 = ConvLayer(
-            x_size=self.conv_x_size, y_size=self.conv_x_size, 
-            x_stride=1, y_stride=1, n_filter=16, activation='leaky_relu', 
-            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv4', prev_layer=self.conv_layer3)
         self.pool_layer2 = PoolLayer(
             x_size=2, y_size=2, x_stride=2, y_stride=2, mode=self.pool_mode, resp_normal=False, 
-            name='pool2', prev_layer=self.conv_layer4)
+            name='pool2', prev_layer=self.conv_layer2)
         
+        self.conv_layer3 = ConvLayer(
+            x_size=1, y_size=1, x_stride=1, y_stride=1, n_filter=128, activation='leaky_relu', 
+            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv3', prev_layer=self.pool_layer2)
+        self.conv_layer4 = ConvLayer(
+            x_size=3, y_size=3, x_stride=1, y_stride=1, n_filter=256, activation='leaky_relu', 
+            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv4', prev_layer=self.conv_layer3) 
         self.conv_layer5 = ConvLayer(
-            x_size=self.conv_x_size, y_size=self.conv_y_size, 
-            x_stride=1, y_stride=1, n_filter=32, activation='leaky_relu', 
-            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv5', prev_layer=self.pool_layer2) 
+            x_size=1, y_size=1, x_stride=1, y_stride=1, n_filter=256, activation='leaky_relu', 
+            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv5', prev_layer=self.conv_layer4) 
         self.conv_layer6 = ConvLayer(
-            x_size=1, y_size=1, x_stride=1, y_stride=1, n_filter=16, activation='leaky_relu', 
-            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv6', prev_layer=self.conv_layer5) 
-        self.conv_layer7 = ConvLayer(
-            x_size=self.conv_x_size, y_size=self.conv_y_size, 
-            x_stride=1, y_stride=1, n_filter=32, activation='leaky_relu', 
-            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv7', prev_layer=self.conv_layer6) 
+            x_size=3, y_size=3, x_stride=1, y_stride=1, n_filter=512, activation='leaky_relu', 
+            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv6', prev_layer=self.conv_layer5)
         self.pool_layer3 = PoolLayer(
             x_size=2, y_size=2, x_stride=2, y_stride=2, mode=self.pool_mode, resp_normal=False, 
-            name='pool3', prev_layer=self.conv_layer7)
+            name='pool3', prev_layer=self.conv_layer6)
         
+        self.conv_layer7 = ConvLayer(
+            x_size=1, y_size=1, x_stride=1, y_stride=1, n_filter=256, activation='leaky_relu', 
+            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv7', prev_layer=self.pool_layer3)
         self.conv_layer8 = ConvLayer(
-            x_size=self.conv_x_size, y_size=self.conv_y_size, 
-            x_stride=1, y_stride=1, n_filter=64, activation='leaky_relu', 
-            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv8', prev_layer=self.pool_layer3) 
+            x_size=3, y_size=3, x_stride=1, y_stride=1, n_filter=512, activation='leaky_relu', 
+            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv8', prev_layer=self.conv_layer7) 
         self.conv_layer9 = ConvLayer(
-            x_size=1, y_size=1, x_stride=1, y_stride=1, n_filter=32, activation='leaky_relu', 
+            x_size=1, y_size=1, x_stride=1, y_stride=1, n_filter=512, activation='leaky_relu', 
             batch_normal=True, weight_decay=self.weight_decay_scale, name='conv9', prev_layer=self.conv_layer8) 
         self.conv_layer10 = ConvLayer(
-            x_size=self.conv_x_size, y_size=self.conv_y_size, 
-            x_stride=1, y_stride=1, n_filter=64, activation='leaky_relu', 
-            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv10', prev_layer=self.conv_layer9) 
+            x_size=3, y_size=3, x_stride=1, y_stride=1, n_filter=1024, activation='leaky_relu', 
+            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv10', prev_layer=self.conv_layer9)
         self.pool_layer4 = PoolLayer(
             x_size=2, y_size=2, x_stride=2, y_stride=2, mode=self.pool_mode, resp_normal=False, 
             name='pool4', prev_layer=self.conv_layer10)
         
         self.conv_layer11 = ConvLayer(
-            x_size=self.conv_x_size, y_size=self.conv_y_size, 
-            x_stride=1, y_stride=1, n_filter=128, activation='leaky_relu', 
-            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv11', prev_layer=self.pool_layer4) 
+            x_size=1, y_size=1, x_stride=1, y_stride=1, n_filter=512, activation='leaky_relu', 
+            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv11', prev_layer=self.pool_layer4)
         self.conv_layer12 = ConvLayer(
-            x_size=1, y_size=1, x_stride=1, y_stride=1, n_filter=64, activation='leaky_relu', 
+            x_size=3, y_size=3, x_stride=1, y_stride=1, n_filter=512, activation='leaky_relu', 
             batch_normal=True, weight_decay=self.weight_decay_scale, name='conv12', prev_layer=self.conv_layer11) 
         self.conv_layer13 = ConvLayer(
-            x_size=self.conv_x_size, y_size=self.conv_y_size, 
-            x_stride=1, y_stride=1, n_filter=128, activation='leaky_relu', 
+            x_size=3, y_size=3, x_stride=1, y_stride=1, n_filter=1024, activation='leaky_relu', 
             batch_normal=True, weight_decay=self.weight_decay_scale, name='conv13', prev_layer=self.conv_layer12) 
         self.pool_layer5 = PoolLayer(
             x_size=2, y_size=2, x_stride=2, y_stride=2, mode=self.pool_mode, resp_normal=False, 
             name='pool5', prev_layer=self.conv_layer13)
         
         self.conv_layer14 = ConvLayer(
-            x_size=self.conv_x_size, y_size=self.conv_y_size, 
-            x_stride=1, y_stride=1, n_filter=256, activation='leaky_relu', 
+            x_size=3, y_size=3, x_stride=1, y_stride=1, n_filter=1024, activation='leaky_relu', 
             batch_normal=True, weight_decay=self.weight_decay_scale, name='conv14', prev_layer=self.pool_layer5) 
         self.conv_layer15 = ConvLayer(
-            x_size=1, y_size=1, x_stride=1, y_stride=1, n_filter=128, activation='leaky_relu', 
+            x_size=3, y_size=3, x_stride=1, y_stride=1, n_filter=1024, activation='leaky_relu', 
             batch_normal=True, weight_decay=self.weight_decay_scale, name='conv15', prev_layer=self.conv_layer14) 
-        self.conv_layer16 = ConvLayer(
-            x_size=self.conv_x_size, y_size=self.conv_y_size, 
-            x_stride=1, y_stride=1, n_filter=256, activation='leaky_relu', 
-            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv16', prev_layer=self.conv_layer15) 
         self.pool_layer6 = PoolLayer(
             x_size=2, y_size=2, x_stride=2, y_stride=2, mode=self.pool_mode, resp_normal=False, 
-            name='pool6', prev_layer=self.conv_layer16)
+            name='pool6', prev_layer=self.conv_layer15)
         
-        self.conv_layer17 = ConvLayer(
-            x_size=self.conv_x_size, y_size=self.conv_y_size, 
-            x_stride=1, y_stride=1, n_filter=512, activation='leaky_relu', 
-            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv17', prev_layer=self.pool_layer6) 
-        self.conv_layer18 = ConvLayer(
-            x_size=self.conv_x_size, y_size=self.conv_y_size, 
-            x_stride=1, y_stride=1, n_filter=512, activation='leaky_relu', 
-            batch_normal=True, weight_decay=self.weight_decay_scale, name='conv18', prev_layer=self.conv_layer17) 
-        self.conv_layer19 = ConvLayer(
-            x_size=1, y_size=1, x_stride=1, y_stride=1, 
-            n_filter=self.n_boxes*(1+self.n_coord+self.n_classes), activation='none',
-            batch_normal=False, weight_decay=self.weight_decay_scale, name='conv19', prev_layer=self.conv_layer18)
+        self.dense_layer1 = DenseLayer(
+            hidden_dim=1024, activation='leaky_relu', batch_normal=True, weight_decay=self.weight_decay_scale, 
+            name='dense1', prev_layer=self.pool_layer6)
+        self.dense_layer2 = DenseLayer(
+            hidden_dim=self.cell_y_size*self.cell_x_size*self.n_boxes*(5+self.n_classes), 
+            activation='none', batch_normal=False, weight_decay=self.weight_decay_scale, 
+            name='dense2', prev_layer=self.dense_layer1)
         
         self.layers = [
             self.conv_layer1, self.pool_layer1, 
-            self.conv_layer2, self.conv_layer3, self.conv_layer4, self.pool_layer2, 
-            self.conv_layer5, self.conv_layer6, self.conv_layer7, self.pool_layer3,
-            self.conv_layer8, self.conv_layer9, self.conv_layer10, self.pool_layer4,
+            self.conv_layer2, self.pool_layer2,
+            self.conv_layer3, self.conv_layer4, self.conv_layer5, self.conv_layer6, self.pool_layer3,
+            self.conv_layer7, self.conv_layer8, self.conv_layer9, self.conv_layer10, self.pool_layer4,
             self.conv_layer11, self.conv_layer12, self.conv_layer13, self.pool_layer5,
-            self.conv_layer14, self.conv_layer15, self.conv_layer16, self.pool_layer6,
-            self.conv_layer17, self.conv_layer18, self.conv_layer19]
+            self.conv_layer14, self.conv_layer15, self.pool_layer6,
+            self.dense_layer1, self.dense_layer2]
 
         self.calculation = sum([layer.calculation for layer in self.layers])
         print('calculation: %.2fM\n' % (self.calculation / 1024.0 / 1024.0))
@@ -248,7 +225,7 @@ class Network:
             
             # 网络输出 
             logits1 = tf.sigmoid(tf.reshape(logits[:,:,:,:,0:5], shape=[
-                self.batch_size, self.cell_y_size, self.cell_x_size, self.n_boxes, self.n_coord+1]))
+                self.batch_size, self.cell_y_size, self.cell_x_size, self.n_boxes, 5]))
             logits2 = tf.softmax(tf.reshape(logits[:,:,:,:,5:], shape=[
                 self.batch_size, self.cell_y_size, self.cell_x_size, self.n_boxes, self.n_classes]))
             logits = tf.concat([logits1, logits2], axis=4)

@@ -142,11 +142,10 @@ class Model():
         self.valid_logits = self.network.get_inference(self.place_holders['images']) 
         
     def train(self, processor, network, backup_dir, logs_dir, n_iters=500000):
-        sub_dir = 'adaption' if self.is_adaption else 'basic'
         self.train_init(network, backup_dir)
         
         # 训练开始前保存1次模型
-        model_path = os.path.join(backup_dir, sub_dir, 'model_0.ckpt')
+        model_path = os.path.join(backup_dir, 'model_0.ckpt')
         self.saver.save(self.sess, model_path)
                 
         # 模型训练
@@ -156,7 +155,7 @@ class Model():
         data_spend, model_spend, max_valid_value, max_train_value = 0.0, 0.0, 0.0, 0.0
         
         print('\nstart training ...\n')
-        for n_iter in range(self.n_restart, n_iters+4):
+        for n_iter in range(1, n_iters+4):
             # 获取数据
             st = time.time()
             data = processor.shared_memory.get()
@@ -271,16 +270,13 @@ class Model():
             
             if need_valid and self.is_valid:
                 # 观测一次basic验证集evaluation
-                precision_array, recall_array, f1_array, overlap = self.valid_model(
-                    processor, model_path, logs_dir, mode='valid_basic')
-                print('[%d] valid '
-                    'p@0.5: %.6f, r@0.5: %.6f, f1@0.5: %.6f\n' % (
-                    n_iter, precision_array[4], recall_array[4], f1_array[4]))
+                mAP = self.valid_model(processor, model_path, logs_dir, mode='valid_basic')
+                print('[%d] valid mAP: %.4f\n' % (n_iter, mAP))
                 valid_value = f1_array[4]
 
-                if train_value >= max_train_value:
-                    max_train_value = train_value
-                    print('update best train textf1@1.0: %.4f\n' % (max_train_value))
+                if valid_value >= max_valid_value:
+                    max_valid_value = valid_value
+                    print('update best valid mAP: %.4f\n' % (max_valid_value))
             
             # 每固定轮数保存一次模型
             if n_iter % 5000 == 0:
@@ -319,71 +315,56 @@ class Model():
                 sys.stdout.flush()
 
     def valid_model(self, processor, model_path, output_dir, mode='valid'):
-        n_ious = 10
-        right_array = numpy.zeros((n_ious, ), dtype='int32')
+        mAPs = []
+        for k in range(self.n_classes-1):
+            mAPs.append([])
 
         for i in range(int(processor.n_valid / self.batch_size) - 1):
             # 获取数据并进行数据增强
             batch_images, batch_datasets = processor.dataset_producer(
                 mode=mode, indexs=[i*self.batch_size+t for t in range(self.batch_size)])
-            batch_images = numpy.zeros((self.batch_size, self.image_y_size, self.image_x_size, 3))
+            batch_images = numpy.reshape(batch_images, 
+                (self.batch_size, self.image_y_size, self.image_x_size, 3))
             
             [logits] = self.sess.run(
                 fetches=[self.valid_logits],
                 feed_dict={self.place_holders[0]['images']: batch_images})
             
             # 获得预测的框
-            pred_objects = self.get_pred_boxes(logits, batch_datasets, self.batch_size)
-            for boxes in pred_objects:
-                preds_denominator += len(boxes)
+            preds_objects = self.get_pred_boxes(logits, batch_datasets, self.batch_size)
 
             # 获得真实的框
-            true_objects = self.get_true_boxes(batch_datasets, self.batch_size)
-            for boxes in true_objects:
-                trues_denominator += len(boxes)
+            trues_objects = self.get_true_boxes(batch_datasets, self.batch_size)
+            n_trues = numpy.zeros((self.n_classes-1), dtype='int32')
+            for true_objects in trues_objects:
+                for true_object in trues_objects:
+                    n_trues[true_object['index']-1] += 1
+    
+            precisions = numpy.zeros((self.n_classes-1, 11), dtype='float32')
+            recalls = numpy.zeros((self.n_classes-1, 11), dtype='float32')
+            for j in range(0, 11):
+                best_prob = 1.0 * j / 10.0
+                n_true_positives, n_false_positives = self.get_truepositive_falsepositive(
+                    trues_objects, preds_objects, true_iou=0.5, true_prob=best_prob)
+                for k in range(self.n_classes-1):
+                    precision = 1.0 * n_true_positives[k] / (n_true_positives[k] + n_false_positives[k]) if \
+                        n_true_positives[k] + n_false_positives[k] > 0 else 0.0
+                    recall = 1.0 * n_true_positives[k] / n_trues[k] if n_trues[k] > 0 else 0.0
+                    precisions[k][j] = precision
+                    recalls[k][j] = recall
 
-            # 获得预测的框和真实的框的对应pair
-            pair_objects = self.get_pair_boxes(true_objects, pred_objects)
+            for k in range(self.n_classes-1):
+                AP = 0.0
+                for j in range(1, 11):
+                    AP += (precisions[k][j-1] - precisions[k][j]) * (recall[k][j] - recall[k][j-1])
+                mAPs[k].append(AP)
+        
+        mAP = 0.0
+        for k in range(self.n_classes-1):
+            mAP += 1.0 * sum(mAPs[k]) / len(mAPs[k])
+        mAP /= (self.n_classes-1)
 
-            # 计算每个真实框对应的IOU最大的预测框
-            for j in range(self.batch_size):
-                for p, t, best_iou in pair_objects[j]:
-                    if best_iou >= 0.9:
-                        right_array[0] += 1
-                    if best_iou >= 0.8:
-                        right_array[1] += 1
-                    if best_iou >= 0.7:
-                        right_array[2] += 1
-                    if best_iou >= 0.6:
-                        right_array[3] += 1
-                    if best_iou >= 0.5:
-                        right_array[4] += 1
-                    if best_iou >= 0.4:
-                        right_array[5] += 1
-                    if best_iou >= 0.3:
-                        right_array[6] += 1
-                    if best_iou >= 0.2:
-                        right_array[7] += 1
-                    if best_iou >= 0.1:
-                        right_array[8] += 1
-                    if best_iou >= 0.0:
-                        right_array[9] += 1
-                
-        precision_array = [0.0] * n_ious
-        recall_array = [0.0] * n_ious
-        f1_array = [0.0] * n_ious
-        for i in range(n_ious):
-            precision_array[i] = 1.0 * right_array[i] / preds_denominator \
-                if preds_denominator != 0 else 0.0
-            recall_array[i] = 1.0 * right_array[i] / trues_denominator \
-                if trues_denominator != 0 else 0.0
-            f1_array[i] = 2 * precision_array[i] * recall_array[i] / (
-                precision_array[i] + recall_array[i]) if precision_array[i] != 0 or \
-                recall_array[i] !=0 else 0.0
-        overlap = 1.0 * overlap_numerator / overlap_denominator \
-            if overlap_denominator != 0 else 0.0
-
-        return precision_array, recall_array, f1_array, overlap
+        return mAP
     
     def test_model(self, processor, network, model_path, output_dir):
         self.deploy_init(processor, network, model_path)
@@ -490,32 +471,27 @@ class Model():
 
         return true_objects
 
-    def get_pair_boxes(self, true_objects, pred_objects):
+    def get_truepositive_falsepositive(self, true_objects, pred_objects, true_iou=0.5, true_prob=0.5):
         """
         获取每个预测框对应的真实框的pair对
         """
-        pair_objects = []
+        n_true_positives = numpy.array((self.n_classes-1), dtype='int32')
+        n_false_positives = numpy.array((self.n_classes-1), dtype='int32')
         for i in range(self.batch_size):
-            pred_pair_dict = {}
-            pair_boxes = []
-            for t in range(len(trues_boxes[i])):
-                best_n, best_iou = -1, 0.4
-                for p in range(len(preds_boxes[i])):
+            for p in range(len(preds_boxes[i])):
+                best_n, best_iou = -1, true_iou
+                for t in range(len(trues_boxes[i])):
                     iou = self.calculate_iou_py(pred_objects[i][p]['box'], true_objects[i][t]['box'], mode='ltrb')
                     is_class_right = pred_objects[i][p]['class'] == true_objects[i][t]['class']
-                    if iou >= best_iou and is_class_right:
+                    if iou >= true_iou and is_class_right and pred_objects[i][p]['prob'] >= true_prob:
                         best_iou = iou
-                        best_n = p
+                        best_n = t
                 if best_n != -1:
-                    if best_n not in pred_pair_dict:
-                        pred_pair_dict[best_n] = []
-                    pred_pair_dict[best_n].append([t, best_iou])
-            for p in pred_pair_dict:
-                [best_n, best_iou] = max(pred_pair_dict[p], key=lambda x: x[1])
-                pair_boxes.append([p, best_n, best_iou])
-            pair_objects.append(pair_boxes)
+                    n_true_positives[preds_objects[i][p]['class']-1] += 1
+                else:
+                    n_false_positives[preds_objects[i][p]['class']-1] += 1
 
-        return pair_objects
+        return n_true_positives, n_false_positives
 
     def get_direct_position_py(self, coord_pred):
         # 计算bx
