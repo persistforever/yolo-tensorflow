@@ -1,6 +1,6 @@
 ## How to improve the performance of object detection system
 
-### Problem
+### 1 Problem
 
 Object detection is a computer technology related to computer vision and image processing that deals with detecting instances of semantic objects of a certain class (such as humans, buildings, or cars) in digital images and videos. There are several key steps in existing object detection systems, such as hypothesizing bounding boxes, resampling pixels or features for each box, and applying a high- quality classifier. Two fractions develop gradually because of different kernel goal. The two-stage detectors focus on the accuracy of object detection, which first generates a set of candidate bounding boxes and then  selects and revises target bounding boxes, such as, R-CNN [1], Fast R-CNN [2], Faster R-CNN [3], Mask R-CNN [4], FPN [5]. In contrast, the one-state detectors focus on the efficiency of object detection, which regresses object boxes directly in an end-to-end framework, such as, SSD [6], YOLO [7], YOLOv2 [8], RetinaNet [9].
 
@@ -19,9 +19,19 @@ Now there is a directory `voc` in `yolo-tensorflow/datasets`
 
 
 
-### Model
+### 2 Model
+
+#### 2.1 basic model
+
+##### 2.1.1 data pre-processing
+
+The VOC dataset has 5717 training images, 2911 validation images and 2912 testing images. Because each image has different scales, it is necessary to resize each image to a fixed size, I set (448,448,3) following YOLO [7]. In detail, I first create a canvas whose size is (448,448,3) and filled with neutral gray color. Then I scaling the original image according to original size. Finally, I put the resized image in the middle of the canvas. **It is important that adjusting the ground truth bounding boxes when processing image**. Here is an example of data pre-processing. In order to minimize the time consuming in data pre-processing, I use  the shared memory technique introduced in article `机器学习中如何“优雅地”处理数据` [11].
+
+![data pre-processing](pictures/data-pre-processing.png)
 
 
+
+##### 2.1.2 network backbone
 
 
 
@@ -46,3 +56,5 @@ Now there is a directory `voc` in `yolo-tensorflow/datasets`
 [9]. Lin T Y, Goyal P, Girshick R, et al. Focal Loss for Dense Object Detection. in ICCV, 2017.
 
 [10]. <http://cvlab.postech.ac.kr/~mooyeol/pascal_voc_2012/VOCtrainval_11-May-2012.tar>
+
+[11]. https://zhuanlan.zhihu.com/p/31628847
