@@ -43,7 +43,7 @@ def main(method='train', gpus=''):
     option['gpus'] = gpus
     option['n_gpus'] = len(gpus.split(',')) if len(gpus.split(',')) != 0 else 1
     option['is_multigpu'] = True if option['n_gpus'] > 1 else False
-    option['is_valid'] = True
+    option['is_valid'] = False
     option['is_observe'] = False
     option['noobject_scale'] = 1
     option['object_scale'] = 1

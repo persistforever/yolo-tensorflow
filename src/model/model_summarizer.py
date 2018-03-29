@@ -251,15 +251,15 @@ class Model():
             valid_freq = 1000
             need_valid = False
             for t in range(-3,4,1):
-                if (n_iter+t) % valid_freq == 0 and n_iter >= 10:
+                if (n_iter+t) % valid_freq == 0: # and n_iter >= 10:
                     need_valid = True
                     break
             
             if need_valid and self.is_valid:
                 # 观测一次basic验证集evaluation
-                mAP = self.valid_model(processor, model_path, logs_dir, mode='valid_basic')
+                mAP = self.valid_model(processor, model_path, logs_dir, mode='valid')
                 print('[%d] valid mAP: %.4f\n' % (n_iter, mAP))
-                valid_value = f1_array[4]
+                valid_value = mAP
 
                 if valid_value >= max_valid_value:
                     max_valid_value = valid_value
@@ -324,8 +324,8 @@ class Model():
             trues_objects = self.get_true_boxes(batch_datasets, self.batch_size)
             n_trues = numpy.zeros((self.n_classes-1), dtype='int32')
             for true_objects in trues_objects:
-                for true_object in trues_objects:
-                    n_trues[true_object['index']-1] += 1
+                for true_object in true_objects:
+                    n_trues[true_object['class']-1] += 1
     
             precisions = numpy.zeros((self.n_classes-1, 11), dtype='float32')
             recalls = numpy.zeros((self.n_classes-1, 11), dtype='float32')
@@ -342,8 +342,9 @@ class Model():
 
             for k in range(self.n_classes-1):
                 AP = 0.0
+                print(precisions[k], recalls[k])
                 for j in range(1, 11):
-                    AP += (precisions[k][j-1] - precisions[k][j]) * (recall[k][j] - recall[k][j-1])
+                    AP += (precisions[k][j-1] - precisions[k][j]) * (recalls[k][j] - recalls[k][j-1])
                 mAPs[k].append(AP)
         
         mAP = 0.0
@@ -446,6 +447,8 @@ class Model():
 
             true_boxes = []
             for index, x, y, w, h in label:
+                if x == 0.0 and y == 0.0 and w == 0.0 and h == 0.0:
+                    continue
                 left = int(round(min(max(0.0, x - w / 2.0), 0.9999) * self.image_x_size))
                 top = int(round(min(max(0.0, y - h / 2.0), 0.9999) * self.image_y_size))
                 right = int(round(min(max(0.0, x + w / 2.0), 0.9999) * self.image_x_size))
@@ -462,21 +465,21 @@ class Model():
         """
         获取每个预测框对应的真实框的pair对
         """
-        n_true_positives = numpy.array((self.n_classes-1), dtype='int32')
-        n_false_positives = numpy.array((self.n_classes-1), dtype='int32')
+        n_true_positives = numpy.zeros((self.n_classes-1,), dtype='int32')
+        n_false_positives = numpy.zeros((self.n_classes-1,), dtype='int32')
         for i in range(self.batch_size):
-            for p in range(len(preds_boxes[i])):
+            for p in range(len(pred_objects[i])):
                 best_n, best_iou = -1, true_iou
-                for t in range(len(trues_boxes[i])):
+                for t in range(len(true_objects[i])):
                     iou = self.calculate_iou_py(pred_objects[i][p]['box'], true_objects[i][t]['box'], mode='ltrb')
                     is_class_right = pred_objects[i][p]['class'] == true_objects[i][t]['class']
                     if iou >= true_iou and is_class_right and pred_objects[i][p]['prob'] >= true_prob:
                         best_iou = iou
                         best_n = t
                 if best_n != -1:
-                    n_true_positives[preds_objects[i][p]['class']-1] += 1
+                    n_true_positives[pred_objects[i][p]['class']-1] += 1
                 else:
-                    n_false_positives[preds_objects[i][p]['class']-1] += 1
+                    n_false_positives[pred_objects[i][p]['class']-1] += 1
 
         return n_true_positives, n_false_positives
 
