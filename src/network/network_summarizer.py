@@ -151,13 +151,10 @@ class Network:
         self.conv_layer15 = ConvLayer(
             x_size=3, y_size=3, x_stride=1, y_stride=1, n_filter=1024, activation='leaky_relu', 
             batch_normal=True, weight_decay=self.weight_decay_scale, name='conv15', prev_layer=self.conv_layer14) 
-        self.pool_layer6 = PoolLayer(
-            x_size=2, y_size=2, x_stride=2, y_stride=2, mode=self.pool_mode, resp_normal=False, 
-            name='pool6', prev_layer=self.conv_layer15)
         
         self.dense_layer1 = DenseLayer(
             hidden_dim=1024, activation='leaky_relu', batch_normal=False, weight_decay=self.weight_decay_scale, 
-            name='dense1', input_shape=[4*4*1024])
+            name='dense1', input_shape=[7*7*1024])
         self.dense_layer2 = DenseLayer(
             hidden_dim=self.cell_y_size*self.cell_x_size*self.n_boxes*(5+self.n_classes), 
             activation='none', batch_normal=False, weight_decay=self.weight_decay_scale, 
@@ -169,7 +166,7 @@ class Network:
             self.conv_layer3, self.conv_layer4, self.conv_layer5, self.conv_layer6, self.pool_layer3,
             self.conv_layer7, self.conv_layer8, self.conv_layer9, self.conv_layer10, self.pool_layer4,
             self.conv_layer11, self.conv_layer12, self.conv_layer13, self.pool_layer5,
-            self.conv_layer14, self.conv_layer15, self.pool_layer6,
+            self.conv_layer14, self.conv_layer15,
             self.dense_layer1, self.dense_layer2]
 
         self.calculation = sum([layer.calculation for layer in self.layers])
@@ -222,7 +219,7 @@ class Network:
             hidden_state = images
             for layer in self.layers[:-2]:
                 hidden_state = layer.get_output(input=hidden_state, is_training=is_training)
-            hidden_state = tf.reshape(hidden_state, (self.batch_size, 4*4*1024))
+            hidden_state = tf.reshape(hidden_state, (self.batch_size, 7*7*1024))
             for layer in self.layers[-2:]:
                 hidden_state = layer.get_output(input=hidden_state, is_training=is_training)
             logits = hidden_state
