@@ -151,7 +151,7 @@ class Processor:
                 self.get_random_batch(self.trainsets, self.batch_size)
      
             batch_indexs = numpy.array(batch_indexs, dtype='float32')
-            batch_images = self.convert_batch_images(batch_images)
+            batch_images, batch_labels = self.convert_batch_infos(batch_images, batch_labels)
             batch_images = numpy.array(batch_images / 255.0, dtype='float32')
             
             # 数据增强
@@ -211,17 +211,18 @@ class Processor:
             batch_images.append(dictionary[index]['image'])
             batch_datasets.append(dictionary[index])
         
-        batch_images = self.convert_batch_images(batch_images)
+        batch_images = self.convert_batch_infos(batch_images)
         batch_images = numpy.array(batch_images / 255.0, dtype='float32')
         return batch_images, batch_datasets
 
-    def convert_batch_images(self, batch_images):
+    def convert_batch_infos(self, batch_images, batch_labels=None):
         """
         将一个batch的images从list转化成numpy.array
         """
-        new_batch_images = []
+        new_batch_images, new_batch_labels = [], []
 
-        for image in batch_images:
+        for i, image in enumerate(batch_images):
+            # images
             orig_h, orig_w = image.shape[0], image.shape[1]
             canvas_image = numpy.zeros((self.image_y_size, self.image_x_size, 3), dtype='uint8') + 128
             if 1.0 * orig_h / orig_w >= 1.0 * self.image_y_size / self.image_x_size:
@@ -237,9 +238,42 @@ class Processor:
                 start_y = int((self.image_y_size - new_h) / 2.0)
                 canvas_image[start_y: start_y+new_h, :, :] = resized_image
             new_batch_images.append(canvas_image)
+            
+            # labels
+            if batch_labels:
+                new_label = batch_labels[i]
+                if 1.0 * orig_h / orig_w >= 1.0 * self.image_y_size / self.image_x_size:
+                    new_h = int(round(self.image_y_size))
+                    new_w = int(round(1.0 * orig_w / orig_h * new_h))
+                    for j in range(self.max_objects):
+                        [index, x, y, w, h] = batch_labels[i][j]
+                        if x == 0 and y == 0 and w == 0 and h == 0:
+                            break
+                        x = 1.0 * (x * new_w + (self.image_x_size - new_w) / 2.0) / self.image_x_size
+                        y = y
+                        w = 1.0 * w * new_w / orig_w
+                        h = 1.0 * h * new_h / orig_h
+                        new_label[j] = [index, x, y, w, h]
+                else:
+                    new_w = int(round(self.image_x_size))
+                    new_h = int(round(1.0 * orig_h / orig_w * new_w))
+                    for j in range(self.max_objects):
+                        [index, x, y, w, h] = batch_labels[i][j]
+                        if x == 0 and y == 0 and w == 0 and h == 0:
+                            break
+                        x = x
+                        y = 1.0 * (y * new_h + (self.image_y_size - new_h) / 2.0) / self.image_y_size
+                        w = 1.0 * w * new_w / orig_w
+                        h = 1.0 * h * new_h / orig_h
+                        new_label[j] = [index, x, y, w, h]
+                new_batch_labels.append(new_label)
 
         new_batch_images = numpy.array(new_batch_images, dtype='float32')
-        return new_batch_images
+        if batch_labels:
+            new_batch_labels = numpy.array(new_batch_labels, dtype='float32')
+            return new_batch_images, new_batch_labels
+        else:
+            return new_batch_images
 
     def convert_batch_labels(self, batch_labels):
         """

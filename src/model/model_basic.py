@@ -34,7 +34,8 @@ class Model():
         is_valid=False, 
         update_function='momentum', 
         learning_rate=0.01,
-        is_lr_decay=False):
+        is_lr_decay=False,
+        is_observe=False):
 
         # 设置参数
         self.image_x_size = image_x_size
@@ -51,6 +52,7 @@ class Model():
         self.update_function = update_function
         self.learning_rate = learning_rate
         self.is_lr_decay = is_lr_decay
+        self.is_observe = is_observe
         
         self.index_size = (self.batch_size)
         self.image_size = (self.batch_size, self.image_y_size, self.image_x_size, self.n_channel)
@@ -143,6 +145,8 @@ class Model():
         
     def train(self, processor, network, backup_dir, logs_dir, n_iters=500000):
         self.train_init(network, backup_dir)
+        model_path = os.path.join(backup_dir, 'model_50000.ckpt')
+        self.saver.restore(self.sess, model_path)
         
         # 训练开始前保存1次模型
         model_path = os.path.join(backup_dir, 'model_0.ckpt')
@@ -214,6 +218,10 @@ class Model():
                 
             et = time.time()
             feed_time = et - st
+
+            # 生成训练图像
+            if self.is_observe and n_iter <= 10:
+                self.write_train_images(batch_images, batch_unpos_coord_true, logs_dir, n_iter)
             
             st = time.time()
             [_, avg_loss, coord_loss, noobject_loss, object_loss, class_loss, \
@@ -355,7 +363,6 @@ class Model():
         return mAP
     
     def test_model(self, processor, network, model_path, output_dir):
-        self.deploy_init(processor, network, model_path)
         
         if not os.path.exists(os.path.join(output_dir, 'predictions')):
             os.mkdir(os.path.join(output_dir, 'predictions'))
@@ -522,3 +529,22 @@ class Model():
             iou = inter_area / (box1_area + box2_area - inter_area + 1e-6)
         
         return iou
+    
+    def write_train_images(self, batch_images, batch_unpos_coord_true, logs_dir, index):
+        if not os.path.exists(os.path.join(logs_dir, 'train')):
+            os.mkdir(os.path.join(logs_dir, 'train'))
+
+        for i in range(self.batch_size):
+            image = numpy.array(batch_images[i]*255, dtype='uint8')
+            for j in range(self.max_objects):
+                if sum(batch_unpos_coord_true[i,j,:]) == 0.0:
+                    continue
+                [x, y, w, h] = batch_unpos_coord_true[i,j,:]
+                left = int(round((x - w / 2.0) * self.image_x_size))
+                top = int(round((y - h / 2.0) * self.image_y_size))
+                right = int(round((x + w / 2.0) * self.image_x_size))
+                bottom = int(round((y + h / 2.0) * self.image_y_size))
+                cv2.rectangle(image, (left, top), (right, bottom), (71, 99, 255), 2) # blue
+                
+            output_path = os.path.join(logs_dir, 'train', '%d_%d.png' % (index, i))
+            cv2.imwrite(output_path, image)

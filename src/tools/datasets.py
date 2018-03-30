@@ -32,6 +32,7 @@ def convert_annotation(in_file, out_file):
     w = int(size.find('width').text)
     h = int(size.find('height').text)
 
+    lines = []
     for obj in root.iter('object'):
         difficult = obj.find('difficult').text
         cls = obj.find('name').text
@@ -41,8 +42,11 @@ def convert_annotation(in_file, out_file):
         xmlbox = obj.find('bndbox')
         b = (float(xmlbox.find('xmin').text), float(xmlbox.find('xmax').text), float(xmlbox.find('ymin').text), float(xmlbox.find('ymax').text))
         bb = convert((w,h), b)
-        with open(out_file, 'w') as fw:
-            fw.write(str(cls_id) + " " + " ".join([str(a) for a in bb]) + '\n')
+        lines.append(str(cls_id) + " " + " ".join([str(a) for a in bb]) + '\n')
+        
+    with open(out_file, 'w') as fw:
+        for line in lines:
+            fw.writelines(line)
 
 
 def construct_label(source_dir, target_dir):

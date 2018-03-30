@@ -22,9 +22,9 @@ elif 'Linux' in platform.platform():
 
 
 def main(method='train', gpus=''):
-    from src.data.data_summarizer import Processor
-    from src.network.network_summarizer import Network
-    from src.model.model_summarizer import Model
+    from src.data.data_basic import Processor
+    from src.network.network_basic import Network
+    from src.model.model_basic import Model
    
     option = collections.OrderedDict()
     option['batch_size'] = 32
@@ -44,7 +44,6 @@ def main(method='train', gpus=''):
     option['n_gpus'] = len(gpus.split(',')) if len(gpus.split(',')) != 0 else 1
     option['is_multigpu'] = True if option['n_gpus'] > 1 else False
     option['is_valid'] = False
-    option['is_observe'] = False
     option['noobject_scale'] = 1
     option['object_scale'] = 1
     option['coord_scale'] = 1
@@ -58,6 +57,7 @@ def main(method='train', gpus=''):
     option['seq'] = 'voc-v1'
     option['model'] = 'model_best.ckpt'
     option['update_function'] = 'momentum'
+    option['is_observe'] = True
     
     # 打印option
     print()
@@ -114,7 +114,8 @@ def main(method='train', gpus=''):
         is_valid = option['is_valid'], 
         update_function = option['update_function'], 
         learning_rate = option['learning_rate'],
-        is_lr_decay = option['is_lr_decay']) 
+        is_lr_decay = option['is_lr_decay'],
+        is_observe = option['is_observe']) 
     
     if method == 'train':
         # 训练模型
