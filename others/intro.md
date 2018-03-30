@@ -19,7 +19,7 @@ Now there is a directory `voc` in `yolo-tensorflow/datasets`
 
 
 
-### 2 Model
+### 2 Models
 
 #### 2.1 basic model
 
@@ -76,7 +76,15 @@ $$
 
 ##### 2.1.4 evaluation
 
+**mean average precision (mAP)** is the most common evaluation in object detection task. After predicting some target boxes at given confidence threshold, I match target boxes to ground truth objects. The **true positive boxes** has IOU >= 0.5 with corresponding ground truth objects and the **false positive boxes** has IOU < 0.5 with corresponding ground truth objects. Then, I get precision which is number of true positive boxes divided by the number of ground truth objects and recall which is number of true positive boxes divided by the sum of true positive boxes and false positive boxes. I can get a tuple of precision and recall at each confidence threshold. Thus, the precision is increasing and the recall is decreasing along with the increasing of confidence threshold. The area of this curve surrounded by the x and y axis is the AP value. I get a mean value of each AP in different class, namely mean average precision (mAP).
 
+
+
+### 3 Experiments
+
+#### 3.1 basic model
+
+I set image size as (448,448,3), cell size as (7,7), number of bounding boxes in each cell as 5, the learning rate as 0.0001, the no-object lambda as 1, the object lambda as 1, the coordinate lambda as 1, the classification lambda as 1, the update method as momentum with 0.9 decay. These parameters are set simply without any tuning. I train the basic model by 200000 iterations and calculate mAP value on validation set every 1000 iterations. Here is the curve of mAP in each evaluation iteration.
 
 
 
