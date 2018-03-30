@@ -27,13 +27,13 @@ Now there is a directory `voc` in `yolo-tensorflow/datasets`
 
 The VOC dataset has 5717 training images, 2911 validation images and 2912 testing images. Because each image has different scales, it is necessary to resize each image to a fixed size, I set (448,448,3) following YOLO [7]. In detail, I first create a canvas whose size is (448,448,3) and filled with neutral gray color. Then I scaling the original image according to original size. Finally, I put the resized image in the middle of the canvas. **It is important that adjusting the ground truth bounding boxes when processing image**. Here is an example of data pre-processing. In order to minimize the time consuming in data pre-processing, I use  the shared memory technique introduced in article `机器学习中如何“优雅地”处理数据` [11].
 
-![data pre-processing](pictures/data-pre-processing.png)
+![data pre-processing](others/pictures/data-pre-processing.png)
 
 ##### 2.1.2 network backbone
 
 Similar to YOLO model, I create the deep convolutional neural network as the backbone. In consideration of the complicated representation and efficient calculation, I set 15 convolutional layers, 5 max pooling layers as well as 2 dense layers. Here is the backbone of network.
 
-![network](pictures/network.png)
+![network](others/pictures/network.png)
 
 The output of the network is consist of 3 tensors, each represent bounding box, confidence and classification. That is to say, I assume that the output feature has 7*7 cells and each cell has 5 bounding boxes. Thus, the network can predict 245 objects at most in one image. Clearly, each cell in the image has the ability of feeling positional information of objects and each bounding box in the cell has the ability of feeling size information of objects. Each bounding box has 27 information in order. 
 
