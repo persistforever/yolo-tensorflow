@@ -91,7 +91,7 @@ I set image size as (448,448,3), cell size as (7,7), number of bounding boxes in
 Here is the running command.
 
 ```shell
- python -u -m detect_basic -method train -gpus 0 -name basic
+ python -u -m script.detect_basic -method train -gpus 0 -name basic
 ```
 
 
