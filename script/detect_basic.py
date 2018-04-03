@@ -31,7 +31,7 @@ def main(method='train', gpus=''):
     option['image_x_size'] = 448
     option['image_y_size'] = 448
     option['n_channel'] = 3
-    option['n_classes'] = 21
+    option['n_classes'] = 20
     option['cell_x_size'] = 7
     option['cell_y_size'] = 7
     option['pool_mode'] = 'max'

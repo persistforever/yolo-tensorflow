@@ -251,8 +251,8 @@ class Processor:
                             break
                         x = 1.0 * (x * new_w + (self.image_x_size - new_w) / 2.0) / self.image_x_size
                         y = y
-                        w = 1.0 * w * new_w / orig_w
-                        h = 1.0 * h * new_h / orig_h
+                        w = 1.0 * w * new_w / self.image_x_size
+                        h = h
                         new_label[j] = [index, x, y, w, h]
                 else:
                     new_w = int(round(self.image_x_size))
@@ -263,8 +263,8 @@ class Processor:
                             break
                         x = x
                         y = 1.0 * (y * new_h + (self.image_y_size - new_h) / 2.0) / self.image_y_size
-                        w = 1.0 * w * new_w / orig_w
-                        h = 1.0 * h * new_h / orig_h
+                        w = w
+                        h = 1.0 * h * new_h / self.image_y_size
                         new_label[j] = [index, x, y, w, h]
                 new_batch_labels.append(new_label)
 

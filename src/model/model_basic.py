@@ -53,6 +53,9 @@ class Model():
         self.learning_rate = learning_rate
         self.is_lr_decay = is_lr_decay
         self.is_observe = is_observe
+        self.class_type = [
+            "aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", 
+            "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
         
         self.index_size = (self.batch_size)
         self.image_size = (self.batch_size, self.image_y_size, self.image_x_size, self.n_channel)
@@ -221,7 +224,7 @@ class Model():
 
             # 生成训练图像
             if self.is_observe and n_iter <= 10:
-                self.write_train_images(batch_images, batch_unpos_coord_true, logs_dir, n_iter)
+                self.write_train_images(batch_images, batch_coord_true, batch_class_true, logs_dir, n_iter)
             
             st = time.time()
             [_, avg_loss, coord_loss, noobject_loss, object_loss, class_loss, \
@@ -530,21 +533,25 @@ class Model():
         
         return iou
     
-    def write_train_images(self, batch_images, batch_unpos_coord_true, logs_dir, index):
+    def write_train_images(self, batch_images, batch_coord_true, batch_class_true, logs_dir, index):
         if not os.path.exists(os.path.join(logs_dir, 'train')):
             os.mkdir(os.path.join(logs_dir, 'train'))
 
-        for i in range(self.batch_size):
-            image = numpy.array(batch_images[i]*255, dtype='uint8')
-            for j in range(self.max_objects):
-                if sum(batch_unpos_coord_true[i,j,:]) == 0.0:
-                    continue
-                [x, y, w, h] = batch_unpos_coord_true[i,j,:]
-                left = int(round((x - w / 2.0) * self.image_x_size))
-                top = int(round((y - h / 2.0) * self.image_y_size))
-                right = int(round((x + w / 2.0) * self.image_x_size))
-                bottom = int(round((y + h / 2.0) * self.image_y_size))
-                cv2.rectangle(image, (left, top), (right, bottom), (71, 99, 255), 2) # blue
+        for b in range(self.batch_size):
+            image = numpy.array(batch_images[b]*255, dtype='uint8')
+            for i in range(self.cell_y_size):
+                for j in range(self.cell_x_size):
+                    for n in range(self.max_objects):
+                        if sum(batch_coord_true[b,i,j,n,:]) == 0.0:
+                            continue
+                        [x, y, w, h] = batch_coord_true[b,i,j,n,:]
+                        class_type = int(numpy.argmax(batch_class_true[b,i,j,n,:]))
+                        left = int(round((x - w / 2.0) * self.image_x_size))
+                        top = int(round((y - h / 2.0) * self.image_y_size))
+                        right = int(round((x + w / 2.0) * self.image_x_size))
+                        bottom = int(round((y + h / 2.0) * self.image_y_size))
+                        cv2.rectangle(image, (left, top), (right, bottom), (71, 99, 255), 2) # blue
+                        cv2.putText(image, self.class_type[class_type], (left, top), cv2.FONT_HERSHEY_COMPLEX, 6, (71, 99, 255), 20)
                 
             output_path = os.path.join(logs_dir, 'train', '%d_%d.png' % (index, i))
             cv2.imwrite(output_path, image)
