@@ -71,7 +71,9 @@ def construct_dataset(source_dir, target_dir):
             source_path = os.path.join(source_dir, 'JPEGImages', '%s.jpg' % (filename))
             target_path = os.path.join(target_dir, 'Images', '%s.jpg' % (filename))
             shutil.copy(source_path, target_path)
-            trainsets.append(target_path)
+            label_path = os.path.join(target_dir, 'Labels', '%s.txt' % (filename))
+            if os.path.exists(label_path):
+                trainsets.append(target_path)
 
     with open(os.path.join(source_dir, 'ImageSets', 'Main', 'cat_val.txt'), 'r') as fo:
         for line in fo:
@@ -79,7 +81,9 @@ def construct_dataset(source_dir, target_dir):
             source_path = os.path.join(source_dir, 'JPEGImages', '%s.jpg' % (filename))
             target_path = os.path.join(target_dir, 'Images', '%s.jpg' % (filename))
             shutil.copy(source_path, target_path)
-            testsets.append(target_path)
+            label_path = os.path.join(target_dir, 'Labels', '%s.txt' % (filename))
+            if os.path.exists(label_path):
+                testsets.append(target_path)
 
     with open(os.path.join(target_dir, 'train.txt'), 'w') as fw:
         for filepath in trainsets:

@@ -28,6 +28,7 @@ class Processor:
         n_classes, 
         cell_x_size, 
         cell_y_size,
+        n_boxes,
         batch_size, 
         n_channel, 
         n_processes, 
@@ -41,6 +42,7 @@ class Processor:
         self.n_classes = n_classes + 1
         self.cell_x_size = cell_x_size
         self.cell_y_size = cell_y_size
+        self.n_boxes = n_boxes
         self.batch_size = batch_size
         self.n_channel = n_channel
         self.n_processes = n_processes
@@ -341,7 +343,8 @@ class Processor:
                 object_mask[center_cell_y, center_cell_x,
                     object_nums[center_cell_y, center_cell_x]] = 1.0
                 
-                object_nums[center_cell_y, center_cell_x] += 1
+                if object_nums[center_cell_y, center_cell_x] < self.max_objects-1:
+                    object_nums[center_cell_y, center_cell_x] += 1
 
                 unpos_coord_true[j,:] = numpy.array([in_x, in_y, in_w, in_h])
                 unpos_object_mask[j] = 1.0
@@ -385,7 +388,7 @@ class Processor:
             for line in fo:
                 infos = line.strip().split(' ')
                 
-                index = float(infos[0])
+                index = float(int(infos[0]) + 1)
                 in_x = float(infos[1])
                 in_y = float(infos[2])
                 in_w = float(infos[3])

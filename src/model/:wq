@@ -545,14 +545,14 @@ class Model():
                             continue
                         [x, y, w, h] = batch_coord_true[b,i,j,n,:]
                         class_type = int(numpy.argmax(batch_class_true[b,i,j,n,:]))
-                        print(self.class_types[class_type], index)
+                        print(self.class_types[class_type-1], index)
                         left = int(round((x - w / 2.0) * self.image_x_size))
                         top = int(round((y - h / 2.0) * self.image_y_size))
                         right = int(round((x + w / 2.0) * self.image_x_size))
                         bottom = int(round((y + h / 2.0) * self.image_y_size))
                         cv2.rectangle(image, (left, top), (right, bottom), (71, 99, 255), 2) # red
-                        cv2.rectangle(image, (left, top-15), (left+80, top), (71, 99, 255), -1) # red
-                        cv2.putText(image, self.class_types[class_type], (left, top), cv2.FONT_HERSHEY_COMPLEX, 0.4, (255, 255, 255), 1)
+                        cv2.rectangle(image, (left, top-12), (left+80, top), (71, 99, 255), -1) # red
+                        cv2.putText(image, self.class_types[class_type-1], (left, top), cv2.FONT_HERSHEY_COMPLEX, 0.4, (255, 255, 255), 1)
                 
             output_path = os.path.join(logs_dir, 'train', '%d_%d.png' % (index, b))
             cv2.imwrite(output_path, image)

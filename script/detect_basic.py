@@ -44,9 +44,9 @@ def main(method='train', gpus=''):
     option['n_gpus'] = len(gpus.split(',')) if len(gpus.split(',')) != 0 else 1
     option['is_multigpu'] = True if option['n_gpus'] > 1 else False
     option['is_valid'] = False
-    option['noobject_scale'] = 1
+    option['noobject_scale'] = 0.5
     option['object_scale'] = 1
-    option['coord_scale'] = 1
+    option['coord_scale'] = 5
     option['class_scale'] = 1
     option['is_weight_decay'] = False
     option['weight_decay'] = 1e-3
@@ -72,6 +72,7 @@ def main(method='train', gpus=''):
         n_classes = option['n_classes'],
         cell_x_size = option['cell_x_size'], 
         cell_y_size = option['cell_y_size'],
+        n_boxes = option['n_boxes'],
         batch_size = option['batch_size'], 
         n_channel = option['n_channel'],
         n_processes = option['n_processes'], 

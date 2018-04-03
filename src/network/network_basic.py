@@ -187,7 +187,7 @@ class Network:
         # 待输出的中间变量
         self.logits = self.inference(self.images, is_training=tf.constant(True))
         self.loss, self.noobject_loss, self.object_loss, self.coord_loss, self.class_loss, \
-            self.iou_value, self.object_value, self.noobject_value = self.calculate_loss(self.logits)
+            self.iou_value, self.object_value, self.noobject_value, self.class_value = self.calculate_loss(self.logits)
         self.weight_decay_loss = tf.constant(0.0)
         
         tf.add_to_collection('losses_%s' % (name), self.loss)
@@ -206,7 +206,7 @@ class Network:
         self.class_loss /= self.batch_size
             
         return self.avg_loss, self.noobject_loss, self.object_loss, self.coord_loss, self.class_loss, \
-            self.weight_decay_loss, self.iou_value, self.object_value, self.noobject_value
+            self.weight_decay_loss, self.iou_value, self.object_value, self.noobject_value, self.class_value
 
     def get_inference(self, images):
        
@@ -346,7 +346,7 @@ class Network:
                 # 计算iou_value
                 iou_value = tf.reduce_sum(
                     iou_tensor * iou_tensor_mask, axis=[0,1,2,3,4]) / (
-                        tf.reduce_sum(self.object_mask, axis=[0,1,2,3]))
+                    tf.reduce_sum(self.object_mask, axis=[0,1,2,3]))
 
             with tf.name_scope('class'):
                 # 计算class_loss和class_value
@@ -354,11 +354,16 @@ class Network:
                 class_label = tf.stop_gradient(class_label)
                 class_output = (class_label - class_pred) * tf.stop_gradient(iou_tensor_pred_mask)
                 class_loss = self.class_scale * tf.nn.l2_loss(class_output)
+
+                # 计算class_value
+                class_value = tf.reduce_sum(
+                    class_label * class_pred * iou_tensor_pred_mask, axis=[0,1,2,3,4]) / (
+                    tf.reduce_sum(self.object_mask, axis=[0,1,2,3]))
             
             loss = (noobject_loss + object_loss + coord_loss + class_loss) / self.batch_size
 
             return loss, noobject_loss, object_loss, coord_loss, class_loss, \
-                iou_value, object_value, noobject_value
+                iou_value, object_value, noobject_value, class_value
     
     def get_direct_position(self, coord_pred):
         """
