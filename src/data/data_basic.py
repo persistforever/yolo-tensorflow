@@ -343,14 +343,20 @@ class Processor:
                 object_mask[center_cell_y, center_cell_x,
                     object_nums[center_cell_y, center_cell_x]] = 1.0
                 
-                if object_nums[center_cell_y, center_cell_x] < self.max_objects-1:
-                    object_nums[center_cell_y, center_cell_x] += 1
-
                 unpos_coord_true[j,:] = numpy.array([in_x, in_y, in_w, in_h])
                 unpos_object_mask[j] = 1.0
                 
                 class_true[center_cell_y, center_cell_x, 
                     object_nums[center_cell_y, center_cell_x], index] = 1.0
+
+                if object_nums[center_cell_y, center_cell_x] < self.max_objects-1:
+                    object_nums[center_cell_y, center_cell_x] += 1
+
+        for i in range(self.cell_y_size):
+            for j in range(self.cell_x_size):
+                for n in range(self.max_objects):
+                    if sum(class_true[i,j,n,:]) == 0.0:
+                        class_true[i,j,n,0] = 1.0
                 
         return coord_true, object_mask, class_true, \
             unpos_coord_true, unpos_object_mask, object_nums

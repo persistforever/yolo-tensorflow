@@ -53,7 +53,8 @@ class Model():
         self.learning_rate = learning_rate
         self.is_lr_decay = is_lr_decay
         self.is_observe = is_observe
-        self.class_types = ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow', 
+        self.class_types = ['background', 
+            'aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow', 
             'diningtable', 'dog', 'horse', 'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
         
         self.index_size = (self.batch_size)
@@ -545,7 +546,6 @@ class Model():
                             continue
                         [x, y, w, h] = batch_coord_true[b,i,j,n,:]
                         class_type = int(numpy.argmax(batch_class_true[b,i,j,n,:]))
-                        print(self.class_types[class_type], index)
                         left = int(round((x - w / 2.0) * self.image_x_size))
                         top = int(round((y - h / 2.0) * self.image_y_size))
                         right = int(round((x + w / 2.0) * self.image_x_size))
