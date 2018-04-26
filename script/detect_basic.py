@@ -122,9 +122,11 @@ def main(method='train', gpus=''):
         # 训练模型
         train_image_paths_file = os.path.join(data_dir, 'datasets', option['train_data'], 'train.txt')
         test_image_paths_file = os.path.join(data_dir, 'datasets', option['test_data'], 'valid.txt')
-        processor.init_datasets(mode='train', 
+        traineval_image_paths_file = os.path.join(data_dir, 'datasets', option['test_data'], 'traineval.txt')
+        processor.init_datasets(mode='train',
             train_image_paths_file=train_image_paths_file, 
-            test_image_paths_file=test_image_paths_file)
+            test_image_paths_file=test_image_paths_file,
+            traineval_image_paths_file=traineval_image_paths_file)
         
         # 设置数据池，processor负责生产dataset，model负责消费dataset
         producers = []

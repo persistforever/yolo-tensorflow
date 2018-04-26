@@ -5,6 +5,7 @@
 import xml.etree.ElementTree as ET
 import pickle
 import os
+import random
 from os import listdir, getcwd
 from os.path import join
 import shutil
@@ -61,7 +62,7 @@ def construct_label(source_dir, target_dir):
         convert_annotation(xmlpath, outpath)
 
 def construct_dataset(source_dir, target_dir):
-    trainsets, testsets = [], []
+    datasets, trainsets, testsets = [], [], []
     if not os.path.exists(os.path.join('datasets', 'voc', 'Images')):
         os.mkdir(os.path.join('datasets', 'voc', 'Images'))
 
@@ -73,7 +74,7 @@ def construct_dataset(source_dir, target_dir):
             shutil.copy(source_path, target_path)
             label_path = os.path.join(target_dir, 'Labels', '%s.txt' % (filename))
             if os.path.exists(label_path):
-                trainsets.append(target_path)
+                datasets.append(target_path)
 
     with open(os.path.join(source_dir, 'ImageSets', 'Main', 'cat_val.txt'), 'r') as fo:
         for line in fo:
@@ -83,18 +84,19 @@ def construct_dataset(source_dir, target_dir):
             shutil.copy(source_path, target_path)
             label_path = os.path.join(target_dir, 'Labels', '%s.txt' % (filename))
             if os.path.exists(label_path):
-                testsets.append(target_path)
+                datasets.append(target_path)
+
+    n_valid = 2000
+    random.shuffle(datasets)
+    testsets = datasets[0:n_valid]
+    trainsets = datasets[n_valid:]
 
     with open(os.path.join(target_dir, 'train.txt'), 'w') as fw:
         for filepath in trainsets:
             fw.writelines(('%s\n' % (filepath)).encode('utf8'))
     
     with open(os.path.join(target_dir, 'valid.txt'), 'w') as fw:
-        for filepath in testsets[0:int(len(testsets)/2.0)]:
-            fw.writelines(('%s\n' % (filepath)).encode('utf8'))
-
-    with open(os.path.join(target_dir, 'test.txt'), 'w') as fw:
-        for filepath in testsets[int(len(testsets)/2.0):]:
+        for filepath in testsets:
             fw.writelines(('%s\n' % (filepath)).encode('utf8'))
 
 if not os.path.exists(os.path.join('datasets', 'voc')):

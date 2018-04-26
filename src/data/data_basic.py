@@ -66,7 +66,7 @@ class Processor:
         
         
     def init_datasets(self, mode, train_image_paths_file=None,
-        test_image_paths_file=None): 
+        test_image_paths_file=None, traineval_image_paths_file=None): 
         """
         初始化数据集
         输入1：mode - 训练/验证/测试/应用
@@ -75,7 +75,8 @@ class Processor:
         """
         # 根据mode进行image_processor的初始化，并判断参数是否出错
         if mode == 'train':
-            if train_image_paths_file is None and test_image_paths_file is None:
+            if train_image_paths_file is None and test_image_paths_file is None and \
+                traineval_image_paths_file is None:
                 raise('ERROR: wrong parameters in initialization!')
         elif mode == 'test':
             if test_image_paths_file is None:
@@ -86,6 +87,7 @@ class Processor:
         if mode == 'train':
             self.load_datasets('train', image_paths_file=train_image_paths_file)
             self.load_datasets('valid', image_paths_file=test_image_paths_file)
+            self.load_datasets('traineval', image_paths_file=traineval_image_paths_file)
             self.shared_memory = SharedMemory(self.buffer_size, self.dataset_size)
             print('finish apply shared memory ...')
             sys.stdout.flush()
@@ -103,7 +105,7 @@ class Processor:
         datasets = []
         
         # 判断参数是否出错
-        if mode in ['train', 'valid', 'test']:
+        if mode in ['train', 'valid', 'test', 'traineval']:
             if image_paths_file is None:
                 raise('ERROR: wrong parameters in load_datasets!')
         else:
@@ -119,6 +121,10 @@ class Processor:
             self.validsets = datasets
             self.n_valid = len(self.validsets)
             print('number of valid images: %d' % (self.n_valid))
+        elif mode == 'traineval':
+            datasets = self.init_subdataset(image_paths_file)
+            self.trainevalsets = datasets
+            self.n_traineval = len(self.trainevalsets)
         elif mode == 'test':
             datasets = self.init_subdataset(image_paths_file)
             self.testsets = datasets
@@ -202,11 +208,11 @@ class Processor:
     def dataset_producer(self, mode, indexs):
         # 直接从内存获取一个batch的数据
         if mode == 'train':
-            dictionary = self.trainsets
+            dictionary = copy.deepcopy(self.trainevalsets)
         elif mode == 'valid':
-            dictionary = self.validsets
+            dictionary = copy.deepcopy(self.validsets)
         elif mode == 'test':
-            dictionary = self.testsets
+            dictionary = copy.deepcopy(self.testsets)
 
         batch_images, batch_datasets = [], []
         for index in indexs:
